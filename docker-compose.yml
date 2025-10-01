@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: whey
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+      - redis
+    environment:
+      API_DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/whey
+      API_CELERY_BROKER_URL: redis://redis:6379/0
+      API_CELERY_RESULT_BACKEND: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+      - redis
+    environment:
+      API_DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/whey
+      API_CELERY_BROKER_URL: redis://redis:6379/0
+      API_CELERY_RESULT_BACKEND: redis://redis:6379/0
+    command: poetry run celery -A app.tasks worker --loglevel=INFO
+
+volumes:
+  postgres_data:
