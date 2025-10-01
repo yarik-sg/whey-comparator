@@ -1,18 +1,29 @@
 # Whey Comparator
 
-Application front-end construite avec Vite + React + TypeScript pour comparer des compléments (whey et créatine).
+## Backend API
 
-## Scripts
+The backend FastAPI application lives in `apps/api`.
+
+### Setup
 
 ```bash
-npm install
-npm run dev
-npm run build
+cd apps/api
+poetry install
+poetry run uvicorn app.main:app --reload
 ```
 
-## Fonctionnalités
+To run the worker:
 
-- Filtres avancés par marque, type de produit et plage de prix.
-- Comparaison dynamique de 2 à 4 produits avec stockage de l'état via Zustand.
-- Récupération des données produits avec React Query et indicateurs clés (KPIs).
-- Skeleton loaders et design responsive avec Tailwind CSS.
+```bash
+poetry run celery -A app.tasks worker --loglevel=INFO
+```
+
+### Docker Compose
+
+From the repository root:
+
+```bash
+docker-compose up --build
+```
+
+This launches PostgreSQL, Redis, the FastAPI application and the Celery worker.
