@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { HeroSection } from "@/components/HeroSection";
 import { DealsShowcase } from "@/components/DealsShowcase";
+import { StatsSection } from "@/components/StatsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { PriceAlertForm } from "@/components/PriceAlertForm";
