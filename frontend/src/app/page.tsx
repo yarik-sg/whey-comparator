@@ -108,12 +108,12 @@ export default function Home() {
         )}
       </header>
 
-      <main>
+      <main className="pt-20 sm:pt-24">
         <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
         <PopularCategories onSelectCategory={handleSelectCategory} />
         <DealsShowcase />
         <StatsSection />
-
+        <PartnerLogos />
         <WhyChooseUsSection />
 
         <PriceAlertsSection onExploreCatalogue={handleExploreCatalogue} />
