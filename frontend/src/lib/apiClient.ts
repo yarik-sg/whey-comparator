@@ -29,23 +29,33 @@ export interface ApiResponse<T> {
 }
 
 const FALLBACK_BASE_URL = "http://localhost:8000";
+const PROXY_PATH = "/api/proxy";
 
-function resolveBaseUrl(): string {
+type ResolvedBaseUrl = {
+  baseUrl: string | null;
+  useProxy: boolean;
+};
+
+function resolveBaseUrl(): ResolvedBaseUrl {
   const isBrowser = typeof window !== "undefined";
-  const browserBase = isBrowser
-    ? process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL
-    : undefined;
-  const serverBase = !isBrowser
-    ? process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL
-    : undefined;
 
-  return (
-    browserBase ||
-    serverBase ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    process.env.API_BASE_URL ||
-    FALLBACK_BASE_URL
-  );
+  if (isBrowser) {
+    const browserBase =
+      process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.API_BASE_URL ?? null;
+
+    if (browserBase) {
+      return { baseUrl: browserBase, useProxy: false };
+    }
+
+    return { baseUrl: null, useProxy: true };
+  }
+
+  const serverBase =
+    process.env.API_BASE_URL ??
+    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    FALLBACK_BASE_URL;
+
+  return { baseUrl: serverBase, useProxy: false };
 }
 
 function isURLSearchParams(value: QueryInput): value is URLSearchParams {
@@ -91,8 +101,37 @@ function buildUrl(path: string, query?: QueryInput): string {
     return url.toString();
   }
 
-  const baseUrl = resolveBaseUrl();
+  const { baseUrl, useProxy } = resolveBaseUrl();
   const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
+
+  if (useProxy) {
+    const pathUrl = new URL(normalizedPath, "http://placeholder");
+    const proxyParams = new URLSearchParams();
+    const combinedParams = toURLSearchParams(query);
+
+    proxyParams.set(
+      "target",
+      pathUrl.pathname.startsWith("/")
+        ? pathUrl.pathname.slice(1)
+        : pathUrl.pathname
+    );
+
+    pathUrl.searchParams.forEach((value, key) => {
+      proxyParams.append(key, value);
+    });
+
+    combinedParams?.forEach((value, key) => {
+      proxyParams.append(key, value);
+    });
+
+    const queryString = proxyParams.toString();
+    return queryString ? `${PROXY_PATH}?${queryString}` : PROXY_PATH;
+  }
+
+  if (!baseUrl) {
+    throw new Error("Unable to resolve API base URL");
+  }
+
   const url = new URL(normalizedPath, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`);
 
   const params = toURLSearchParams(query);
