@@ -20,7 +20,7 @@ export function PriceAlertsSection({ onExploreCatalogue }: PriceAlertsSectionPro
           >
             <h2 className="text-3xl sm:text-4xl font-bold">Ne ratez plus la bonne affaire</h2>
             <p className="text-gray-200">
-              Activez des alertes pour être prévenu dès qu'un prix chute ou qu'un nouveau marchand
+              Activez des alertes pour être prévenu dès qu’un prix chute ou qu’un nouveau marchand
               référence vos produits favoris. Personnalisez vos seuils par marque, catégorie ou format.
             </p>
             <ul className="space-y-3 text-gray-300">
@@ -65,7 +65,7 @@ export function PriceAlertsSection({ onExploreCatalogue }: PriceAlertsSectionPro
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-sm text-gray-300">
-                  "Notification envoyée à 8h12 — remise exceptionnelle chez FitShop."
+                  « Notification envoyée à 8h12 — remise exceptionnelle chez FitShop. »
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm text-gray-300">
