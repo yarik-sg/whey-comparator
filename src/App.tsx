@@ -1,9 +1,12 @@
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
+import { DealsShowcase } from './components/DealsShowcase';
+import { HeroSection } from './components/HeroSection';
 import { KpiSummaryBar } from './components/KpiSummaryBar';
+import { PriceAlertsSection } from './components/PriceAlertsSection';
 import { ProductComparisonTable } from './components/ProductComparisonTable';
+
 import { HighlightedDealsSection } from './components/HighlightedDealsSection';
 import { useProducts } from './hooks/useProducts';
 import { selectFilters, selectSelectedProductIds, useProductSelectionStore } from './store/productSelectionStore';
@@ -32,6 +35,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 pb-12 pt-10 lg:px-8">
         <header className="space-y-3">
           <span className="inline-flex items-center rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-700">
@@ -57,6 +61,7 @@ export default function App() {
           />
           <ProductComparisonTable products={selectedProducts} isLoading={isLoading} />
         </div>
+
       </div>
     </div>
   );
