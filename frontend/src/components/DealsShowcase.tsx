@@ -54,6 +54,8 @@ function useDealCountdown(deadline?: string) {
   return remaining;
 }
 
+const starArray = Array.from({ length: 5 });
+
 function DealCard({ deal, index }: { deal: Deal; index: number }) {
   const countdown = useDealCountdown(deal.deadline);
   const discountBadge = useMemo(
@@ -68,21 +70,63 @@ function DealCard({ deal, index }: { deal: Deal; index: number }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ delay: index * 0.1 }}
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${deal.color} p-6 shadow-lg`}
+      className={`relative flex h-full flex-col overflow-hidden rounded-2xl bg-gradient-to-br ${deal.color} p-6 shadow-lg`}
     >
-      <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-white/80">
-        <span className="inline-flex items-center gap-2 rounded-full bg-black/30 px-3 py-1">
-          {deal.badge}
-        </span>
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wider text-white/80">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full bg-black/30 px-3 py-1">
+            {deal.badge}
+          </span>
+          {deal.bestPrice && (
+            <span
+              className="inline-flex items-center gap-2 rounded-full bg-lime-300/90 px-3 py-1 text-slate-900"
+              aria-label="Meilleur prix actuel"
+            >
+              🏆 Meilleur prix
+            </span>
+          )}
+        </div>
         <span className="inline-flex items-center gap-1 rounded-full bg-black/30 px-3 py-1">
           {discountBadge}
         </span>
       </div>
-      <h3 className="mt-4 text-2xl font-semibold text-white">
+      <div className="mt-5 overflow-hidden rounded-xl bg-black/20">
+        <img
+          src={deal.imageUrl}
+          alt={deal.imageAlt}
+          className="h-48 w-full object-cover object-center sm:h-52"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <h3 className="mt-5 text-2xl font-semibold text-white">
         {deal.productName}
       </h3>
       <p className="mt-3 text-sm text-white/90">{deal.hook}</p>
-      <div className="mt-6 flex items-end gap-3 text-white">
+      <div
+        className="mt-4 flex flex-wrap items-center gap-2 text-white"
+        aria-label={`Note ${deal.rating.toFixed(1)} sur 5 basée sur ${deal.reviewCount} avis`}
+      >
+        <div className="flex items-center gap-0.5" aria-hidden="true">
+          {starArray.map((_, starIndex) => {
+            const isFilled = starIndex + 1 <= Math.round(deal.rating);
+
+            return (
+              <span
+                key={`${deal.id}-star-${starIndex}`}
+                className={isFilled ? "text-yellow-300" : "text-white/40"}
+              >
+                ★
+              </span>
+            );
+          })}
+        </div>
+        <span className="text-sm font-medium">{deal.rating.toFixed(1)}</span>
+        <span className="text-xs text-white/70">
+          ({deal.reviewCount.toLocaleString("fr-FR")} avis)
+        </span>
+      </div>
+      <div className="mt-5 flex items-end gap-3 text-white">
         <span className="text-3xl font-bold">
           {priceFormatter.format(deal.currentPrice)}
         </span>
