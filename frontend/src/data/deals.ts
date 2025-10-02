@@ -41,7 +41,7 @@ export const deals: Deal[] = [
     hook: "Isolat de whey premium + shaker offert chez OptiPower.",
     badge: "Top Deal",
     color: "from-orange-500/80 to-red-500/80",
-    deadline: new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString(),
+    deadline: "2030-01-01T00:00:00.000Z",
     imageUrl:
       "https://images.unsplash.com/photo-1549561434-d2059f2ff538?auto=format&fit=crop&w=600&q=80",
     imageAlt: "Pot de whey isolate 2kg posé sur un plan de travail sportif",
@@ -58,7 +58,7 @@ export const deals: Deal[] = [
     hook: "Stock limité : livraison express offerte dès 2 pots.",
     badge: "Flash",
     color: "from-blue-500/80 to-cyan-500/80",
-    deadline: new Date(Date.now() + 1000 * 60 * 60 * 5).toISOString(),
+    deadline: "2025-06-01T12:00:00.000Z",
     imageUrl:
       "https://images.unsplash.com/photo-1585238341986-410252206994?auto=format&fit=crop&w=600&q=80",
     imageAlt: "Sachet de créatine monohydrate posé à côté d'une cuillère doseuse",
