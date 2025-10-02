@@ -121,10 +121,11 @@ export function PriceAlertForm() {
     <form
       onSubmit={handleSubmit}
       className="space-y-6 rounded-3xl border border-white/10 bg-[#0d1b2a] p-8 shadow-lg"
+      autoComplete="off"
       noValidate
     >
       <div className="grid gap-5 sm:grid-cols-2">
-        <div className="sm:col-span-2">
+        <div className="sm:col-span-2" suppressHydrationWarning>
           <label htmlFor="alert-email" className="block text-sm font-medium text-gray-200">
             Adresse e-mail
           </label>
@@ -133,6 +134,7 @@ export function PriceAlertForm() {
             type="email"
             inputMode="email"
             autoComplete="email"
+            data-lpignore="true"
             value={formState.email}
             onChange={handleChange("email")}
             className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/40"
