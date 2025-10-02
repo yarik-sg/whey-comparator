@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { HeroSection } from "@/components/HeroSection";
 import { DealsShowcase } from "@/components/DealsShowcase";
-import { ComparatorSummary } from "@/components/ComparatorSummary";
+import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { PriceAlertForm } from "@/components/PriceAlertForm";
 import { PopularCategories } from "@/components/PopularCategories";
@@ -112,8 +112,9 @@ export default function Home() {
         <PopularCategories onSelectCategory={handleSelectCategory} />
         <DealsShowcase />
         <StatsSection />
-        <ComparatorSummary />
-        <PartnerLogos />
+
+        <WhyChooseUsSection />
+
         <PriceAlertsSection onExploreCatalogue={handleExploreCatalogue} />
         <section id="alertes-prix" className="bg-[#0b1320] py-20">
           <div className="container mx-auto grid gap-12 px-6 lg:grid-cols-2 lg:items-start">
