@@ -9,6 +9,7 @@ import { ComparatorSummary } from "@/components/ComparatorSummary";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { PriceAlertForm } from "@/components/PriceAlertForm";
 import { PopularCategories } from "@/components/PopularCategories";
+
 import { PartnerLogos } from "@/components/PartnerLogos";
 
 export default function Home() {
@@ -110,6 +111,7 @@ export default function Home() {
         <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
         <PopularCategories onSelectCategory={handleSelectCategory} />
         <DealsShowcase />
+        <StatsSection />
         <ComparatorSummary />
         <PartnerLogos />
         <PriceAlertsSection onExploreCatalogue={handleExploreCatalogue} />
