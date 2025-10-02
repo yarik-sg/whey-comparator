@@ -4,8 +4,10 @@ import { useShallow } from 'zustand/react/shallow';
 import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
 import { KpiSummaryBar } from './components/KpiSummaryBar';
 import { ProductComparisonTable } from './components/ProductComparisonTable';
+import { HighlightedDealsSection } from './components/HighlightedDealsSection';
 import { useProducts } from './hooks/useProducts';
 import { selectFilters, selectSelectedProductIds, useProductSelectionStore } from './store/productSelectionStore';
+import { highlightedDeals } from './data/products';
 
 export default function App() {
   const { data: products = [], isLoading } = useProducts();
@@ -42,6 +44,8 @@ export default function App() {
             qualité/prix.
           </p>
         </header>
+
+        <HighlightedDealsSection deals={highlightedDeals} products={products} isLoading={isLoading} />
 
         <KpiSummaryBar selectedProducts={selectedProducts} isLoading={isLoading} />
 
