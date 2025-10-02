@@ -5,19 +5,10 @@ import { useRouter } from "next/navigation";
 
 import { HeroSection } from "@/components/HeroSection";
 import { DealsShowcase } from "@/components/DealsShowcase";
-import { ComparatorSummary, Category } from "@/components/ComparatorSummary";
+import { ComparatorSummary } from "@/components/ComparatorSummary";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { PriceAlertForm } from "@/components/PriceAlertForm";
-
-const categories: Category[] = [
-  { titre: "Whey Protein", query: "whey protein", icon: "💪", bg: "bg-orange-500" },
-  { titre: "Créatine", query: "creatine", icon: "⚡", bg: "bg-blue-600" },
-  { titre: "BCAA", query: "bcaa", icon: "🍃", bg: "bg-green-500" },
-  { titre: "Pré-Workout", query: "pre workout", icon: "🔥", bg: "bg-red-500" },
-  { titre: "Accessoires Gym", query: "accessoires musculation fitness", icon: "🏋️‍♂️", bg: "bg-purple-500" },
-  { titre: "Vêtements Sportifs", query: "vêtements sport running fitness homme femme", icon: "👕", bg: "bg-teal-500" },
-  { titre: "Catalogue", query: "__catalogue__", icon: "📘", bg: "bg-gray-700" },
-];
+import { PopularCategories } from "@/components/PopularCategories";
 
 export default function Home() {
   const router = useRouter();
@@ -37,13 +28,9 @@ export default function Home() {
 
   const handleSelectCategory = useCallback(
     (query: string) => {
-      if (query === "__catalogue__") {
-        router.push("/catalogue");
-      } else {
-        router.push(`/comparateur?q=${encodeURIComponent(query)}`);
-      }
+      router.push(`/comparateur?q=${encodeURIComponent(query)}`);
     },
-    [router]
+    [router],
   );
 
   const handleNavigation = useCallback(
@@ -51,7 +38,7 @@ export default function Home() {
       action();
       setIsMobileMenuOpen(false);
     },
-    [setIsMobileMenuOpen]
+    [setIsMobileMenuOpen],
   );
 
   const toggleMobileMenu = useCallback(() => {
@@ -90,10 +77,7 @@ export default function Home() {
               aria-controls="mobile-navigation"
             >
               <span className="sr-only">Menu</span>
-              <span
-                aria-hidden
-                className="flex h-5 w-6 flex-col justify-between"
-              >
+              <span aria-hidden className="flex h-5 w-6 flex-col justify-between">
                 <span className="h-0.5 w-full rounded bg-current"></span>
                 <span className="h-0.5 w-full rounded bg-current"></span>
                 <span className="h-0.5 w-full rounded bg-current"></span>
@@ -123,16 +107,16 @@ export default function Home() {
 
       <main>
         <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
+        <PopularCategories onSelectCategory={handleSelectCategory} />
         <DealsShowcase />
-        <ComparatorSummary categories={categories} onSelectCategory={handleSelectCategory} />
+        <ComparatorSummary />
         <PriceAlertsSection onExploreCatalogue={handleExploreCatalogue} />
         <section id="alertes-prix" className="bg-[#0b1320] py-20">
           <div className="container mx-auto grid gap-12 px-6 lg:grid-cols-2 lg:items-start">
             <div className="space-y-6">
               <h2 className="text-3xl sm:text-4xl font-bold text-white">Alertes prix personnalisées</h2>
               <p className="text-lg text-gray-200">
-                Configurez un suivi précis de vos compléments favoris. Nous analysons les marchands via
-                SerpAI et vous envoyons un e-mail instantané dès qu'un prix passe sous votre seuil.
+                Configurez un suivi précis de vos compléments favoris. Nous analysons les marchands via SerpAI et vous envoyons un e-mail instantané dès qu'un prix passe sous votre seuil.
               </p>
               <ul className="space-y-3 text-gray-300">
                 <li className="flex items-start gap-3">
