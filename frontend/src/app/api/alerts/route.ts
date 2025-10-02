@@ -12,6 +12,7 @@ export async function POST(request: Request) {
   try {
     payload = await request.json();
   } catch (error) {
+    console.error("Erreur JSON alerts:", error);
     return NextResponse.json({ message: "Format JSON invalide." }, { status: 400 });
   }
 

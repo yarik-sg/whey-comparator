@@ -5,22 +5,34 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { SiteFooter } from "@/components/SiteFooter";
+import apiClient from "@/lib/apiClient";
+import type { DealItem } from "@/types/api";
 
-interface Produit {
-  site: string;
-  nom: string;
-  prix: string;
-  image?: string;
-  lien?: string;
-  eur_par_kg?: number | null;
-  prix_num?: number | null;
+const priceFormatter = new Intl.NumberFormat("fr-FR", {
+  style: "currency",
+  currency: "EUR",
+  maximumFractionDigits: 2,
+});
+
+function formatPrice(deal: DealItem) {
+  if (deal.price?.formatted) {
+    return deal.price.formatted;
+  }
+
+  if (typeof deal.price?.amount === "number") {
+    const formatted = priceFormatter.format(deal.price.amount);
+    const currency = deal.price.currency ?? "EUR";
+    return currency === "EUR" ? formatted : `${formatted} ${currency}`;
+  }
+
+  return "Prix non disponible";
 }
 
 export default function Comparateur() {
   const searchParams = useSearchParams();
   const qParam = searchParams.get("q") || "whey protein 2kg";
 
-  const [produits, setProduits] = useState<Produit[]>([]);
+  const [produits, setProduits] = useState<DealItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -35,29 +47,27 @@ export default function Comparateur() {
     setLoading(true);
     setApiError(null);
 
-    const params = new URLSearchParams();
-    params.append("q", q);
-    if (marque) params.append("marque", marque);
-    if (categorie) params.append("categorie", categorie);
-
-    fetch(`/api/proxy?target=compare&${params.toString()}`)
-      .then(async (res) => {
-        const text = await res.text();
-        try {
-          const data = JSON.parse(text);
-          if (Array.isArray(data)) {
-            setProduits(data);
-          } else {
-            setApiError("Réponse inattendue du serveur");
-            setProduits([]);
-          }
-        } catch {
-          setApiError("Erreur parsing JSON");
+    apiClient
+      .get<DealItem[]>("/compare", {
+        query: {
+          q,
+          marque: marque || undefined,
+          categorie: categorie || undefined,
+          limit: 24,
+        },
+        cache: "no-store",
+      })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setProduits(data);
+        } else {
+          setApiError("Réponse inattendue du serveur");
           setProduits([]);
         }
       })
-      .catch((err) => {
-        setApiError("Erreur API: " + err.message);
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Erreur inconnue";
+        setApiError("Erreur API: " + message);
         setProduits([]);
       })
       .finally(() => setLoading(false));
@@ -70,7 +80,7 @@ export default function Comparateur() {
 
   // Filtrage local par prix
   const produitsFiltres = produits.filter((p) => {
-    const n = typeof p.prix_num === "number" ? p.prix_num : undefined;
+    const n = typeof p.price?.amount === "number" ? p.price.amount : undefined;
     const min = minPrix ? parseFloat(minPrix) : undefined;
     const max = maxPrix ? parseFloat(maxPrix) : undefined;
 
@@ -108,9 +118,7 @@ export default function Comparateur() {
 
       {/* Hero */}
       <section className="bg-gradient-to-r from-[#0d1b2a] to-[#1b263b] text-white py-12 text-center">
-        <h2 className="text-3xl font-bold mb-2">
-          Comparez les meilleures offres
-        </h2>
+        <h2 className="text-3xl font-bold mb-2">Comparez les meilleures offres</h2>
         <p className="text-gray-300">
           Trouvez le meilleur prix 💰 et la meilleure qualité 🏋️‍♂️
         </p>
@@ -147,16 +155,14 @@ export default function Comparateur() {
       {/* Produits */}
       <main className="container mx-auto px-6 py-10 flex-1">
         {loading ? (
-          <p className="text-center text-gray-600 animate-pulse text-lg">
-            ⏳ Chargement...
-          </p>
+          <p className="text-center text-gray-600 animate-pulse text-lg">⏳ Chargement...</p>
         ) : apiError ? (
           <div className="text-red-600 text-center font-semibold">{apiError}</div>
         ) : produitsFiltres.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produitsFiltres.map((p, i) => (
               <motion.div
-                key={`${p.site}-${p.nom}-${i}`}
+                key={`${p.id}-${i}`}
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
@@ -165,22 +171,23 @@ export default function Comparateur() {
                 <div className="aspect-square flex items-center justify-center p-4 bg-white">
                   <img
                     src={p.image || "/placeholder.png"}
-                    alt={p.nom}
+                    alt={p.title}
                     className="h-full w-full object-contain"
                   />
                 </div>
                 <div className="p-4 flex flex-col flex-1">
-                  <h2 className="text-md font-semibold text-gray-800 line-clamp-2">{p.nom}</h2>
-                  <p className="text-orange-600 font-bold text-xl mt-2">{p.prix}</p>
-                  {p.eur_par_kg && (
-                    <p className="text-sm text-gray-500">~ {p.eur_par_kg} €/kg</p>
+                  <h2 className="text-md font-semibold text-gray-800 line-clamp-2">{p.title}</h2>
+                  <p className="text-sm text-gray-500">{p.vendor}</p>
+                  <p className="text-orange-600 font-bold text-xl mt-2">{formatPrice(p)}</p>
+                  {typeof p.pricePerKg === "number" && (
+                    <p className="text-sm text-gray-500">~ {p.pricePerKg.toFixed(2)} €/kg</p>
                   )}
                   <span className="mt-2 text-xs bg-gray-200 px-2 py-1 rounded self-start text-gray-600">
-                    {p.site}
+                    {p.source}
                   </span>
-                  {p.lien ? (
+                  {p.link ? (
                     <a
-                      href={p.lien}
+                      href={p.link}
                       target="_blank"
                       rel="noopener noreferrer nofollow"
                       className="mt-auto bg-orange-500 text-white px-4 py-2 rounded-lg text-center font-semibold hover:bg-orange-600 transition"

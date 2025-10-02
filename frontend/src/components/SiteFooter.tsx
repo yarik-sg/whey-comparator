@@ -4,16 +4,16 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 
 const productLinks = [
-  { label: "Comparateur de whey", href: "/comparateur" },
+  { label: "Comparaison multi-produits", href: "/comparison" },
   { label: "Promotions protéines", href: "/#promotions" },
   { label: "Alertes prix", href: "/#alertes-prix" },
-  { label: "Catalogue nutrition", href: "/catalogue" },
+  { label: "Catalogue nutrition", href: "/products" },
 ];
 
 const helpLinks = [
-  { label: "Centre d'aide", href: "mailto:contact@sport-comparator.io" },
+  { label: "Centre d&apos;aide", href: "mailto:contact@sport-comparator.io" },
   { label: "Support technique", href: "mailto:support@sport-comparator.io" },
-  { label: "Guide d'utilisation", href: "/comparateur" },
+  { label: "Guide d&apos;utilisation", href: "/comparison" },
   { label: "FAQ", href: "/#faq" },
 ];
 
@@ -58,7 +58,7 @@ export function SiteFooter() {
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-white">Sport Comparator</h2>
               <p className="text-sm text-gray-400">
-                Trouvez la meilleure whey et comparez les compléments en un clin d'œil. Nous sélectionnons les offres les plus
+                Trouvez la meilleure whey et comparez les compléments en un clin d&apos;œil. Nous sélectionnons les offres les plus
                 pertinentes pour les athlètes et passionnés de nutrition.
               </p>
             </div>
@@ -150,7 +150,7 @@ export function SiteFooter() {
                       type="submit"
                       className="inline-flex items-center justify-center rounded-md bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1b2a] focus-visible:ring-orange-500"
                     >
-                      S'abonner
+                      S&apos;abonner
                     </button>
                   </div>
                 </div>
@@ -166,7 +166,7 @@ export function SiteFooter() {
                   role="status"
                   aria-live="polite"
                 >
-                  {message || "Nous respectons votre vie privée et n'envoyons pas de spam."}
+                  {message || "Nous respectons votre vie privée et n&apos;envoyons pas de spam."}
                 </p>
               </form>
             </div>
@@ -177,7 +177,7 @@ export function SiteFooter() {
               </h3>
               <p className="mt-2">
                 Sport Comparator est édité par la société Fit Data. Les informations fournies sont à titre indicatif et ne
-                remplacent pas l'avis d'un professionnel de santé. Consultez nos{" "}
+                remplacent pas l&apos;avis d&apos;un professionnel de santé. Consultez nos{" "}
                 <Link href="/conditions-generales" className="underline">
                   conditions générales
                 </Link>{" "}

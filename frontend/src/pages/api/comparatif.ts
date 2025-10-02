@@ -21,8 +21,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const data = JSON.parse(text);
     res.status(200).json(data);
-  } catch (error: any) {
-    console.error("Erreur proxy:", error.message);
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
+    console.error("Erreur proxy:", message);
+    res.status(500).json({ error: message });
   }
 }

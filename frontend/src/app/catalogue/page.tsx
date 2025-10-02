@@ -4,9 +4,28 @@ import { useEffect, useState } from "react";
 
 import { SiteFooter } from "@/components/SiteFooter";
 
+type GoogleSheetCell = {
+  v?: string | number | null;
+};
+
+interface GoogleSheetRow {
+  c: Array<GoogleSheetCell | null>;
+}
+
+interface GoogleSheetColumn {
+  label?: string | null;
+}
+
+interface GoogleSheetResponse {
+  table: {
+    cols: GoogleSheetColumn[];
+    rows: GoogleSheetRow[];
+  };
+}
+
 export default function Catalogue() {
   const [headers, setHeaders] = useState<string[]>([]);
-  const [rows, setRows] = useState<any[][]>([]);
+  const [rows, setRows] = useState<string[][]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,10 +37,16 @@ export default function Catalogue() {
         );
         const text = await res.text();
 
-        const json = JSON.parse(text.substring(47, text.length - 2));
-        const cols = json.table.cols.map((c: any) => c.label || "");
-        const data = json.table.rows.map((r: any) =>
-          r.c.map((cell: any) => (cell ? cell.v : ""))
+        const json = JSON.parse(text.substring(47, text.length - 2)) as GoogleSheetResponse;
+        const cols = json.table.cols.map((column) => column.label ?? "");
+        const data = json.table.rows.map((row) =>
+          row.c.map((cell) => {
+            const value = cell?.v;
+            if (typeof value === "number") {
+              return value.toString();
+            }
+            return value ?? "";
+          })
         );
 
         setHeaders(cols);
