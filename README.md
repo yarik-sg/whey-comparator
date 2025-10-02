@@ -6,6 +6,39 @@
 
 ---
 
+## ⚙️ Variables d'Environnement
+
+### Backend (FastAPI – `main.py`)
+
+- `SERPAPI_KEY` : clé API SerpAPI utilisée pour interroger Google Shopping.
+- `SCRAPER_BASE_URL` : URL de base du service scraper FastAPI (`services/scraper`) exposant `/products` et `/products/{id}/offers`.
+- `API_BASE_URL` *(optionnel)* : URL publique de l'API principale (utile pour les appels côté serveur du frontend).
+
+### Frontend (Next.js – `frontend/`)
+
+- `NEXT_PUBLIC_API_BASE_URL` : URL publique utilisée dans le navigateur pour atteindre l'API FastAPI.
+- `API_BASE_URL` *(optionnel)* : fallback côté serveur (App Router) si `NEXT_PUBLIC_API_BASE_URL` n'est pas défini.
+
+Toutes les requêtes front passent par `frontend/src/lib/apiClient.ts` qui injecte automatiquement ces URLs et gère la sérialisation JSON.
+
+---
+
+## 🔄 Flux de Données Temps Réel
+
+1. **Collecte** : le service scraper (`services/scraper`) agrège en continu les offres Amazon/MyProtein/Google Shopping et les persiste (PostgreSQL).
+2. **Enrichissement à la demande** : `main.py` combine ces données persistées avec les résultats temps réel SerpAPI via les endpoints `/compare`, `/products`, `/products/{id}/offers` et `/comparison`.
+3. **Diffusion** : le frontend consomme ces endpoints via le client API partagé, met en cache côté React et affiche les meilleures offres avec recalcul du « best price ».
+4. **Pages dédiées** :
+   - `/products` liste le catalogue issu du scraper.
+   - `/products/{id}` fusionne offres persistées et SerpAPI pour un produit.
+   - `/comparison` compare plusieurs IDs (query `ids=1,2,3`).
+   - `/comparateur` déclenche des recherches dynamiques sur `/compare` à partir d’un mot-clé.
+
+Cette chaîne permet de déclencher des comparaisons quasi temps réel tout en capitalisant sur l'historique du scraper.
+
+---
+
+
 ## 🎯 Architecture Globale
 
 ### Stack Technique Recommandée

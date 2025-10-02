@@ -18,7 +18,7 @@ export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleStartComparison = useCallback(() => {
-    router.push("/comparateur");
+    router.push("/comparison");
   }, [router]);
 
   const handleViewDeals = useCallback(() => {
@@ -26,7 +26,7 @@ export default function Home() {
   }, []);
 
   const handleExploreCatalogue = useCallback(() => {
-    router.push("/catalogue");
+    router.push("/products");
   }, [router]);
 
   const handleSelectCategory = useCallback(
@@ -49,7 +49,7 @@ export default function Home() {
   }, [setIsMobileMenuOpen]);
 
   const navigationLinks: Array<{ label: string; action: () => void }> = [
-    { label: "Comparateur", action: handleStartComparison },
+    { label: "Comparaison", action: handleStartComparison },
     { label: "Promotions", action: handleViewDeals },
     { label: "Catalogue", action: handleExploreCatalogue },
   ];
