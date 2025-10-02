@@ -1,16 +1,19 @@
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
 import { KpiSummaryBar } from './components/KpiSummaryBar';
+import { PriceAlertForm } from './components/PriceAlertForm';
+import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
 import { ProductComparisonTable } from './components/ProductComparisonTable';
 import { useProducts } from './hooks/useProducts';
 import { selectFilters, selectSelectedProductIds, useProductSelectionStore } from './store/productSelectionStore';
+import { usePriceAlertStore } from './store/priceAlertStore';
 
 export default function App() {
   const { data: products = [], isLoading } = useProducts();
   const filters = useProductSelectionStore(useShallow(selectFilters));
   const selectedProductIds = useProductSelectionStore(selectSelectedProductIds);
+  const activeAlertCount = usePriceAlertStore((state) => state.alerts.length);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -41,6 +44,21 @@ export default function App() {
             Analysez les KPIs clés comme le prix par 100 g de protéine pour trouver le meilleur rapport
             qualité/prix.
           </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <a
+              href="#price-alerts"
+              className="inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-500"
+            >
+              Activer une alerte prix
+            </a>
+            <span className="text-sm text-slate-500">
+              {activeAlertCount > 0
+                ? `${activeAlertCount} alerte${activeAlertCount > 1 ? 's' : ''} active${
+                    activeAlertCount > 1 ? 's' : ''
+                  }`
+                : 'Recevez un e-mail dès qu’un prix baisse.'}
+            </span>
+          </div>
         </header>
 
         <KpiSummaryBar selectedProducts={selectedProducts} isLoading={isLoading} />
@@ -53,6 +71,20 @@ export default function App() {
           />
           <ProductComparisonTable products={selectedProducts} isLoading={isLoading} />
         </div>
+
+        <section
+          id="price-alerts"
+          className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8"
+        >
+          <div className="space-y-2 pb-4">
+            <h2 className="text-2xl font-semibold text-slate-900">Alertes prix personnalisées</h2>
+            <p className="text-sm text-slate-600">
+              Suivez l’évolution du prix de vos compléments préférés et recevez une notification dès qu’ils
+              passent sous votre seuil.
+            </p>
+          </div>
+          <PriceAlertForm products={products} />
+        </section>
       </div>
     </div>
   );
