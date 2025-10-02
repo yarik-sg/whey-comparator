@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
+import { SiteFooter } from "@/components/SiteFooter";
+
 interface Produit {
   site: string;
   nom: string;
@@ -203,11 +205,7 @@ export default function Comparateur() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#0d1b2a] text-white py-4 mt-10">
-        <div className="container mx-auto px-6 text-center text-sm text-gray-400">
-          © {new Date().getFullYear()} Sport Comparator — Développé avec ❤️
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

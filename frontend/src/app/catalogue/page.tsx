@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { SiteFooter } from "@/components/SiteFooter";
+
 export default function Catalogue() {
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<any[][]>([]);
@@ -98,9 +100,7 @@ export default function Catalogue() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#0d1b2a] text-white py-6 text-center text-sm text-gray-400">
-        © {new Date().getFullYear()} Sport Comparator — Catalogue basé sur Google Sheets
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

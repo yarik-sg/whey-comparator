@@ -9,8 +9,8 @@ import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { PriceAlertForm } from "@/components/PriceAlertForm";
 import { PopularCategories } from "@/components/PopularCategories";
-
 import { PartnerLogos } from "@/components/PartnerLogos";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export default function Home() {
   const router = useRouter();
@@ -143,9 +143,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="bg-[#0d1b2a] py-6 text-center text-sm text-gray-400">
-        © {new Date().getFullYear()} Sport Comparator — Inspiré par Idealo & LeDénicheur
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
