@@ -34,21 +34,19 @@ const formatRemainingTime = (deadline: string) => {
 };
 
 function useDealCountdown(deadline?: string) {
-  const [remaining, setRemaining] = useState(() =>
-    deadline ? formatRemainingTime(deadline) : undefined
-  );
+  const [remaining, setRemaining] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!deadline) {
       return;
     }
 
-    const tick = () => {
+    const update = () => {
       setRemaining(formatRemainingTime(deadline));
     };
 
-    tick();
-    const interval = window.setInterval(tick, 1000);
+    update();
+    const interval = window.setInterval(update, 1000);
 
     return () => window.clearInterval(interval);
   }, [deadline]);
