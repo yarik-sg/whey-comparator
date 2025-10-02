@@ -9,6 +9,7 @@ import { ComparatorSummary } from "@/components/ComparatorSummary";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { PriceAlertForm } from "@/components/PriceAlertForm";
 import { PopularCategories } from "@/components/PopularCategories";
+import { StatsSection } from "@/components/StatsSection";
 
 export default function Home() {
   const router = useRouter();
@@ -109,6 +110,7 @@ export default function Home() {
         <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
         <PopularCategories onSelectCategory={handleSelectCategory} />
         <DealsShowcase />
+        <StatsSection />
         <ComparatorSummary />
         <PriceAlertsSection onExploreCatalogue={handleExploreCatalogue} />
         <section id="alertes-prix" className="bg-[#0b1320] py-20">
