@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { HeroSection } from "@/components/HeroSection";
@@ -21,6 +21,7 @@ const categories: Category[] = [
 
 export default function Home() {
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleStartComparison = useCallback(() => {
     router.push("/comparateur");
@@ -45,23 +46,79 @@ export default function Home() {
     [router]
   );
 
+  const handleNavigation = useCallback(
+    (action: () => void) => {
+      action();
+      setIsMobileMenuOpen(false);
+    },
+    [setIsMobileMenuOpen]
+  );
+
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen((prev) => !prev);
+  }, [setIsMobileMenuOpen]);
+
+  const navigationLinks: Array<{ label: string; action: () => void }> = [
+    { label: "Comparateur", action: handleStartComparison },
+    { label: "Promotions", action: handleViewDeals },
+    { label: "Catalogue", action: handleExploreCatalogue },
+  ];
+
   return (
     <div className="min-h-screen bg-[#0b1320] text-white">
-      <header className="border-b border-white/10 bg-[#0d1b2a]/80 backdrop-blur">
-        <div className="container mx-auto flex items-center justify-between px-6 py-6">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0d1b2a]/80 backdrop-blur shadow-lg shadow-black/10 supports-[backdrop-filter]:bg-[#0d1b2a]/70">
+        <div className="container mx-auto flex items-center justify-between px-4 py-4 sm:px-6 sm:py-6">
           <h1 className="text-2xl font-extrabold text-orange-500">💪 Sport Comparator</h1>
-          <nav className="hidden sm:flex items-center gap-6 text-sm text-gray-300">
-            <button onClick={handleStartComparison} className="transition hover:text-white">
-              Comparateur
+          <div className="flex items-center gap-3">
+            <nav className="hidden items-center gap-6 text-sm text-gray-300 sm:flex">
+              {navigationLinks.map(({ label, action }) => (
+                <button
+                  key={label}
+                  onClick={() => handleNavigation(action)}
+                  className="transition hover:text-white focus:outline-none focus-visible:text-white"
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+            <button
+              type="button"
+              onClick={toggleMobileMenu}
+              className="inline-flex items-center justify-center rounded-md p-2 text-gray-300 transition hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1b2a] sm:hidden"
+              aria-label="Ouvrir le menu"
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-navigation"
+            >
+              <span className="sr-only">Menu</span>
+              <span
+                aria-hidden
+                className="flex h-5 w-6 flex-col justify-between"
+              >
+                <span className="h-0.5 w-full rounded bg-current"></span>
+                <span className="h-0.5 w-full rounded bg-current"></span>
+                <span className="h-0.5 w-full rounded bg-current"></span>
+              </span>
             </button>
-            <button onClick={handleViewDeals} className="transition hover:text-white">
-              Promotions
-            </button>
-            <button onClick={handleExploreCatalogue} className="transition hover:text-white">
-              Catalogue
-            </button>
-          </nav>
+          </div>
         </div>
+        {isMobileMenuOpen && (
+          <nav
+            id="mobile-navigation"
+            className="sm:hidden border-t border-white/10 bg-[#0d1b2a]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0d1b2a]/85"
+          >
+            <div className="container mx-auto space-y-2 px-4 py-4 sm:px-6">
+              {navigationLinks.map(({ label, action }) => (
+                <button
+                  key={label}
+                  onClick={() => handleNavigation(action)}
+                  className="block w-full rounded-md px-4 py-3 text-left text-sm font-medium text-gray-200 transition hover:bg-white/5 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1b2a]"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </nav>
+        )}
       </header>
 
       <main>
