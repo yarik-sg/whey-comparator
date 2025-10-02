@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { ReactNode } from 'react';
 
 import type { Product } from '../data/products';
 import { useProductSelectionStore } from '../store/productSelectionStore';
@@ -6,6 +7,11 @@ import { useProductSelectionStore } from '../store/productSelectionStore';
 interface ProductComparisonTableProps {
   products: Product[];
   isLoading: boolean;
+}
+
+interface ComparisonRow {
+  label: string;
+  render: (product: Product) => ReactNode;
 }
 
 const formatCurrency = (value: number) =>
@@ -21,10 +27,21 @@ const formatNumber = (value: number, options?: Intl.NumberFormatOptions) =>
     ...options,
   }).format(value);
 
+const formatDate = (value: string | null) => {
+  if (!value) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+  }).format(new Date(value));
+};
+
 export const ProductComparisonTable = ({ products, isLoading }: ProductComparisonTableProps) => {
   const toggleProductSelection = useProductSelectionStore((state) => state.toggleProductSelection);
 
-  const rows = useMemo(
+  const rows = useMemo<ComparisonRow[]>(
     () =>
       [
         {
@@ -36,8 +53,47 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
           render: (product: Product) => (product.type === 'whey' ? 'Whey' : 'Créatine'),
         },
         {
-          label: 'Prix',
-          render: (product: Product) => formatCurrency(product.price),
+          label: 'Prix actuel',
+          render: (product: Product) => (
+            <div className="flex flex-col">
+              <span className="text-base font-semibold text-slate-900">{formatCurrency(product.price)}</span>
+              {product.discountRate > 0 ? (
+                <span className="text-xs text-slate-500">
+                  <span className="mr-2 line-through">{formatCurrency(product.originalPrice)}</span>
+                  <span className="font-semibold text-emerald-600">
+                    -{Math.round(product.discountRate * 100)}%
+                  </span>
+                </span>
+              ) : (
+                <span className="text-xs text-slate-400">Aucune remise</span>
+              )}
+            </div>
+          ),
+        },
+        {
+          label: 'Fin de promo',
+          render: (product: Product) => {
+            const formattedDate = formatDate(product.promotionEndsAt);
+            return formattedDate ? `Jusqu’au ${formattedDate}` : 'Offre permanente';
+          },
+        },
+        {
+          label: 'Badges',
+          render: (product: Product) =>
+            product.badges.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {product.badges.map((badge) => (
+                  <span
+                    key={badge}
+                    className="rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700"
+                  >
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span className="text-sm text-slate-400">Aucun badge</span>
+            ),
         },
         {
           label: 'Portions',
