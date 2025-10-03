@@ -135,6 +135,7 @@ export function PriceAlertForm() {
             inputMode="email"
             autoComplete="email"
             data-lpignore="true"
+            data-lastpass-icon="false"
             value={formState.email}
             onChange={handleChange("email")}
             className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/40"
@@ -151,6 +152,7 @@ export function PriceAlertForm() {
           <input
             id="alert-product"
             type="text"
+            data-lastpass-icon="false"
             value={formState.product}
             onChange={handleChange("product")}
             className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/40"
@@ -170,6 +172,7 @@ export function PriceAlertForm() {
             inputMode="decimal"
             min="0"
             step="0.01"
+            data-lastpass-icon="false"
             value={formState.priceThreshold}
             onChange={handleChange("priceThreshold")}
             className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/40"
