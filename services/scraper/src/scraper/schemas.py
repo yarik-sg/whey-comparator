@@ -13,6 +13,9 @@ class OfferSchema(BaseModel):
     currency: str
     price_per_100g_protein: float | None
     stock_status: str | None
+    in_stock: bool | None
+    shipping_cost: float | None
+    shipping_text: str | None
     last_checked: datetime | None
 
     class Config:
@@ -33,3 +36,13 @@ class ProductSchema(BaseModel):
 
 class ProductWithOffersSchema(ProductSchema):
     offers: list[OfferSchema]
+
+
+class PriceHistoryPointSchema(BaseModel):
+    price: float
+    currency: str
+    source: str | None
+    recorded_at: datetime
+
+    class Config:
+        from_attributes = True

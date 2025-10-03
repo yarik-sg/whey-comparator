@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { OfferTable } from "@/components/OfferTable";
 import { ProductCard } from "@/components/ProductCard";
+import { PriceHistoryChart } from "@/components/PriceHistoryChart";
 import { SiteFooter } from "@/components/SiteFooter";
 import apiClient from "@/lib/apiClient";
 import type { ProductOffersResponse } from "@/types/api";
@@ -42,6 +43,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   const { product, offers, sources } = data;
+  const bestOffer = offers.find((offer) => offer.isBestPrice || offer.bestPrice) ?? offers[0];
 
   return (
     <div className="min-h-screen bg-[#0b1320] text-white">
@@ -95,6 +97,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
           <div className="space-y-6">
             <OfferTable offers={offers} caption="Meilleures offres" />
+            <PriceHistoryChart productId={product.id} />
             <section className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
               <h2 className="text-lg font-semibold text-white">Flux de données</h2>
               <p className="mt-2 text-gray-300">
@@ -114,6 +117,35 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 {sources.scraper.length === 0 && <li>Aucune donnée scraper disponible.</li>}
               </ul>
             </section>
+            {bestOffer && (
+              <section className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
+                <h2 className="text-lg font-semibold text-white">Avis & réputation</h2>
+                <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-300">Source sélectionnée : {bestOffer.vendor}</p>
+                    <p className="mt-2 text-2xl font-semibold text-white">
+                      {typeof bestOffer.rating === "number" ? `${bestOffer.rating.toFixed(1)} ★` : "—"}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {typeof bestOffer.reviewsCount === "number"
+                        ? `${bestOffer.reviewsCount.toLocaleString("fr-FR")} avis`
+                        : "Nombre d'avis non communiqué"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-white/5 p-4 text-xs text-gray-300">
+                    <p>
+                      {bestOffer.stockStatus
+                        ? `Disponibilité : ${bestOffer.stockStatus}`
+                        : bestOffer.inStock
+                        ? "Produit disponible"
+                        : "Stock à confirmer"}
+                    </p>
+                    {bestOffer.shippingText && <p className="mt-2">Livraison : {bestOffer.shippingText}</p>}
+                    <p className="mt-2">Total TTC : {bestOffer.totalPrice?.formatted ?? bestOffer.price.formatted}</p>
+                  </div>
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </main>

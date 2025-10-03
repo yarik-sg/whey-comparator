@@ -9,16 +9,40 @@ export interface DealItem {
   title: string;
   vendor: string;
   price: ApiPrice;
+  totalPrice?: ApiPrice | null;
+  shippingCost?: number | null;
+  shippingText?: string | null;
+  inStock?: boolean | null;
+  stockStatus?: string | null;
   link?: string | null;
   image?: string | null;
   rating?: number | null;
   reviewsCount?: number | null;
   bestPrice: boolean;
+  isBestPrice?: boolean;
   source: string;
   productId?: number | null;
   expiresAt?: string | null;
   weightKg?: number | null;
   pricePerKg?: number | null;
+}
+
+export interface PriceHistoryPoint {
+  recordedAt: string;
+  source?: string | null;
+  price: ApiPrice;
+}
+
+export interface PriceHistoryResponse {
+  productId: number;
+  period: string;
+  points: PriceHistoryPoint[];
+  statistics: {
+    lowest: ApiPrice;
+    highest: ApiPrice;
+    average: ApiPrice;
+    current: ApiPrice;
+  };
 }
 
 export interface ProductSummary {
@@ -28,6 +52,30 @@ export interface ProductSummary {
   flavour?: string | null;
   protein_per_serving_g?: number | null;
   serving_size_g?: number | null;
+  category?: string | null;
+  bestPrice: ApiPrice;
+  totalPrice?: ApiPrice | null;
+  bestDeal?: DealItem | null;
+  offersCount: number;
+  inStock?: boolean | null;
+  stockStatus?: string | null;
+  rating?: number | null;
+  reviewsCount?: number | null;
+  proteinPerEuro?: number | null;
+  pricePerKg?: number | null;
+  bestVendor?: string | null;
+}
+
+export interface ProductListResponse {
+  products: ProductSummary[];
+  pagination: {
+    page: number;
+    perPage: number;
+    total: number;
+    totalPages: number;
+    hasPrevious: boolean;
+    hasNext: boolean;
+  };
 }
 
 export interface ScraperOffer {
@@ -38,6 +86,9 @@ export interface ScraperOffer {
   currency: string;
   price_per_100g_protein?: number | null;
   stock_status?: string | null;
+  in_stock?: boolean | null;
+  shipping_cost?: number | null;
+  shipping_text?: string | null;
   last_checked?: string | null;
 }
 
