@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .database import Offer, Product
+from .database import Offer, PriceHistory, Product
 from .normalization.product import NormalizedOffer, NormalizedProduct
 
 
@@ -48,6 +48,9 @@ async def _sync_offers(
             db_offer.price_per_100g_protein = offer.price_per_100g_protein
             db_offer.stock_status = offer.stock_status
             db_offer.url = offer.url
+            db_offer.in_stock = offer.in_stock
+            db_offer.shipping_cost = offer.shipping_cost
+            db_offer.shipping_text = offer.shipping_text
         else:
             session.add(
                 Offer(
@@ -58,7 +61,54 @@ async def _sync_offers(
                     currency=offer.currency,
                     price_per_100g_protein=offer.price_per_100g_protein,
                     stock_status=offer.stock_status,
+                    in_stock=offer.in_stock,
+                    shipping_cost=offer.shipping_cost,
+                    shipping_text=offer.shipping_text,
                 )
             )
 
+    await session.flush()
+    await _record_price_history(session, product, offers)
+
+
+async def _record_price_history(
+    session: AsyncSession, product: Product, offers: Iterable[NormalizedOffer]
+) -> None:
+    best_offer: NormalizedOffer | None = None
+    best_total: float | None = None
+
+    for offer in offers:
+        total = offer.price
+        if offer.shipping_cost:
+            total += offer.shipping_cost
+
+        if best_total is None or total < best_total:
+            best_total = total
+            best_offer = offer
+
+    if best_offer is None or best_total is None:
+        return
+
+    latest = await session.scalar(
+        select(PriceHistory)
+        .where(PriceHistory.product_id == product.id)
+        .order_by(PriceHistory.recorded_at.desc())
+    )
+
+    if (
+        latest
+        and abs(latest.price - best_total) < 1e-6
+        and latest.currency == best_offer.currency
+        and latest.source == best_offer.source
+    ):
+        return
+
+    session.add(
+        PriceHistory(
+            product=product,
+            price=best_total,
+            currency=best_offer.currency,
+            source=best_offer.source,
+        )
+    )
     await session.flush()

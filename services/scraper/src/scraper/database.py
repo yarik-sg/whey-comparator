@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, func
 from sqlalchemy.ext.asyncio import (
     AsyncAttrs,
     AsyncEngine,
@@ -34,6 +34,9 @@ class Product(Base):
     offers: Mapped[list["Offer"]] = relationship(
         back_populates="product", cascade="all, delete-orphan"
     )
+    price_history: Mapped[list["PriceHistory"]] = relationship(
+        back_populates="product", cascade="all, delete-orphan"
+    )
 
 
 class Offer(Base):
@@ -47,11 +50,29 @@ class Offer(Base):
     currency: Mapped[str] = mapped_column(String(length=8), default="EUR")
     price_per_100g_protein: Mapped[float | None] = mapped_column(Float)
     stock_status: Mapped[str | None] = mapped_column(String(length=64))
+    in_stock: Mapped[bool | None] = mapped_column(Boolean, default=None)
+    shipping_cost: Mapped[float | None] = mapped_column(Float)
+    shipping_text: Mapped[str | None] = mapped_column(String(length=255))
     last_checked: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     product: Mapped[Product] = relationship(back_populates="offers")
+
+
+class PriceHistory(Base):
+    __tablename__ = "price_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"))
+    price: Mapped[float] = mapped_column(Float, nullable=False)
+    currency: Mapped[str] = mapped_column(String(length=8), default="EUR")
+    source: Mapped[str | None] = mapped_column(String(length=255))
+    recorded_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    product: Mapped[Product] = relationship(back_populates="price_history")
 
 
 engine: AsyncEngine = create_async_engine(settings.database_url, echo=False, future=True)

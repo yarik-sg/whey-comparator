@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 import { SiteFooter } from "@/components/SiteFooter";
 import apiClient from "@/lib/apiClient";
-import type { DealItem } from "@/types/api";
+import type { ApiPrice, DealItem } from "@/types/api";
 
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
@@ -14,18 +14,41 @@ const priceFormatter = new Intl.NumberFormat("fr-FR", {
   maximumFractionDigits: 2,
 });
 
-function formatPrice(deal: DealItem) {
-  if (deal.price?.formatted) {
-    return deal.price.formatted;
+function formatPriceValue(price?: ApiPrice | null) {
+  if (!price) {
+    return "Prix non disponible";
   }
 
-  if (typeof deal.price?.amount === "number") {
-    const formatted = priceFormatter.format(deal.price.amount);
-    const currency = deal.price.currency ?? "EUR";
+  if (price.formatted) {
+    return price.formatted;
+  }
+
+  if (typeof price.amount === "number") {
+    const formatted = priceFormatter.format(price.amount);
+    const currency = price.currency ?? "EUR";
     return currency === "EUR" ? formatted : `${formatted} ${currency}`;
   }
 
   return "Prix non disponible";
+}
+
+function formatShipping(offer: DealItem) {
+  if (typeof offer.shippingCost === "number") {
+    if (offer.shippingCost === 0) {
+      return "Livraison offerte";
+    }
+    return `Livraison ${formatPriceValue({
+      amount: offer.shippingCost,
+      currency: offer.totalPrice?.currency ?? offer.price.currency,
+      formatted: offer.shippingText ?? null,
+    })}`;
+  }
+
+  if (offer.shippingText) {
+    return offer.shippingText;
+  }
+
+  return "Livraison à vérifier";
 }
 
 export default function Comparateur() {
@@ -177,11 +200,32 @@ export default function Comparateur() {
                 </div>
                 <div className="p-4 flex flex-col flex-1">
                   <h2 className="text-md font-semibold text-gray-800 line-clamp-2">{p.title}</h2>
-                  <p className="text-sm text-gray-500">{p.vendor}</p>
-                  <p className="text-orange-600 font-bold text-xl mt-2">{formatPrice(p)}</p>
+                  <div className="mt-1 flex items-center justify-between text-sm text-gray-500">
+                    <span>{p.vendor}</span>
+                    {(p.isBestPrice || p.bestPrice) && (
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+                        Meilleur prix
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-2 text-xl font-bold text-orange-600">
+                    {formatPriceValue(p.price)}
+                  </p>
+                  <p className="text-sm text-gray-600">Total : {formatPriceValue(p.totalPrice ?? p.price)}</p>
                   {typeof p.pricePerKg === "number" && (
                     <p className="text-sm text-gray-500">~ {p.pricePerKg.toFixed(2)} €/kg</p>
                   )}
+                  <p className="mt-2 text-xs text-gray-500">{formatShipping(p)}</p>
+                  <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                    {p.inStock === null || p.inStock === undefined ? (
+                      <span>{p.stockStatus ?? "Disponibilité inconnue"}</span>
+                    ) : (
+                      <>
+                        <span aria-hidden>{p.inStock ? "✅" : "❌"}</span>
+                        <span>{p.stockStatus ?? (p.inStock ? "Disponible" : "Vérifier le stock")}</span>
+                      </>
+                    )}
+                  </p>
                   <span className="mt-2 text-xs bg-gray-200 px-2 py-1 rounded self-start text-gray-600">
                     {p.source}
                   </span>

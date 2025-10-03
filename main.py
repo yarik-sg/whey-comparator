@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
+from datetime import datetime, timedelta
+
 from fastapi.middleware.cors import CORSMiddleware
 import os, re
 import requests
@@ -33,6 +35,14 @@ PREFERRED_DOMAINS = [
     "nutrimuscle.com",
 ]
 
+PRICE_HISTORY_PERIODS = {
+    "7d": timedelta(days=7),
+    "1m": timedelta(days=30),
+    "3m": timedelta(days=90),
+    "6m": timedelta(days=180),
+    "1y": timedelta(days=365),
+}
+
 # --- Utils ---
 
 def decode_google_redirect(u: Optional[str]) -> Optional[str]:
@@ -55,6 +65,11 @@ def is_http_url(u: Optional[str]) -> bool:
         return pu.scheme in ("http", "https")
     except Exception:
         return False
+
+
+def isoformat_utc(dt: datetime) -> str:
+    return dt.replace(microsecond=0).isoformat() + "Z"
+
 
 def sanitize_price_str(price_str: Optional[str]) -> Optional[str]:
     """Nettoie les prix type '19,90\\u00a0\\u20ac' -> '19,90 €'."""
@@ -183,6 +198,36 @@ def fetch_scraper_product_with_offers(product_id: int) -> Optional[Dict[str, Any
         return None
 
 
+def fetch_scraper_price_history(
+    product_id: int,
+    *,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    if not SCRAPER_BASE_URL:
+        return []
+
+    params: Dict[str, Any] = {}
+    if start_date:
+        params["start_date"] = start_date
+    if end_date:
+        params["end_date"] = end_date
+
+    try:
+        response = requests.get(
+            f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/history",
+            params=params,
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+        if not isinstance(data, list):
+            return []
+        return data
+    except Exception:
+        return []
+
+
 def build_deal_payload(
     *,
     identifier: str,
@@ -191,6 +236,10 @@ def build_deal_payload(
     price_amount: Optional[float],
     price_currency: Optional[str],
     price_formatted: Optional[str],
+    shipping_cost: Optional[float] = None,
+    shipping_text: Optional[str] = None,
+    in_stock: Optional[bool] = None,
+    stock_status: Optional[str] = None,
     link: Optional[str],
     image: Optional[str],
     rating: Optional[float],
@@ -201,6 +250,19 @@ def build_deal_payload(
     weight_kg: Optional[float] = None,
     price_per_kg: Optional[float] = None,
 ) -> Dict[str, Any]:
+    total_price_amount: Optional[float] = None
+    if price_amount is not None:
+        total_price_amount = float(price_amount)
+        if shipping_cost is not None:
+            try:
+                total_price_amount += float(shipping_cost)
+            except (TypeError, ValueError):
+                pass
+
+    shipping_label = shipping_text
+    if shipping_label is None and shipping_cost is not None:
+        shipping_label = format_numeric_price(shipping_cost, price_currency)
+
     return {
         "id": identifier,
         "title": title,
@@ -210,11 +272,21 @@ def build_deal_payload(
             "currency": price_currency,
             "formatted": price_formatted,
         },
+        "totalPrice": {
+            "amount": total_price_amount,
+            "currency": price_currency,
+            "formatted": format_numeric_price(total_price_amount, price_currency),
+        },
+        "shippingCost": shipping_cost,
+        "shippingText": shipping_label,
+        "inStock": in_stock,
+        "stockStatus": stock_status,
         "link": link,
         "image": image,
         "rating": rating,
         "reviewsCount": reviews_count,
         "bestPrice": False,
+        "isBestPrice": False,
         "source": source,
         "productId": product_id,
         "expiresAt": expires_at,
@@ -223,21 +295,27 @@ def build_deal_payload(
     }
 
 
+def build_price_summary(
+    amount: Optional[float], currency: Optional[str]
+) -> Dict[str, Any]:
+    return {
+        "amount": amount,
+        "currency": currency,
+        "formatted": format_numeric_price(amount, currency),
+    }
+
+
 def mark_best_price(deals: List[Dict[str, Any]]) -> None:
     for deal in deals:
         deal["bestPrice"] = False
+        deal["isBestPrice"] = False
 
     best_index: Optional[int] = None
     best_price: Optional[float] = None
 
     for idx, deal in enumerate(deals):
-        price_data = deal.get("price") or {}
-        amount = price_data.get("amount")
-        if amount is None:
-            continue
-        try:
-            amount_value = float(amount)
-        except (ValueError, TypeError):
+        amount_value = extract_total_price_amount(deal)
+        if amount_value is None:
             continue
         if best_price is None or amount_value < best_price:
             best_price = amount_value
@@ -245,6 +323,7 @@ def mark_best_price(deals: List[Dict[str, Any]]) -> None:
 
     if best_index is not None:
         deals[best_index]["bestPrice"] = True
+        deals[best_index]["isBestPrice"] = True
 
 
 def clone_deal_payload(deal: Dict[str, Any]) -> Dict[str, Any]:
@@ -252,7 +331,38 @@ def clone_deal_payload(deal: Dict[str, Any]) -> Dict[str, Any]:
     price = deal.get("price")
     if isinstance(price, dict):
         cloned["price"] = dict(price)
+    total_price = deal.get("totalPrice")
+    if isinstance(total_price, dict):
+        cloned["totalPrice"] = dict(total_price)
     return cloned
+
+
+def extract_total_price_amount(deal: Dict[str, Any]) -> Optional[float]:
+    total_data = deal.get("totalPrice")
+    if isinstance(total_data, dict):
+        amount = total_data.get("amount")
+        if amount is not None:
+            try:
+                return float(amount)
+            except (ValueError, TypeError):
+                pass
+
+    price_data = deal.get("price") or {}
+    base_amount = price_data.get("amount")
+    if base_amount is None:
+        return None
+
+    try:
+        total = float(base_amount)
+    except (ValueError, TypeError):
+        return None
+
+    shipping_cost = deal.get("shippingCost")
+    shipping_amount = parse_float(shipping_cost)
+    if shipping_amount is not None:
+        total += shipping_amount
+
+    return total
 
 
 def collect_serp_deals(
@@ -338,6 +448,25 @@ def collect_serp_deals(
             else None
         )
 
+        availability_text = item.get("availability") or None
+        if best and best.get("availability"):
+            availability_text = best.get("availability")
+
+        stock_status = availability_text
+        in_stock = None
+        if availability_text:
+            normalized_availability = str(availability_text).lower()
+            in_stock = any(
+                keyword in normalized_availability
+                for keyword in ("stock", "available", "disponible")
+            )
+
+        shipping_text = item.get("shipping") or None
+        shipping_cost = None
+        if best:
+            shipping_text = best.get("shipping") or shipping_text
+            shipping_cost = parse_float(best.get("shipping_cost"))
+
         deals.append(
             build_deal_payload(
                 identifier=f"google-{product_id or 'item'}-{index}",
@@ -346,6 +475,10 @@ def collect_serp_deals(
                 price_amount=price_num,
                 price_currency="EUR" if price_num is not None else None,
                 price_formatted=price_str,
+                shipping_cost=shipping_cost,
+                shipping_text=shipping_text,
+                in_stock=in_stock,
+                stock_status=stock_status,
                 link=display_link,
                 image=img,
                 rating=rating_val,
@@ -374,6 +507,14 @@ def convert_scraper_offer_to_deal(
     price_amount = parse_float(offer.get("price"))
     currency = offer.get("currency") or "EUR"
     source_name = offer.get("source") or "Marchand"
+    shipping_cost = parse_float(offer.get("shipping_cost"))
+    shipping_text = offer.get("shipping_text") or None
+    in_stock = offer.get("in_stock")
+    if in_stock is None and offer.get("stock_status"):
+        status_value = str(offer.get("stock_status")).lower()
+        in_stock = any(
+            keyword in status_value for keyword in ("stock", "disponible", "available")
+        )
 
     identifier = f"scraper-{product_id}-{offer.get('id', index)}"
 
@@ -384,6 +525,10 @@ def convert_scraper_offer_to_deal(
         price_amount=price_amount,
         price_currency=currency,
         price_formatted=format_numeric_price(price_amount, currency),
+        shipping_cost=shipping_cost,
+        shipping_text=shipping_text,
+        in_stock=in_stock,
+        stock_status=offer.get("stock_status"),
         link=offer.get("url"),
         image=offer.get("image"),
         rating=parse_float(offer.get("rating")),
@@ -417,14 +562,101 @@ def aggregate_offers_for_product(
     combined = scraper_deals + serp_deals
     combined.sort(
         key=lambda deal: (
-            deal.get("price", {}).get("amount")
-            if deal.get("price", {}).get("amount") is not None
+            extract_total_price_amount(deal)
+            if extract_total_price_amount(deal) is not None
             else float("inf")
         )
     )
 
     mark_best_price(combined)
     return combined[:limit]
+
+
+def build_product_summary(
+    product: Dict[str, Any], *, offer_limit: int = 10
+) -> Dict[str, Any]:
+    base_payload = serialize_product(product)
+    product_id = base_payload.get("id")
+    detail = fetch_scraper_product_with_offers(product_id) if product_id else None
+
+    aggregated: List[Dict[str, Any]] = []
+    if detail:
+        aggregated = aggregate_offers_for_product(detail, limit=offer_limit)
+
+    best_offer: Optional[Dict[str, Any]] = None
+    for deal in aggregated:
+        if deal.get("isBestPrice"):
+            best_offer = deal
+            break
+    if best_offer is None and aggregated:
+        best_offer = aggregated[0]
+
+    best_price_amount: Optional[float] = None
+    best_currency: Optional[str] = None
+    best_formatted: Optional[str] = None
+    total_price_payload: Optional[Dict[str, Any]] = None
+
+    if best_offer:
+        total_price_payload = best_offer.get("totalPrice")
+        if isinstance(total_price_payload, dict) and (
+            total_price_payload.get("amount") is not None
+        ):
+            best_price_amount = parse_float(total_price_payload.get("amount"))
+            best_currency = total_price_payload.get("currency")
+            best_formatted = total_price_payload.get("formatted")
+
+        if best_price_amount is None:
+            price_payload = best_offer.get("price") or {}
+            amount = price_payload.get("amount")
+            if amount is not None:
+                best_price_amount = parse_float(amount)
+                best_currency = price_payload.get("currency")
+                best_formatted = price_payload.get("formatted")
+
+    if best_formatted is None and best_price_amount is not None:
+        best_formatted = format_numeric_price(best_price_amount, best_currency)
+
+    protein_per_serving = parse_float(base_payload.get("protein_per_serving_g"))
+    protein_per_euro: Optional[float] = None
+    if (
+        protein_per_serving is not None
+        and protein_per_serving > 0
+        and best_price_amount is not None
+        and best_price_amount > 0
+    ):
+        protein_per_euro = round(protein_per_serving / best_price_amount, 2)
+
+    rating_value = parse_float(best_offer.get("rating")) if best_offer else None
+    reviews_value = (
+        parse_int(best_offer.get("reviewsCount")) if best_offer else None
+    )
+    in_stock_value = best_offer.get("inStock") if best_offer else None
+    stock_status_value = best_offer.get("stockStatus") if best_offer else None
+    price_per_kg = (
+        parse_float(best_offer.get("pricePerKg")) if best_offer else None
+    )
+
+    best_price_payload = {
+        "amount": best_price_amount,
+        "currency": best_currency,
+        "formatted": best_formatted,
+    }
+
+    return {
+        **base_payload,
+        "category": base_payload.get("category"),
+        "bestPrice": best_price_payload,
+        "bestDeal": best_offer,
+        "offersCount": len(aggregated),
+        "inStock": in_stock_value,
+        "stockStatus": stock_status_value,
+        "rating": rating_value,
+        "reviewsCount": reviews_value,
+        "proteinPerEuro": protein_per_euro,
+        "pricePerKg": price_per_kg,
+        "bestVendor": best_offer.get("vendor") if best_offer else None,
+        "totalPrice": total_price_payload,
+    }
 
 
 def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
@@ -435,6 +667,7 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
         "flavour",
         "protein_per_serving_g",
         "serving_size_g",
+        "category",
     ]
     return {key: product.get(key) for key in keys}
 
@@ -545,20 +778,131 @@ def compare(
 
 @app.get("/products")
 def list_products(
-    search: Optional[str] = Query(None, description="Filtrer par nom"),
-    limit: int = Query(50, ge=1, le=200),
+    search: Optional[str] = Query(None, description="Recherche nom ou marque"),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(24, ge=1, le=60),
+    min_price: Optional[float] = Query(None, ge=0),
+    max_price: Optional[float] = Query(None, ge=0),
+    brands: Optional[List[str]] = Query(None),
+    min_rating: Optional[float] = Query(None, ge=0, le=5),
+    in_stock: Optional[bool] = Query(None),
+    category: Optional[str] = Query(None),
+    sort: Optional[str] = Query("price_asc"),
 ):
     products = fetch_scraper_products()
+
     if search:
-        search_lower = search.lower()
         products = [
             product
             for product in products
-            if search_lower in (product.get("name") or "").lower()
+            if matches_query(product.get("name") or "", search)
+            or matches_query(product.get("brand") or "", search)
         ]
 
-    serialized = [serialize_product(product) for product in products]
-    return serialized[:limit]
+    brand_filter: Optional[set[str]] = None
+    if brands:
+        brand_filter = {value.lower() for value in brands if value}
+
+    category_filter = category.lower() if category else None
+
+    enriched_products: List[Dict[str, Any]] = [
+        build_product_summary(product) for product in products
+    ]
+
+    def price_in_range(item: Dict[str, Any]) -> bool:
+        best_price = item.get("bestPrice") or {}
+        amount = best_price.get("amount")
+        if amount is None:
+            return min_price is None and max_price is None
+        try:
+            value = float(amount)
+        except (TypeError, ValueError):
+            return False
+        if min_price is not None and value < min_price:
+            return False
+        if max_price is not None and value > max_price:
+            return False
+        return True
+
+    filtered = []
+    for item in enriched_products:
+        if brand_filter and (item.get("brand") or "").lower() not in brand_filter:
+            continue
+        if category_filter:
+            product_category = (item.get("category") or "").lower()
+            if category_filter not in product_category:
+                continue
+        if not price_in_range(item):
+            continue
+        if min_rating is not None:
+            rating = item.get("rating")
+            if rating is None or rating < min_rating:
+                continue
+        if in_stock is not None:
+            available = item.get("inStock")
+            if available is None:
+                if in_stock:
+                    continue
+            elif available != in_stock:
+                continue
+        filtered.append(item)
+
+    def best_price_amount(value: Dict[str, Any]) -> Optional[float]:
+        amount = value.get("bestPrice", {}).get("amount")
+        if amount is None:
+            return None
+        try:
+            return float(amount)
+        except (TypeError, ValueError):
+            return None
+
+    sort_key = (sort or "price_asc").lower()
+    if sort_key == "price_desc":
+        filtered.sort(
+            key=lambda item: (
+                best_price_amount(item)
+                if best_price_amount(item) is not None
+                else -float("inf")
+            ),
+            reverse=True,
+        )
+    elif sort_key == "rating":
+        filtered.sort(
+            key=lambda item: (item.get("rating") or 0.0),
+            reverse=True,
+        )
+    elif sort_key == "protein_ratio":
+        filtered.sort(
+            key=lambda item: (item.get("proteinPerEuro") or 0.0),
+            reverse=True,
+        )
+    else:  # default price ascending
+        filtered.sort(
+            key=lambda item: (
+                best_price_amount(item)
+                if best_price_amount(item) is not None
+                else float("inf")
+            )
+        )
+
+    total = len(filtered)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    page = min(max(page, 1), total_pages)
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated = filtered[start:end]
+
+    return {
+        "products": paginated,
+        "pagination": {
+            "page": page,
+            "perPage": per_page,
+            "total": total,
+            "totalPages": total_pages,
+            "hasPrevious": page > 1,
+            "hasNext": page < total_pages,
+        },
+    }
 
 
 @app.get("/products/{product_id}/offers")
@@ -581,6 +925,72 @@ def product_offers_endpoint(
         "offers": aggregated,
         "sources": {
             "scraper": scraper_offers,
+        },
+    }
+
+
+@app.get("/products/{product_id}/price-history")
+def product_price_history_endpoint(
+    product_id: int,
+    period: Optional[str] = Query("3m", description="Période 7d/1m/3m/6m/1y/all"),
+):
+    normalized_period = (period or "all").lower()
+    if normalized_period not in PRICE_HISTORY_PERIODS and normalized_period != "all":
+        normalized_period = "all"
+
+    end_dt = datetime.utcnow()
+    start_iso: Optional[str] = None
+    if normalized_period in PRICE_HISTORY_PERIODS:
+        delta = PRICE_HISTORY_PERIODS[normalized_period]
+        start_dt = end_dt - delta
+        start_iso = isoformat_utc(start_dt)
+
+    history_entries = fetch_scraper_price_history(
+        product_id,
+        start_date=start_iso,
+    )
+
+    points: List[Dict[str, Any]] = []
+    for entry in history_entries:
+        recorded_at = entry.get("recorded_at") or entry.get("recordedAt")
+        price_amount = parse_float(entry.get("price"))
+        currency = entry.get("currency") or "EUR"
+        if recorded_at is None or price_amount is None:
+            continue
+        points.append(
+            {
+                "recordedAt": recorded_at,
+                "source": entry.get("source"),
+                "price": build_price_summary(price_amount, currency),
+            }
+        )
+
+    points.sort(key=lambda point: point.get("recordedAt") or "")
+    price_values = [
+        point["price"]["amount"]
+        for point in points
+        if point.get("price", {}).get("amount") is not None
+    ]
+
+    stats_currency = points[-1]["price"]["currency"] if points else "EUR"
+    lowest = min(price_values) if price_values else None
+    highest = max(price_values) if price_values else None
+    average = (
+        round(sum(price_values) / len(price_values), 2)
+        if price_values
+        else None
+    )
+    current = price_values[-1] if price_values else None
+
+    return {
+        "productId": product_id,
+        "period": normalized_period,
+        "points": points,
+        "statistics": {
+            "lowest": build_price_summary(lowest, stats_currency),
+            "highest": build_price_summary(highest, stats_currency),
+            "average": build_price_summary(average, stats_currency),
+            "current": build_price_summary(current, stats_currency),
         },
     }
 

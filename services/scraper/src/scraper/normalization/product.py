@@ -10,6 +10,9 @@ class NormalizedOffer:
     price: float
     currency: str
     stock_status: str | None = None
+    in_stock: bool | None = None
+    shipping_cost: float | None = None
+    shipping_text: str | None = None
     protein_content_g: float | None = None
     price_per_100g_protein: float | None = None
 

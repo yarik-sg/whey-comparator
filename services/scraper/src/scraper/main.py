@@ -1,13 +1,19 @@
 from __future__ import annotations
 
-from fastapi import Depends, FastAPI, HTTPException
+from datetime import datetime
+
+from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .cache import cache
-from .database import Product, get_session, init_models
+from .database import PriceHistory, Product, get_session, init_models
 from .scheduler import scheduler
-from .schemas import ProductSchema, ProductWithOffersSchema
+from .schemas import (
+    PriceHistoryPointSchema,
+    ProductSchema,
+    ProductWithOffersSchema,
+)
 from .settings import settings
 
 app = FastAPI(title="Whey Comparator Scraper", version="0.1.0")
@@ -53,6 +59,31 @@ async def product_offers(
 
     await session.refresh(product, attribute_names=["offers"])
     return ProductWithOffersSchema.model_validate(product)
+
+
+@app.get(
+    "/products/{product_id}/history",
+    response_model=list[PriceHistoryPointSchema],
+)
+async def product_price_history(
+    product_id: int,
+    start_date: datetime | None = Query(None),
+    end_date: datetime | None = Query(None),
+    session: AsyncSession = Depends(get_db_session),
+) -> list[PriceHistoryPointSchema]:
+    product = await session.get(Product, product_id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Produit introuvable")
+
+    stmt = select(PriceHistory).where(PriceHistory.product_id == product_id)
+    if start_date:
+        stmt = stmt.where(PriceHistory.recorded_at >= start_date)
+    if end_date:
+        stmt = stmt.where(PriceHistory.recorded_at <= end_date)
+
+    stmt = stmt.order_by(PriceHistory.recorded_at.asc())
+    points = (await session.scalars(stmt)).all()
+    return [PriceHistoryPointSchema.model_validate(point) for point in points]
 
 
 @app.get("/health")
