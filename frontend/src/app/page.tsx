@@ -8,10 +8,15 @@ import { DealsShowcase } from "@/components/DealsShowcase";
 import { StatsSection } from "@/components/StatsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
-import { PriceAlertForm } from "@/components/PriceAlertForm";
+import dynamic from "next/dynamic";
 import { PopularCategories } from "@/components/PopularCategories";
 import { PartnerLogos } from "@/components/PartnerLogos";
 import { SiteFooter } from "@/components/SiteFooter";
+
+const PriceAlertForm = dynamic(
+  () => import("@/components/PriceAlertForm").then((mod) => mod.PriceAlertForm),
+  { ssr: false },
+);
 
 export default function Home() {
   const router = useRouter();
