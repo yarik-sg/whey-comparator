@@ -123,7 +123,14 @@ export function SiteFooter() {
               <p className="text-sm text-gray-400">
                 Recevez chaque semaine les meilleures promotions et astuces pour optimiser vos performances.
               </p>
-              <form noValidate onSubmit={handleSubmit} className="space-y-3" aria-describedby="newsletter-feedback">
+              <form
+                noValidate
+                onSubmit={handleSubmit}
+                className="space-y-3"
+                aria-describedby="newsletter-feedback"
+                data-lpignore="true"
+                autoComplete="off"
+              >
                 <div className="space-y-2">
                   <label htmlFor="newsletter-email" className="text-sm font-medium text-gray-200">
                     Adresse e-mail
