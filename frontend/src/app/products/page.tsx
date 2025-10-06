@@ -15,6 +15,13 @@ import type { ProductSummary } from "@/types/api";
 
 const DEFAULT_PER_PAGE = 12;
 
+function buildComparisonHref(productIds: number[]): string {
+  const uniqueIds = Array.from(new Set(productIds.map((id) => String(id).trim())));
+  return uniqueIds.length > 0
+    ? `/comparison?ids=${encodeURIComponent(uniqueIds.join(","))}`
+    : "/comparison";
+}
+
 function parseNumberParam(value: string | null): number | null {
   if (!value) {
     return null;
@@ -310,7 +317,7 @@ export default function ProductsPage() {
                       <div className="flex items-center justify-between text-xs text-gray-400">
                         <span>ID #{product.id}</span>
                         <CompareLinkButton
-                          href={`/comparison?ids=${product.id}`}
+                          href={buildComparisonHref([product.id])}
                           className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                           aria-label={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
                           title={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}

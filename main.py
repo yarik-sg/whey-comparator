@@ -673,7 +673,18 @@ def build_product_summary(
 
     product_image = base_payload.get("image")
     if not product_image and best_offer:
-        product_image = best_offer.get("image")
+        candidate = best_offer.get("image") if isinstance(best_offer, dict) else None
+        if candidate and isinstance(candidate, str) and candidate.strip():
+            product_image = candidate
+
+    if not product_image:
+        for deal in aggregated:
+            if not isinstance(deal, dict):
+                continue
+            candidate = deal.get("image")
+            if candidate and isinstance(candidate, str) and candidate.strip():
+                product_image = candidate
+                break
 
     return {
         **base_payload,
@@ -704,7 +715,30 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
         "serving_size_g",
         "category",
     ]
-    return {key: product.get(key) for key in keys}
+    payload = {key: product.get(key) for key in keys}
+
+    image_value = payload.get("image")
+    if not image_value or not isinstance(image_value, str):
+        image_value = None
+
+    if not image_value:
+        offers = product.get("offers")
+        if isinstance(offers, list):
+            for offer in offers:
+                if not isinstance(offer, dict):
+                    continue
+                candidate = offer.get("image")
+                if candidate and isinstance(candidate, str):
+                    if is_http_url(candidate):
+                        image_value = candidate
+                        break
+                    if not candidate.startswith("http"):
+                        # Accept absolute paths from trusted sources as-is
+                        image_value = candidate
+                        break
+
+    payload["image"] = image_value
+    return payload
 
 
 def compute_similarity_score(
