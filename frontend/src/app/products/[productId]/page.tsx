@@ -183,12 +183,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                       footer={
                         <div className="flex items-center justify-between text-xs text-gray-400">
                           <span>ID #{relatedProduct.id}</span>
-                          <CompareLinkButton
+                          <Link
                             href={`/comparison?ids=${product.id},${relatedProduct.id}`}
-                            className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                            className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200"
                           >
                             Comparer →
-                          </CompareLinkButton>
+                          </Link>
                         </div>
                       }
                     />
