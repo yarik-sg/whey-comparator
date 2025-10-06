@@ -420,6 +420,7 @@ def collect_serp_deals(
 
     deals: List[Dict[str, Any]] = []
     for index, item in enumerate(shopping_results):
+        best: Optional[Dict[str, Any]] = None
         title = (item.get("title") or "").strip()
         title_lower = title.lower()
 
