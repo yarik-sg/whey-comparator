@@ -1,7 +1,11 @@
 "use client";
 
-import { type MouseEvent, type ReactNode, type ButtonHTMLAttributes } from "react";
-import { type MouseEvent, type ButtonHTMLAttributes } from "react";
+import {
+  type MouseEvent,
+  type ReactNode,
+  type ButtonHTMLAttributes,
+  useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
 
 interface CompareLinkButtonProps
@@ -14,40 +18,42 @@ interface CompareLinkButtonProps
 export function CompareLinkButton({
   href,
   onClick,
-  className = "",
+  className,
   children,
   ...props
 }: CompareLinkButtonProps) {
-}
-
-export function CompareLinkButton({ href, onClick, className = "", ...props }: CompareLinkButtonProps) {
   const router = useRouter();
 
-  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (onClick) {
-      onClick(event);
-      if (event.defaultPrevented) {
-        return;
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      if (onClick) {
+        onClick(event);
+        if (event.defaultPrevented) {
+          return;
+        }
       }
-    }
 
-    router.push(href);
-  };
+      event.preventDefault();
+      event.stopPropagation();
+
+      router.push(href);
+    },
+    [href, onClick, router],
+  );
+
+  const buttonClassName =
+    typeof className === "string" && className.length > 0
+      ? className.trim()
+      : className;
 
   return (
     <button
       type="button"
-      {...props}
-      className={className.trim()}
+      className={buttonClassName}
       onClick={handleClick}
+      {...props}
     >
       {children}
     </button>
-      className={`${className}`.trim()}
-      onClick={handleClick}
-    />
   );
 }

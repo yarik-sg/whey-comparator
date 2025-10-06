@@ -118,7 +118,9 @@ export default function ProductsPage() {
       }
     });
     filters.brands.forEach((brand) => brandSet.add(brand));
-    return Array.from(brandSet);
+    return Array.from(brandSet).sort((a, b) =>
+      a.localeCompare(b, "fr", { sensitivity: "base" }),
+    );
   }, [filters.brands, products]);
 
   const updateSearchParams = (updater: (params: URLSearchParams) => void) => {
@@ -310,20 +312,10 @@ export default function ProductsPage() {
                         <CompareLinkButton
                           href={`/comparison?ids=${product.id}`}
                           className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                          aria-label={`Comparer ${product.name}`}
                         >
                           Comparer →
                         </CompareLinkButton>
-                        <button
-                          type="button"
-                          onClick={(event: MouseEvent<HTMLButtonElement>) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            router.push(`/comparison?ids=${product.id}`);
-                          }}
-                          className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
-                        >
-                          Comparer →
-                        </button>
                       </div>
                     }
                   />

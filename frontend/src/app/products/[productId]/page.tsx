@@ -186,15 +186,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                           <CompareLinkButton
                             href={`/comparison?ids=${product.id},${relatedProduct.id}`}
                             className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                            aria-label={`Comparer ${product.name} et ${relatedProduct.name}`}
                           >
                             Comparer →
                           </CompareLinkButton>
-                          <Link
-                            href={`/comparison?ids=${product.id},${relatedProduct.id}`}
-                            className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200"
-                          >
-                            Comparer →
-                          </Link>
                         </div>
                       }
                     />
