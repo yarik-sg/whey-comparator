@@ -144,7 +144,7 @@ export default function Home() {
                 </li>
               </ul>
             </div>
-            <PriceAlertForm />
+            <PriceAlertForm className="lg:ml-auto" />
           </div>
         </section>
       </main>

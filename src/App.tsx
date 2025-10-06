@@ -1,17 +1,20 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-
 import { KpiSummaryBar } from './components/KpiSummaryBar';
-import { PriceAlertForm } from './components/PriceAlertForm';
 import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
 
 import { ProductComparisonTable } from './components/ProductComparisonTable';
 
 import { HighlightedDealsSection } from './components/HighlightedDealsSection';
+import { PriceAlertsSection } from './components/PriceAlertsSection';
 import { highlightedDeals } from './data/products';
 import { useProducts } from './hooks/useProducts';
-import { selectFilters, selectSelectedProductIds, useProductSelectionStore } from './store/productSelectionStore';
+import {
+  selectFilters,
+  selectSelectedProductIds,
+  useProductSelectionStore,
+} from './store/productSelectionStore';
 import { usePriceAlertStore } from './store/priceAlertStore';
 
 
@@ -19,7 +22,15 @@ export default function App() {
   const { data: products = [], isLoading } = useProducts();
   const filters = useProductSelectionStore(useShallow(selectFilters));
   const selectedProductIds = useProductSelectionStore(selectSelectedProductIds);
+  const setSelectedProductIds = useProductSelectionStore((state) => state.setSelectedProductIds);
   const activeAlertCount = usePriceAlertStore((state) => state.alerts.length);
+
+  useEffect(() => {
+    if (!isLoading && products.length > 0 && selectedProductIds.length === 0) {
+      const defaultSelection = products.slice(0, Math.min(products.length, 2)).map((product) => product.id);
+      setSelectedProductIds(defaultSelection);
+    }
+  }, [isLoading, products, selectedProductIds.length, setSelectedProductIds]);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -81,7 +92,7 @@ export default function App() {
           <ProductComparisonTable products={selectedProducts} isLoading={isLoading} />
         </div>
 
-
+        <PriceAlertsSection products={products} isLoading={isLoading} />
       </div>
     </div>
   );
