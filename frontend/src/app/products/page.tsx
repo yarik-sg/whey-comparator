@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { FilterSidebar, type ProductFilters } from "@/components/FilterSidebar";
 import { SortDropdown } from "@/components/SortDropdown";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { useProductList } from "@/lib/queries";
 import type { ProductSummary } from "@/types/api";
 
@@ -117,7 +118,9 @@ export default function ProductsPage() {
       }
     });
     filters.brands.forEach((brand) => brandSet.add(brand));
-    return Array.from(brandSet);
+    return Array.from(brandSet).sort((a, b) =>
+      a.localeCompare(b, "fr", { sensitivity: "base" }),
+    );
   }, [filters.brands, products]);
 
   const updateSearchParams = (updater: (params: URLSearchParams) => void) => {
@@ -306,12 +309,13 @@ export default function ProductsPage() {
                     footer={
                       <div className="flex items-center justify-between text-xs text-gray-400">
                         <span>ID #{product.id}</span>
-                        <Link
+                        <CompareLinkButton
                           href={`/comparison?ids=${product.id}`}
-                          className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200"
+                          className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                          aria-label={`Comparer ${product.name}`}
                         >
                           Comparer →
-                        </Link>
+                        </CompareLinkButton>
                       </div>
                     }
                   />

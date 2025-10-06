@@ -5,8 +5,9 @@ import { OfferTable } from "@/components/OfferTable";
 import { ProductCard } from "@/components/ProductCard";
 import { PriceHistoryChart } from "@/components/PriceHistoryChart";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CompareLinkButton } from "@/components/CompareLinkButton";
 import apiClient from "@/lib/apiClient";
-import type { ProductOffersResponse } from "@/types/api";
+import type { ProductOffersResponse, RelatedProductsResponse } from "@/types/api";
 
 interface ProductDetailPageProps {
   params: { productId: string };
@@ -29,6 +30,23 @@ async function fetchProductOffers(productId: number) {
   }
 }
 
+async function fetchRelatedProducts(productId: number, limit = 4) {
+  try {
+    const related = await apiClient.get<RelatedProductsResponse>(
+      `/products/${productId}/related`,
+      {
+        query: { limit },
+        cache: "no-store",
+      },
+    );
+
+    return related;
+  } catch (error) {
+    console.error("Erreur chargement produits similaires", error);
+    return null;
+  }
+}
+
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const productId = Number(params.productId);
 
@@ -44,6 +62,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
   const { product, offers, sources } = data;
   const bestOffer = offers.find((offer) => offer.isBestPrice || offer.bestPrice) ?? offers[0];
+  const related = await fetchRelatedProducts(product.id, 4);
+  const relatedProducts = related?.related ?? [];
 
   return (
     <div className="min-h-screen bg-[#0b1320] text-white">
@@ -143,6 +163,37 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                     {bestOffer.shippingText && <p className="mt-2">Livraison : {bestOffer.shippingText}</p>}
                     <p className="mt-2">Total TTC : {bestOffer.totalPrice?.formatted ?? bestOffer.price.formatted}</p>
                   </div>
+                </div>
+              </section>
+            )}
+            {relatedProducts.length > 0 && (
+              <section className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h2 className="text-lg font-semibold text-white">Produits similaires</h2>
+                  <p className="text-xs text-gray-400">
+                    Basés sur la marque, la catégorie et la composition nutritionnelle.
+                  </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {relatedProducts.map((relatedProduct) => (
+                    <ProductCard
+                      key={relatedProduct.id}
+                      product={relatedProduct}
+                      href={`/products/${relatedProduct.id}`}
+                      footer={
+                        <div className="flex items-center justify-between text-xs text-gray-400">
+                          <span>ID #{relatedProduct.id}</span>
+                          <CompareLinkButton
+                            href={`/comparison?ids=${product.id},${relatedProduct.id}`}
+                            className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                            aria-label={`Comparer ${product.name} et ${relatedProduct.name}`}
+                          >
+                            Comparer →
+                          </CompareLinkButton>
+                        </div>
+                      }
+                    />
+                  ))}
                 </div>
               </section>
             )}

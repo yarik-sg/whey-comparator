@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 const productLinks = [
   { label: "Comparaison multi-produits", href: "/comparison" },
@@ -34,6 +34,11 @@ export function SiteFooter() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "error" | "success">("idle");
   const [message, setMessage] = useState("");
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -123,59 +128,70 @@ export function SiteFooter() {
               <p className="text-sm text-gray-400">
                 Recevez chaque semaine les meilleures promotions et astuces pour optimiser vos performances.
               </p>
-              <form
-                noValidate
-                onSubmit={handleSubmit}
-                className="space-y-3"
-                aria-describedby="newsletter-feedback"
-                data-lpignore="true"
-                autoComplete="off"
-              >
-                <div className="space-y-2">
-                  <label htmlFor="newsletter-email" className="text-sm font-medium text-gray-200">
-                    Adresse e-mail
-                  </label>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                      id="newsletter-email"
-                      type="email"
-                      name="email"
-                      value={email}
-                      onChange={(event) => {
-                        setEmail(event.target.value);
-                        if (status !== "idle") {
-                          setStatus("idle");
-                          setMessage("");
-                        }
-                      }}
-                      placeholder="vous@exemple.com"
-                      aria-invalid={status === "error"}
-                      aria-describedby={message ? "newsletter-feedback" : undefined}
-                      className="w-full rounded-md border border-white/20 bg-[#0b1320] px-4 py-2 text-sm text-white placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    />
-                    <button
-                      type="submit"
-                      className="inline-flex items-center justify-center rounded-md bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1b2a] focus-visible:ring-orange-500"
-                    >
-                      S&apos;abonner
-                    </button>
-                  </div>
-                </div>
-                <p
-                  id="newsletter-feedback"
-                  className={`text-sm ${
-                    status === "error"
-                      ? "text-red-400"
-                      : status === "success"
-                      ? "text-emerald-400"
-                      : "text-gray-400"
-                  }`}
-                  role="status"
-                  aria-live="polite"
+              {isHydrated ? (
+                <form
+                  noValidate
+                  onSubmit={handleSubmit}
+                  className="space-y-3"
+                  aria-describedby="newsletter-feedback"
+                  data-lpignore="true"
+                  autoComplete="off"
                 >
-                  {message || "Nous respectons votre vie privée et n&apos;envoyons pas de spam."}
-                </p>
-              </form>
+                  <div className="space-y-2">
+                    <label htmlFor="newsletter-email" className="text-sm font-medium text-gray-200">
+                      Adresse e-mail
+                    </label>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        id="newsletter-email"
+                        type="email"
+                        name="email"
+                        value={email}
+                        onChange={(event) => {
+                          setEmail(event.target.value);
+                          if (status !== "idle") {
+                            setStatus("idle");
+                            setMessage("");
+                          }
+                        }}
+                        placeholder="vous@exemple.com"
+                        aria-invalid={status === "error"}
+                        aria-describedby={message ? "newsletter-feedback" : undefined}
+                        className="w-full rounded-md border border-white/20 bg-[#0b1320] px-4 py-2 text-sm text-white placeholder:text-gray-500 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                      <button
+                        type="submit"
+                        className="inline-flex items-center justify-center rounded-md bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d1b2a] focus-visible:ring-orange-500"
+                      >
+                        S&apos;abonner
+                      </button>
+                    </div>
+                  </div>
+                  <p
+                    id="newsletter-feedback"
+                    className={`text-sm ${
+                      status === "error"
+                        ? "text-red-400"
+                        : status === "success"
+                        ? "text-emerald-400"
+                        : "text-gray-400"
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {message || "Nous respectons votre vie privée et n&apos;envoyons pas de spam."}
+                  </p>
+                </form>
+              ) : (
+                <div className="space-y-3" aria-hidden>
+                  <div className="h-4 w-32 rounded bg-white/10" />
+                  <div className="space-y-2">
+                    <div className="h-10 w-full rounded-md bg-white/10" />
+                    <div className="h-10 w-full rounded-md bg-white/10 sm:w-36" />
+                  </div>
+                  <div className="h-4 w-2/3 rounded bg-white/10" />
+                </div>
+              )}
             </div>
 
             <div className="rounded-lg border border-white/10 bg-white/5 p-5 text-sm text-gray-400 lg:col-span-5">

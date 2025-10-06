@@ -100,6 +100,11 @@ export interface ProductOffersResponse {
   };
 }
 
+export interface RelatedProductsResponse {
+  productId: number;
+  related: ProductSummary[];
+}
+
 export interface ComparisonEntry {
   product: ProductSummary;
   offers: DealItem[];
