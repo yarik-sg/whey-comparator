@@ -6,6 +6,7 @@ import { usePriceAlertStore } from '../store/priceAlertStore';
 
 interface PriceAlertFormProps {
   products: Product[];
+  className?: string;
 }
 
 interface FormErrors {
@@ -16,7 +17,7 @@ interface FormErrors {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function PriceAlertForm({ products }: PriceAlertFormProps) {
+export function PriceAlertForm({ products, className }: PriceAlertFormProps) {
   const { email, productId, priceThreshold, alerts, status, message } = usePriceAlertStore(
     useShallow((state) => ({
       email: state.email,
@@ -108,7 +109,7 @@ export function PriceAlertForm({ products }: PriceAlertFormProps) {
   const isLoading = status === 'loading';
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 ${className ?? ''}`.trim()}>
       <form className="grid gap-4 md:grid-cols-3" onSubmit={handleSubmit}>
         <div className="md:col-span-1">
           <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="price-alert-email">

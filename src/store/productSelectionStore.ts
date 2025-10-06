@@ -10,6 +10,7 @@ interface ProductSelectionState {
   priceBounds: Range;
   priceRange: Range;
   selectedProductIds: string[];
+  setSelectedProductIds: (productIds: string[]) => void;
   setSelectedBrands: (brands: string[]) => void;
   setSelectedTypes: (types: ProductType[]) => void;
   setPriceBounds: (bounds: Range) => void;
@@ -26,6 +27,8 @@ export const useProductSelectionStore = create<ProductSelectionState>((set) => (
   priceBounds: defaultRange,
   priceRange: defaultRange,
   selectedProductIds: [],
+  setSelectedProductIds: (productIds) =>
+    set({ selectedProductIds: productIds.slice(0, 4) }),
   setSelectedBrands: (brands) => set({ selectedBrands: brands }),
   setSelectedTypes: (types) => set({ selectedTypes: types }),
   setPriceBounds: (bounds) =>
