@@ -3,6 +3,7 @@ import Link from "next/link";
 import { OfferTable } from "@/components/OfferTable";
 import { ProductCard } from "@/components/ProductCard";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CompareLinkButton } from "@/components/CompareLinkButton";
 import apiClient from "@/lib/apiClient";
 import type { ComparisonResponse } from "@/types/api";
 
@@ -97,12 +98,12 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
                       product={product}
                       href={`/products/${product.id}`}
                       footer={
-                        <Link
+                        <CompareLinkButton
                           href={`/comparison?ids=${product.id}`}
-                          className="inline-flex items-center gap-2 text-xs font-semibold text-orange-300 transition hover:text-orange-200"
+                          className="inline-flex items-center gap-2 text-xs font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                         >
                           Comparer individuellement →
-                        </Link>
+                        </CompareLinkButton>
                       }
                     />
                     <OfferTable offers={offers} caption="Offres sélectionnées" />
