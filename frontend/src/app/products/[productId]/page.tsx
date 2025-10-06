@@ -95,12 +95,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <h1 className="mt-3 text-3xl font-bold sm:text-4xl">{product.name}</h1>
             {product.brand && <p className="text-gray-300">{product.brand}</p>}
           </div>
-          <Link
+          <CompareLinkButton
             href={`/comparison?ids=${product.id}`}
-            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
+            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+            aria-label={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
+            title={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
           >
             Ajouter à la comparaison
-          </Link>
+          </CompareLinkButton>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1fr,2fr]">
@@ -186,7 +188,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                           <CompareLinkButton
                             href={`/comparison?ids=${product.id},${relatedProduct.id}`}
                             className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
-                            aria-label={`Comparer ${product.name} et ${relatedProduct.name}`}
+                            aria-label={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name} avec ${relatedProduct.brand ? `${relatedProduct.brand} ` : ""}${relatedProduct.name}`}
+                            title={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name} avec ${relatedProduct.brand ? `${relatedProduct.brand} ` : ""}${relatedProduct.name}`}
                           >
                             Comparer →
                           </CompareLinkButton>

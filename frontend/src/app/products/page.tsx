@@ -312,7 +312,8 @@ export default function ProductsPage() {
                         <CompareLinkButton
                           href={`/comparison?ids=${product.id}`}
                           className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
-                          aria-label={`Comparer ${product.name}`}
+                          aria-label={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
+                          title={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
                         >
                           Comparer →
                         </CompareLinkButton>

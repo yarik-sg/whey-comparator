@@ -671,8 +671,13 @@ def build_product_summary(
         "formatted": best_formatted,
     }
 
+    product_image = base_payload.get("image")
+    if not product_image and best_offer:
+        product_image = best_offer.get("image")
+
     return {
         **base_payload,
+        "image": product_image,
         "category": base_payload.get("category"),
         "bestPrice": best_price_payload,
         "bestDeal": best_offer,
@@ -694,6 +699,7 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
         "name",
         "brand",
         "flavour",
+        "image",
         "protein_per_serving_g",
         "serving_size_g",
         "category",
