@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { FilterSidebar, type ProductFilters } from "@/components/FilterSidebar";
 import { SortDropdown } from "@/components/SortDropdown";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { useProductList } from "@/lib/queries";
 import type { ProductSummary } from "@/types/api";
 
@@ -306,6 +307,12 @@ export default function ProductsPage() {
                     footer={
                       <div className="flex items-center justify-between text-xs text-gray-400">
                         <span>ID #{product.id}</span>
+                        <CompareLinkButton
+                          href={`/comparison?ids=${product.id}`}
+                          className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                        >
+                          Comparer →
+                        </CompareLinkButton>
                         <button
                           type="button"
                           onClick={(event: MouseEvent<HTMLButtonElement>) => {

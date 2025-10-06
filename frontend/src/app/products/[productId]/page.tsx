@@ -5,6 +5,7 @@ import { OfferTable } from "@/components/OfferTable";
 import { ProductCard } from "@/components/ProductCard";
 import { PriceHistoryChart } from "@/components/PriceHistoryChart";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CompareLinkButton } from "@/components/CompareLinkButton";
 import apiClient from "@/lib/apiClient";
 import type { ProductOffersResponse, RelatedProductsResponse } from "@/types/api";
 
