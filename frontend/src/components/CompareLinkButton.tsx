@@ -1,59 +1,57 @@
 "use client";
 
+import Link from "next/link";
 import {
+  forwardRef,
+  type AnchorHTMLAttributes,
   type MouseEvent,
-  type ReactNode,
-  type ButtonHTMLAttributes,
   useCallback,
 } from "react";
-import { useRouter } from "next/navigation";
 
 interface CompareLinkButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type" | "onClick"> {
+  extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
   href: string;
-  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
-  children: ReactNode;
+  stopPropagation?: boolean;
 }
 
-export function CompareLinkButton({
-  href,
-  onClick,
-  className,
-  children,
-  ...props
-}: CompareLinkButtonProps) {
-  const router = useRouter();
-
-  const handleClick = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      if (onClick) {
-        onClick(event);
-        if (event.defaultPrevented) {
-          return;
+export const CompareLinkButton = forwardRef<
+  HTMLAnchorElement,
+  CompareLinkButtonProps
+>(
+  (
+    { href, stopPropagation = true, onClick, className, children, ...props },
+    ref,
+  ) => {
+    const handleClick = useCallback(
+      (event: MouseEvent<HTMLAnchorElement>) => {
+        if (stopPropagation) {
+          event.stopPropagation();
         }
-      }
 
-      event.preventDefault();
-      event.stopPropagation();
+        if (onClick) {
+          onClick(event);
+        }
+      },
+      [onClick, stopPropagation],
+    );
 
-      router.push(href);
-    },
-    [href, onClick, router],
-  );
+    const normalizedClassName =
+      typeof className === "string" && className.trim().length > 0
+        ? className.trim()
+        : className ?? undefined;
 
-  const buttonClassName =
-    typeof className === "string" && className.length > 0
-      ? className.trim()
-      : className;
+    return (
+      <Link
+        href={href}
+        ref={ref}
+        className={normalizedClassName}
+        onClick={handleClick}
+        {...props}
+      >
+        {children}
+      </Link>
+    );
+  },
+);
 
-  return (
-    <button
-      type="button"
-      className={buttonClassName}
-      onClick={handleClick}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
+CompareLinkButton.displayName = "CompareLinkButton";
