@@ -189,6 +189,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                           >
                             Comparer →
                           </CompareLinkButton>
+                          <Link
+                            href={`/comparison?ids=${product.id},${relatedProduct.id}`}
+                            className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200"
+                          >
+                            Comparer →
+                          </Link>
                         </div>
                       }
                     />

@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  type MouseEvent,
-  type ReactNode,
-  type ButtonHTMLAttributes,
-} from "react";
+import { type MouseEvent, type ReactNode, type ButtonHTMLAttributes } from "react";
+import { type MouseEvent, type ButtonHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 
 interface CompareLinkButtonProps
@@ -17,13 +14,19 @@ interface CompareLinkButtonProps
 export function CompareLinkButton({
   href,
   onClick,
-  className,
+  className = "",
   children,
   ...props
 }: CompareLinkButtonProps) {
+}
+
+export function CompareLinkButton({ href, onClick, className = "", ...props }: CompareLinkButtonProps) {
   const router = useRouter();
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
     if (onClick) {
       onClick(event);
       if (event.defaultPrevented) {
@@ -31,25 +34,20 @@ export function CompareLinkButton({
       }
     }
 
-    event.preventDefault();
-    event.stopPropagation();
-
     router.push(href);
   };
-
-  const trimmedClassName =
-    typeof className === "string" && className.length > 0
-      ? className.trim()
-      : className;
 
   return (
     <button
       type="button"
-      className={trimmedClassName}
-      onClick={handleClick}
       {...props}
+      className={className.trim()}
+      onClick={handleClick}
     >
       {children}
     </button>
+      className={`${className}`.trim()}
+      onClick={handleClick}
+    />
   );
 }
