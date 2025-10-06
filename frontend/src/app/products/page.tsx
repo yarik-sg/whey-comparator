@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -313,6 +313,17 @@ export default function ProductsPage() {
                         >
                           Comparer →
                         </CompareLinkButton>
+                        <button
+                          type="button"
+                          onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            router.push(`/comparison?ids=${product.id}`);
+                          }}
+                          className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                        >
+                          Comparer →
+                        </button>
                       </div>
                     }
                   />

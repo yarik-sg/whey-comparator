@@ -1,6 +1,7 @@
 "use client";
 
 import { type MouseEvent, type ReactNode, type ButtonHTMLAttributes } from "react";
+import { type MouseEvent, type ButtonHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 
 interface CompareLinkButtonProps
@@ -17,6 +18,9 @@ export function CompareLinkButton({
   children,
   ...props
 }: CompareLinkButtonProps) {
+}
+
+export function CompareLinkButton({ href, onClick, className = "", ...props }: CompareLinkButtonProps) {
   const router = useRouter();
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -42,5 +46,8 @@ export function CompareLinkButton({
     >
       {children}
     </button>
+      className={`${className}`.trim()}
+      onClick={handleClick}
+    />
   );
 }
