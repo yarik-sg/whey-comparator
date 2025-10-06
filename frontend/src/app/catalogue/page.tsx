@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -21,6 +21,48 @@ interface GoogleSheetResponse {
     cols: GoogleSheetColumn[];
     rows: GoogleSheetRow[];
   };
+}
+
+const IMAGE_HEADER_KEYWORDS = ["image", "photo", "visuel", "thumbnail", "cover", "illustration"];
+
+const IMAGE_EXTENSION_REGEX = /\.(png|jpe?g|gif|webp|avif|svg)(\?.*)?$/i;
+
+const URL_REGEX = /^https?:\/\//i;
+
+function isLikelyUrl(value: string) {
+  return URL_REGEX.test(value.trim());
+}
+
+function isLikelyImageUrl(value: string, headerLabel?: string | null) {
+  const trimmed = value.trim();
+  if (!isLikelyUrl(trimmed)) {
+    return false;
+  }
+
+  if (IMAGE_EXTENSION_REGEX.test(trimmed)) {
+    return true;
+  }
+
+  const normalizedHeader = headerLabel?.toLowerCase() ?? "";
+  if (IMAGE_HEADER_KEYWORDS.some((keyword) => normalizedHeader.includes(keyword))) {
+    return true;
+  }
+
+  return trimmed.includes("googleusercontent") || trimmed.includes("images.unsplash.com");
+}
+
+function buildRowPrimaryLabel(row: string[]): string {
+  for (const cell of row) {
+    const trimmed = cell.trim();
+    if (trimmed.length === 0) {
+      continue;
+    }
+    if (!isLikelyUrl(trimmed)) {
+      return trimmed;
+    }
+  }
+
+  return "Image du produit";
 }
 
 export default function Catalogue() {
@@ -45,7 +87,10 @@ export default function Catalogue() {
             if (typeof value === "number") {
               return value.toString();
             }
-            return value ?? "";
+            if (typeof value === "string") {
+              return value.trim();
+            }
+            return "";
           })
         );
 
@@ -61,6 +106,13 @@ export default function Catalogue() {
 
     fetchSheet();
   }, []);
+
+  const normalizedHeaders = useMemo(
+    () => headers.map((header, index) => header?.trim() || `Col ${index + 1}`),
+    [headers],
+  );
+
+  const primaryLabels = useMemo(() => rows.map(buildRowPrimaryLabel), [rows]);
 
   return (
     <div className="min-h-screen bg-gray-100 font-sans flex flex-col">
@@ -85,7 +137,7 @@ export default function Catalogue() {
             <table className="w-full text-sm text-left border-collapse">
               <thead className="bg-[#0d1b2a] text-white">
                 <tr>
-                  {headers.map((h, idx) => (
+                  {normalizedHeaders.map((h, idx) => (
                     <th key={idx} className="px-4 py-3">
                       {h || `Col ${idx + 1}`}
                     </th>
@@ -100,22 +152,40 @@ export default function Catalogue() {
                       i % 2 === 0 ? "bg-gray-100" : "bg-white"
                     }`}
                   >
-                    {row.map((cell, j) => (
-                      <td key={j} className="px-4 py-3">
-                        {typeof cell === "string" && cell.startsWith("http") ? (
-                          <a
-                            href={cell}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            {cell.length > 30 ? cell.slice(0, 30) + "..." : cell}
-                          </a>
-                        ) : (
-                          cell
-                        )}
-                      </td>
-                    ))}
+                    {row.map((cell, j) => {
+                      const headerLabel = normalizedHeaders[j];
+                      const value = cell.trim();
+                      const isImage = value.length > 0 && isLikelyImageUrl(value, headerLabel);
+                      const isUrl = !isImage && value.length > 0 && isLikelyUrl(value);
+                      const altText = `${headerLabel || "Image"} — ${primaryLabels[i]}`.trim();
+
+                      return (
+                        <td key={j} className="px-4 py-3 align-middle">
+                          {isImage ? (
+                            <div className="flex items-center justify-center">
+                              {/* eslint-disable-next-line @next/next/no-img-element -- remote assets from catalogue */}
+                              <img
+                                src={value}
+                                alt={altText}
+                                className="h-24 w-24 rounded-lg border border-gray-200 object-contain"
+                                loading="lazy"
+                              />
+                            </div>
+                          ) : isUrl ? (
+                            <a
+                              href={value}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {value.length > 40 ? `${value.slice(0, 37)}...` : value}
+                            </a>
+                          ) : (
+                            value
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>
