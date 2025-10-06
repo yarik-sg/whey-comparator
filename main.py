@@ -8,6 +8,12 @@ from urllib.parse import urlparse, parse_qs
 from functools import lru_cache
 from typing import Dict, Any, List, Optional
 
+from fallback_catalogue import (
+    get_fallback_price_history,
+    get_fallback_product,
+    get_fallback_products,
+)
+
 app = FastAPI()
 
 # --- CORS (ok pour dev; en prod restreins à ton domaine) ---
@@ -163,39 +169,49 @@ def matches_query(name: str, query: Optional[str]) -> bool:
     return all(term in normalized for term in terms)
 
 
-def fetch_scraper_products(limit: Optional[int] = None) -> List[Dict[str, Any]]:
-    if not SCRAPER_BASE_URL:
-        return []
+def tokenize_keywords(value: Optional[str]) -> set[str]:
+    if not value:
+        return set()
+    tokens = re.split(r"[^a-z0-9]+", value.lower())
+    return {token for token in tokens if len(token) >= 3}
 
-    try:
-        response = requests.get(
-            f"{SCRAPER_BASE_URL.rstrip('/')}/products", timeout=10
-        )
-        response.raise_for_status()
-        data = response.json()
-        if not isinstance(data, list):
-            return []
-        return data[:limit] if limit else data
-    except Exception:
-        return []
+
+def fetch_scraper_products(limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    def _with_limit(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        if limit:
+            return items[:limit]
+        return items
+
+    if SCRAPER_BASE_URL:
+        try:
+            response = requests.get(
+                f"{SCRAPER_BASE_URL.rstrip('/')}/products", timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+            if isinstance(data, list) and data:
+                return _with_limit(data)
+        except Exception:
+            pass
+
+    return _with_limit(get_fallback_products())
 
 
 def fetch_scraper_product_with_offers(product_id: int) -> Optional[Dict[str, Any]]:
-    if not SCRAPER_BASE_URL:
-        return None
+    if SCRAPER_BASE_URL:
+        try:
+            response = requests.get(
+                f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/offers",
+                timeout=10,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if isinstance(data, dict) and data:
+                return data
+        except Exception:
+            pass
 
-    try:
-        response = requests.get(
-            f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/offers",
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
-        if not isinstance(data, dict):
-            return None
-        return data
-    except Exception:
-        return None
+    return get_fallback_product(product_id)
 
 
 def fetch_scraper_price_history(
@@ -204,28 +220,41 @@ def fetch_scraper_price_history(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    if not SCRAPER_BASE_URL:
-        return []
-
     params: Dict[str, Any] = {}
     if start_date:
         params["start_date"] = start_date
     if end_date:
         params["end_date"] = end_date
 
-    try:
-        response = requests.get(
-            f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/history",
-            params=params,
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
-        if not isinstance(data, list):
-            return []
-        return data
-    except Exception:
+    if SCRAPER_BASE_URL:
+        try:
+            response = requests.get(
+                f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/history",
+                params=params,
+                timeout=10,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if isinstance(data, list) and data:
+                return data
+        except Exception:
+            pass
+
+    fallback_history = get_fallback_price_history(product_id)
+    if not fallback_history:
         return []
+
+    def in_bounds(entry: Dict[str, Any]) -> bool:
+        timestamp = entry.get("recorded_at")
+        if not isinstance(timestamp, str):
+            return False
+        if start_date and timestamp < start_date:
+            return False
+        if end_date and timestamp > end_date:
+            return False
+        return True
+
+    return [entry for entry in fallback_history if in_bounds(entry)]
 
 
 def build_deal_payload(
@@ -672,6 +701,92 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
     return {key: product.get(key) for key in keys}
 
 
+def compute_similarity_score(
+    base: Dict[str, Any], candidate: Dict[str, Any]
+) -> float:
+    score = 0.0
+
+    base_brand = (base.get("brand") or "").strip().lower()
+    candidate_brand = (candidate.get("brand") or "").strip().lower()
+    if base_brand and candidate_brand:
+        if base_brand == candidate_brand:
+            score += 3.0
+        elif base_brand in candidate_brand or candidate_brand in base_brand:
+            score += 1.5
+
+    base_category = (base.get("category") or "").strip().lower()
+    candidate_category = (candidate.get("category") or "").strip().lower()
+    if base_category and candidate_category and base_category == candidate_category:
+        score += 1.5
+
+    base_tokens = tokenize_keywords(base.get("name"))
+    candidate_tokens = tokenize_keywords(candidate.get("name"))
+    if base_tokens and candidate_tokens:
+        overlap = base_tokens & candidate_tokens
+        if overlap:
+            score += 2.0 * len(overlap) / max(len(base_tokens), 1)
+
+    base_flavour = tokenize_keywords(base.get("flavour"))
+    candidate_flavour = tokenize_keywords(candidate.get("flavour"))
+    if base_flavour and candidate_flavour:
+        flavour_overlap = base_flavour & candidate_flavour
+        if flavour_overlap:
+            score += 1.0
+
+    base_protein = parse_float(base.get("protein_per_serving_g"))
+    candidate_protein = parse_float(candidate.get("protein_per_serving_g"))
+    if (
+        base_protein is not None
+        and candidate_protein is not None
+        and abs(base_protein - candidate_protein) <= 2
+    ):
+        score += 0.5
+
+    return score
+
+
+def find_related_products(
+    products: List[Dict[str, Any]],
+    base_product: Dict[str, Any],
+    *,
+    limit: int,
+) -> List[Dict[str, Any]]:
+    base_id = base_product.get("id")
+    if base_id is None:
+        return []
+
+    scored_candidates: List[tuple[float, Dict[str, Any]]] = []
+    for candidate in products:
+        if candidate is base_product:
+            continue
+        candidate_id = candidate.get("id")
+        if candidate_id is None or candidate_id == base_id:
+            continue
+        score = compute_similarity_score(base_product, candidate)
+        if score <= 0:
+            continue
+        scored_candidates.append((score, candidate))
+
+    if not scored_candidates:
+        fallback = [
+            product
+            for product in products
+            if product is not base_product and product.get("id") != base_id
+        ]
+        scored_candidates = [(0.0, product) for product in fallback[: limit * 2]]
+    else:
+        scored_candidates.sort(key=lambda item: item[0], reverse=True)
+
+    related_summaries: List[Dict[str, Any]] = []
+    for _, candidate in scored_candidates:
+        summary = build_product_summary(candidate, offer_limit=6)
+        related_summaries.append(summary)
+        if len(related_summaries) >= limit:
+            break
+
+    return related_summaries
+
+
 def collect_scraper_deals(q: str, limit: int = 12) -> List[Dict[str, Any]]:
     deals: List[Dict[str, Any]] = []
     products = fetch_scraper_products()
@@ -926,6 +1041,32 @@ def product_offers_endpoint(
         "sources": {
             "scraper": scraper_offers,
         },
+    }
+
+
+@app.get("/products/{product_id}/related")
+def related_products_endpoint(
+    product_id: int,
+    limit: int = Query(4, ge=1, le=12),
+):
+    products = fetch_scraper_products()
+    base_product: Optional[Dict[str, Any]] = None
+    for product in products:
+        try:
+            if int(product.get("id")) == product_id:
+                base_product = product
+                break
+        except (TypeError, ValueError):
+            continue
+
+    if base_product is None:
+        raise HTTPException(status_code=404, detail="Produit introuvable")
+
+    related = find_related_products(products, base_product, limit=limit)
+
+    return {
+        "productId": product_id,
+        "related": related,
     }
 
 
