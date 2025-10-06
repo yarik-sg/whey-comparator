@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import type { HighlightedDeal, Product } from '../data/products';
+import { ProductImage } from './ProductImage';
 
 type HighlightedDealsSectionProps = {
   deals: HighlightedDeal[];
@@ -80,6 +81,12 @@ export const HighlightedDealsSection = ({ deals, products, isLoading }: Highligh
               className="flex h-full flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
             >
               <div className="space-y-3">
+                <ProductImage
+                  imageUrl={product.imageUrl}
+                  alt={product.imageAlt ?? product.name}
+                  className="h-40 w-full rounded-xl"
+                  fallbackLabel={`${product.brand} ${product.name}`}
+                />
                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-600">
                   {product.badges.map((badge) => (
                     <span

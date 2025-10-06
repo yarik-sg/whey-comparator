@@ -9,6 +9,7 @@ import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
 import { ProductComparisonTable } from './components/ProductComparisonTable';
 
 import { HighlightedDealsSection } from './components/HighlightedDealsSection';
+import { highlightedDeals } from './data/products';
 import { useProducts } from './hooks/useProducts';
 import { selectFilters, selectSelectedProductIds, useProductSelectionStore } from './store/productSelectionStore';
 import { usePriceAlertStore } from './store/priceAlertStore';

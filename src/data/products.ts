@@ -5,6 +5,8 @@ export interface Product {
   name: string;
   brand: string;
   type: ProductType;
+  imageUrl?: string;
+  imageAlt?: string;
   price: number; // €
   originalPrice: number; // €
   discountRate: number; // 0-1
@@ -25,6 +27,9 @@ export const products: Product[] = [
     name: 'Iso Elite Vanilla',
     brand: 'NutriFuel',
     type: 'whey',
+    imageUrl:
+      'https://images.unsplash.com/photo-1586380837285-307d1fdfa4b4?auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Sachet de whey protéine Iso Elite saveur vanille',
     price: 39.9,
     originalPrice: 49.9,
     discountRate: 0.2,
@@ -42,6 +47,9 @@ export const products: Product[] = [
     name: 'Power Whey Choco',
     brand: 'PureForce',
     type: 'whey',
+    imageUrl:
+      'https://images.unsplash.com/photo-1547514701-42782101795d?auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Pot de whey chocolat Power Whey',
     price: 54.9,
     originalPrice: 64.9,
     discountRate: 0.154,
@@ -59,6 +67,9 @@ export const products: Product[] = [
     name: 'Grass-Fed Strawberry',
     brand: 'Alpine Nutrition',
     type: 'whey',
+    imageUrl:
+      'https://images.unsplash.com/photo-1586401100295-7a8096fd2315?auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Sachet de whey Grass-Fed saveur fraise',
     price: 44.5,
     originalPrice: 44.5,
     discountRate: 0,
@@ -76,6 +87,9 @@ export const products: Product[] = [
     name: 'Creapure Performance',
     brand: 'PureForce',
     type: 'creatine',
+    imageUrl:
+      'https://images.unsplash.com/photo-1585386959984-a4155223f96d?auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Boîte de créatine Creapure Performance',
     price: 24.9,
     originalPrice: 29.9,
     discountRate: 0.167,
@@ -94,6 +108,9 @@ export const products: Product[] = [
     name: 'Micronized Creatine',
     brand: 'NutriFuel',
     type: 'creatine',
+    imageUrl:
+      'https://images.unsplash.com/photo-1600180758890-6f05512d4d6c?auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Pot de poudre de créatine micronisée',
     price: 18.5,
     originalPrice: 18.5,
     discountRate: 0,
@@ -112,6 +129,9 @@ export const products: Product[] = [
     name: 'Vegan Whey Mix',
     brand: 'GreenLab',
     type: 'whey',
+    imageUrl:
+      'https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&w=600&q=80',
+    imageAlt: 'Shaker de whey végétale Vegan Whey Mix',
     price: 32.0,
     originalPrice: 36.0,
     discountRate: 0.111,

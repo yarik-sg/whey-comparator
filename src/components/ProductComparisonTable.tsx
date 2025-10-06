@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import type { Product } from '../data/products';
 import { useProductSelectionStore } from '../store/productSelectionStore';
+import { ProductImage } from './ProductImage';
 
 interface ProductComparisonTableProps {
   products: Product[];
@@ -154,66 +155,96 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
   }
 
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between">
+    <section className="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Comparatif des produits</h2>
           <p className="text-sm text-slate-500">Colonnes dynamiques selon votre sélection.</p>
         </div>
+        <p className="text-xs text-slate-400">Retirez un produit pour libérer une place dans le comparateur.</p>
       </div>
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="min-w-full text-left text-sm text-slate-700">
-          <thead>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {products.map((product) => (
+          <article
+            key={product.id}
+            className="flex h-full flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm"
+          >
+            <div className="flex items-start gap-3">
+              <ProductImage
+                imageUrl={product.imageUrl}
+                alt={product.imageAlt ?? product.name}
+                className="h-16 w-16 flex-shrink-0 rounded-xl border border-white shadow"
+                fallbackLabel={`${product.brand} ${product.name}`}
+              />
+              <div className="flex flex-1 flex-col">
+                <span className="text-xs font-semibold uppercase tracking-wide text-primary-600">{product.brand}</span>
+                <h3 className="text-base font-semibold text-slate-900">{product.name}</h3>
+                <span className="text-xs text-slate-500">{product.servings} portions • {product.flavor}</span>
+              </div>
+            </div>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-lg font-bold text-slate-900">{formatCurrency(product.price)}</p>
+                <p className="text-xs text-slate-500">
+                  {formatCurrency(product.price / product.servings)} / portion
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => toggleProductSelection(product.id)}
+                className="rounded-full border border-primary-200 px-3 py-1 text-xs font-medium text-primary-600 transition hover:border-primary-300 hover:bg-primary-50"
+              >
+                Retirer
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full table-auto border-collapse text-left text-sm text-slate-700">
+          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="w-48 border-b border-slate-200 pb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Critère
-              </th>
+              <th className="w-48 px-4 py-3">Critère</th>
               {products.map((product) => (
-                <th
-                  key={product.id}
-                  className="border-b border-slate-200 pb-3 text-left text-base font-semibold text-slate-900"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <div>{product.name}</div>
-                      <div className="text-xs text-slate-500">{product.brand}</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => toggleProductSelection(product.id)}
-                      className="text-xs font-medium text-primary-600 hover:text-primary-700"
-                    >
-                      Retirer
-                    </button>
-                  </div>
+                <th key={product.id} className="min-w-[160px] px-4 py-3 text-left">
+                  {product.name}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row.label} className="border-b border-slate-100 last:border-0">
-                <th className="py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">{row.label}</th>
+            {rows.map((row, rowIndex) => (
+              <tr
+                key={row.label}
+                className={`${rowIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} border-b border-slate-100 last:border-0`}
+              >
+                <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {row.label}
+                </th>
                 {products.map((product) => (
-                  <td key={product.id} className="py-4 pr-6">
+                  <td key={product.id} className="px-4 py-4 align-top text-slate-700">
                     {row.render(product)}
                   </td>
                 ))}
               </tr>
             ))}
-            <tr className="border-b border-slate-100">
-              <th className="py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Lien</th>
+            <tr className="border-b border-slate-100 bg-white">
+              <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Lien
+              </th>
               {products.map((product) => (
-                <td key={product.id} className="py-4">
+                <td key={product.id} className="px-4 py-4">
                   {product.link ? (
                     <a
                       href={product.link}
-                      className="text-sm font-medium text-primary-600 hover:text-primary-700"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
                       target="_blank"
                       rel="noreferrer"
                     >
                       Voir le produit
+                      <span aria-hidden>↗</span>
                     </a>
                   ) : (
                     <span className="text-sm text-slate-400">Non renseigné</span>
