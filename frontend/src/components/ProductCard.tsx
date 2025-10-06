@@ -32,8 +32,11 @@ function formatBestPrice(price: ProductSummary["bestPrice"]) {
 }
 
 export function ProductCard({ product, href, footer }: ProductCardProps) {
-  const content = (
-    <article className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg transition hover:border-orange-400/40 hover:shadow-xl">
+  const footerNode =
+    footer && <div className="mt-6 border-t border-white/10 pt-4 text-sm text-gray-300">{footer}</div>;
+
+  const body = (
+    <div className="flex flex-1 flex-col justify-between">
       <div className="space-y-3">
         <div className="text-sm font-semibold uppercase tracking-wide text-orange-200/90">
           {product.brand ?? "Produit"}
@@ -95,17 +98,27 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
           </div>
         </dl>
       </div>
-      {footer && <div className="mt-6 border-t border-white/10 pt-4 text-sm text-gray-300">{footer}</div>}
-    </article>
+    </div>
   );
 
   if (href) {
     return (
-      <Link href={href} className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400">
-        {content}
-      </Link>
+      <article className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg transition hover:border-orange-400/40 hover:shadow-xl">
+        <Link
+          href={href}
+          className="flex h-full flex-1 flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+        >
+          {body}
+        </Link>
+        {footerNode}
+      </article>
     );
   }
 
-  return content;
+  return (
+    <article className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg transition hover:border-orange-400/40 hover:shadow-xl">
+      {body}
+      {footerNode}
+    </article>
+  );
 }
