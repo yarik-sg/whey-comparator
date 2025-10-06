@@ -2,6 +2,21 @@ import Link from "next/link";
 
 import type { ProductSummary } from "@/types/api";
 
+function getProductImage(product: ProductSummary): { src: string; alt: string } | null {
+  const imageUrl = product.image ?? product.bestDeal?.image ?? null;
+
+  if (!imageUrl) {
+    return null;
+  }
+
+  const altText = `${product.brand ? `${product.brand} ` : ""}${product.name}`.trim();
+
+  return {
+    src: imageUrl,
+    alt: altText.length > 0 ? altText : "Photo du produit",
+  };
+}
+
 interface ProductCardProps {
   product: ProductSummary;
   href?: string;
@@ -32,17 +47,41 @@ function formatBestPrice(price: ProductSummary["bestPrice"]) {
 }
 
 export function ProductCard({ product, href, footer }: ProductCardProps) {
-  const content = (
-    <article className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg transition hover:border-orange-400/40 hover:shadow-xl">
-      <div className="space-y-3">
-        <div className="text-sm font-semibold uppercase tracking-wide text-orange-200/90">
-          {product.brand ?? "Produit"}
+  const footerNode =
+    footer && <div className="mt-6 border-t border-white/10 pt-4 text-sm text-gray-300">{footer}</div>;
+
+  const productImage = getProductImage(product);
+
+  const body = (
+    <div className="flex flex-1 flex-col justify-between">
+      <div>
+        <div className="relative mb-4 overflow-hidden rounded-xl border border-white/10 bg-white/5">
+          {productImage ? (
+            // eslint-disable-next-line @next/next/no-img-element -- remote catalogue assets
+            <img
+              src={productImage.src}
+              alt={productImage.alt}
+              className="h-40 w-full object-cover object-center"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-40 w-full items-center justify-center bg-gradient-to-br from-slate-800/60 to-slate-900/80 text-sm text-gray-400">
+              <span className="flex items-center gap-2">
+                <span aria-hidden>📦</span>
+                <span>Image indisponible</span>
+              </span>
+            </div>
+          )}
+          <div className="absolute inset-x-3 bottom-3 inline-flex items-center rounded-full bg-black/60 px-3 py-1 text-xs text-orange-200">
+            {product.brand ?? "Produit"}
+          </div>
         </div>
-        <h3 className="text-xl font-semibold text-white">{product.name}</h3>
-        {product.flavour && (
-          <p className="text-sm text-gray-300">Saveur : {product.flavour}</p>
-        )}
-        <div className="rounded-xl bg-white/5 p-3 text-sm text-gray-100">
+        <div className="space-y-3">
+          <h3 className="text-xl font-semibold text-white">{product.name}</h3>
+          {product.flavour && (
+            <p className="text-sm text-gray-300">Saveur : {product.flavour}</p>
+          )}
+          <div className="rounded-xl bg-white/5 p-3 text-sm text-gray-100">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-gray-400">Meilleur prix</p>
@@ -95,17 +134,28 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
           </div>
         </dl>
       </div>
-      {footer && <div className="mt-6 border-t border-white/10 pt-4 text-sm text-gray-300">{footer}</div>}
-    </article>
+      </div>
+    </div>
   );
 
   if (href) {
     return (
-      <Link href={href} className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400">
-        {content}
-      </Link>
+      <article className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg transition hover:border-orange-400/40 hover:shadow-xl">
+        <Link
+          href={href}
+          className="flex h-full flex-1 flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+        >
+          {body}
+        </Link>
+        {footerNode}
+      </article>
     );
   }
 
-  return content;
+  return (
+    <article className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg transition hover:border-orange-400/40 hover:shadow-xl">
+      {body}
+      {footerNode}
+    </article>
+  );
 }

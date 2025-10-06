@@ -50,6 +50,7 @@ export interface ProductSummary {
   name: string;
   brand?: string | null;
   flavour?: string | null;
+  image?: string | null;
   protein_per_serving_g?: number | null;
   serving_size_g?: number | null;
   category?: string | null;
@@ -98,6 +99,11 @@ export interface ProductOffersResponse {
   sources: {
     scraper: ScraperOffer[];
   };
+}
+
+export interface RelatedProductsResponse {
+  productId: number;
+  related: ProductSummary[];
 }
 
 export interface ComparisonEntry {
