@@ -8,6 +8,12 @@ from urllib.parse import urlparse, parse_qs
 from functools import lru_cache
 from typing import Dict, Any, List, Optional
 
+from fallback_catalogue import (
+    get_fallback_price_history,
+    get_fallback_product,
+    get_fallback_products,
+)
+
 app = FastAPI()
 
 # --- CORS (ok pour dev; en prod restreins à ton domaine) ---
@@ -171,38 +177,41 @@ def tokenize_keywords(value: Optional[str]) -> set[str]:
 
 
 def fetch_scraper_products(limit: Optional[int] = None) -> List[Dict[str, Any]]:
-    if not SCRAPER_BASE_URL:
-        return []
+    def _with_limit(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        if limit:
+            return items[:limit]
+        return items
 
-    try:
-        response = requests.get(
-            f"{SCRAPER_BASE_URL.rstrip('/')}/products", timeout=10
-        )
-        response.raise_for_status()
-        data = response.json()
-        if not isinstance(data, list):
-            return []
-        return data[:limit] if limit else data
-    except Exception:
-        return []
+    if SCRAPER_BASE_URL:
+        try:
+            response = requests.get(
+                f"{SCRAPER_BASE_URL.rstrip('/')}/products", timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+            if isinstance(data, list) and data:
+                return _with_limit(data)
+        except Exception:
+            pass
+
+    return _with_limit(get_fallback_products())
 
 
 def fetch_scraper_product_with_offers(product_id: int) -> Optional[Dict[str, Any]]:
-    if not SCRAPER_BASE_URL:
-        return None
+    if SCRAPER_BASE_URL:
+        try:
+            response = requests.get(
+                f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/offers",
+                timeout=10,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if isinstance(data, dict) and data:
+                return data
+        except Exception:
+            pass
 
-    try:
-        response = requests.get(
-            f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/offers",
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
-        if not isinstance(data, dict):
-            return None
-        return data
-    except Exception:
-        return None
+    return get_fallback_product(product_id)
 
 
 def fetch_scraper_price_history(
@@ -211,28 +220,41 @@ def fetch_scraper_price_history(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    if not SCRAPER_BASE_URL:
-        return []
-
     params: Dict[str, Any] = {}
     if start_date:
         params["start_date"] = start_date
     if end_date:
         params["end_date"] = end_date
 
-    try:
-        response = requests.get(
-            f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/history",
-            params=params,
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
-        if not isinstance(data, list):
-            return []
-        return data
-    except Exception:
+    if SCRAPER_BASE_URL:
+        try:
+            response = requests.get(
+                f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/history",
+                params=params,
+                timeout=10,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if isinstance(data, list) and data:
+                return data
+        except Exception:
+            pass
+
+    fallback_history = get_fallback_price_history(product_id)
+    if not fallback_history:
         return []
+
+    def in_bounds(entry: Dict[str, Any]) -> bool:
+        timestamp = entry.get("recorded_at")
+        if not isinstance(timestamp, str):
+            return False
+        if start_date and timestamp < start_date:
+            return False
+        if end_date and timestamp > end_date:
+            return False
+        return True
+
+    return [entry for entry in fallback_history if in_bounds(entry)]
 
 
 def build_deal_payload(
