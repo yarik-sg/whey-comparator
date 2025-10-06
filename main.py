@@ -73,6 +73,16 @@ def is_http_url(u: Optional[str]) -> bool:
         return False
 
 
+def normalize_image_url(value: Any) -> Optional[str]:
+    """Return a trimmed image URL or ``None`` when empty/invalid."""
+
+    if isinstance(value, str):
+        trimmed = value.strip()
+        if trimmed:
+            return trimmed
+    return None
+
+
 def isoformat_utc(dt: datetime) -> str:
     return dt.replace(microsecond=0).isoformat() + "Z"
 
@@ -671,18 +681,18 @@ def build_product_summary(
         "formatted": best_formatted,
     }
 
-    product_image = base_payload.get("image")
+    product_image = normalize_image_url(base_payload.get("image"))
     if not product_image and best_offer:
-        candidate = best_offer.get("image") if isinstance(best_offer, dict) else None
-        if candidate and isinstance(candidate, str) and candidate.strip():
+        candidate = normalize_image_url(best_offer.get("image") if isinstance(best_offer, dict) else None)
+        if candidate:
             product_image = candidate
 
     if not product_image:
         for deal in aggregated:
             if not isinstance(deal, dict):
                 continue
-            candidate = deal.get("image")
-            if candidate and isinstance(candidate, str) and candidate.strip():
+            candidate = normalize_image_url(deal.get("image"))
+            if candidate:
                 product_image = candidate
                 break
 
@@ -717,9 +727,7 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
     ]
     payload = {key: product.get(key) for key in keys}
 
-    image_value = payload.get("image")
-    if not image_value or not isinstance(image_value, str):
-        image_value = None
+    image_value = normalize_image_url(payload.get("image"))
 
     if not image_value:
         offers = product.get("offers")
@@ -727,15 +735,17 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
             for offer in offers:
                 if not isinstance(offer, dict):
                     continue
-                candidate = offer.get("image")
-                if candidate and isinstance(candidate, str):
-                    if is_http_url(candidate):
-                        image_value = candidate
-                        break
-                    if not candidate.startswith("http"):
-                        # Accept absolute paths from trusted sources as-is
-                        image_value = candidate
-                        break
+                candidate = normalize_image_url(offer.get("image"))
+                if not candidate:
+                    continue
+                if (
+                    is_http_url(candidate)
+                    or candidate.startswith("//")
+                    or candidate.startswith("/")
+                    or candidate.startswith("data:")
+                ):
+                    image_value = candidate
+                    break
 
     payload["image"] = image_value
     return payload
