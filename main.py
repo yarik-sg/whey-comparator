@@ -2,9 +2,10 @@ from fastapi import FastAPI, HTTPException, Query
 from datetime import datetime, timedelta
 
 from fastapi.middleware.cors import CORSMiddleware
+import html
 import os, re
 import requests
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, quote
 from functools import lru_cache
 from typing import Dict, Any, List, Optional
 
@@ -73,6 +74,9 @@ def is_http_url(u: Optional[str]) -> bool:
         return False
 
 
+PLACEHOLDER_IMAGE_DOMAINS = {"example.com"}
+
+
 def normalize_image_url(value: Any) -> Optional[str]:
     """Return a trimmed image URL or ``None`` when empty/invalid."""
 
@@ -81,6 +85,66 @@ def normalize_image_url(value: Any) -> Optional[str]:
         if trimmed:
             return trimmed
     return None
+
+
+def _placeholder_host(host: str) -> bool:
+    normalized = host.lower()
+    return any(
+        normalized == domain or normalized.endswith(f".{domain}")
+        for domain in PLACEHOLDER_IMAGE_DOMAINS
+    )
+
+
+def looks_like_placeholder_image(value: Optional[str]) -> bool:
+    candidate = normalize_image_url(value)
+    if not candidate:
+        return True
+    if candidate.startswith("data:"):
+        return False
+    if candidate.startswith("//"):
+        candidate = f"https:{candidate}"
+    try:
+        parsed = urlparse(candidate)
+    except Exception:
+        return False
+    host = parsed.netloc
+    if not host:
+        return False
+    return _placeholder_host(host)
+
+
+def build_placeholder_image(*, name: Optional[str], brand: Optional[str]) -> str:
+    brand_label = (brand or "Protéines").strip() or "Protéines"
+    name_label = (name or "Comparateur").strip() or "Comparateur"
+
+    primary_text = html.escape(brand_label[:28])
+    secondary_text = html.escape(name_label[:48])
+
+    svg = f"""
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400' preserveAspectRatio='xMidYMid meet'>
+  <defs>
+    <linearGradient id='g' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' stop-color='#0f172a'/>
+      <stop offset='100%' stop-color='#1f2937'/>
+    </linearGradient>
+  </defs>
+  <rect width='600' height='400' rx='32' fill='url(#g)'/>
+  <text x='50%' y='45%' fill='#fbbf24' font-family='"Segoe UI", "Helvetica Neue", sans-serif' font-size='40' font-weight='600' text-anchor='middle'>{primary_text}</text>
+  <text x='50%' y='63%' fill='#e2e8f0' font-family='"Segoe UI", "Helvetica Neue", sans-serif' font-size='26' text-anchor='middle'>{secondary_text}</text>
+</svg>
+"""
+
+    return "data:image/svg+xml," + quote(svg)
+
+
+def resolve_image_with_placeholder(
+    candidates: List[Optional[str]], *, name: Optional[str], brand: Optional[str]
+) -> str:
+    for candidate in candidates:
+        normalized = normalize_image_url(candidate)
+        if normalized and not looks_like_placeholder_image(normalized):
+            return normalized
+    return build_placeholder_image(name=name, brand=brand)
 
 
 def isoformat_utc(dt: datetime) -> str:
@@ -302,6 +366,10 @@ def build_deal_payload(
     if shipping_label is None and shipping_cost is not None:
         shipping_label = format_numeric_price(shipping_cost, price_currency)
 
+    normalized_image = normalize_image_url(image)
+    if normalized_image and looks_like_placeholder_image(normalized_image):
+        normalized_image = None
+
     return {
         "id": identifier,
         "title": title,
@@ -321,7 +389,7 @@ def build_deal_payload(
         "inStock": in_stock,
         "stockStatus": stock_status,
         "link": link,
-        "image": image,
+        "image": normalized_image,
         "rating": rating,
         "reviewsCount": reviews_count,
         "bestPrice": False,
@@ -420,6 +488,7 @@ def collect_serp_deals(
 
     deals: List[Dict[str, Any]] = []
     for index, item in enumerate(shopping_results):
+        best: Optional[Dict[str, Any]] = None
         title = (item.get("title") or "").strip()
         title_lower = title.lower()
 
@@ -681,20 +750,21 @@ def build_product_summary(
         "formatted": best_formatted,
     }
 
-    product_image = normalize_image_url(base_payload.get("image"))
-    if not product_image and best_offer:
-        candidate = normalize_image_url(best_offer.get("image") if isinstance(best_offer, dict) else None)
-        if candidate:
-            product_image = candidate
+    image_candidates: List[Optional[str]] = [base_payload.get("image")]
 
-    if not product_image:
-        for deal in aggregated:
-            if not isinstance(deal, dict):
-                continue
-            candidate = normalize_image_url(deal.get("image"))
-            if candidate:
-                product_image = candidate
-                break
+    if best_offer and isinstance(best_offer, dict):
+        image_candidates.append(best_offer.get("image"))
+
+    for deal in aggregated:
+        if not isinstance(deal, dict):
+            continue
+        image_candidates.append(deal.get("image"))
+
+    product_image = resolve_image_with_placeholder(
+        image_candidates,
+        name=base_payload.get("name"),
+        brand=base_payload.get("brand"),
+    )
 
     return {
         **base_payload,
@@ -727,27 +797,20 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
     ]
     payload = {key: product.get(key) for key in keys}
 
-    image_value = normalize_image_url(payload.get("image"))
+    offers = product.get("offers")
+    image_candidates: List[Optional[str]] = [payload.get("image")]
 
-    if not image_value:
-        offers = product.get("offers")
-        if isinstance(offers, list):
-            for offer in offers:
-                if not isinstance(offer, dict):
-                    continue
-                candidate = normalize_image_url(offer.get("image"))
-                if not candidate:
-                    continue
-                if (
-                    is_http_url(candidate)
-                    or candidate.startswith("//")
-                    or candidate.startswith("/")
-                    or candidate.startswith("data:")
-                ):
-                    image_value = candidate
-                    break
+    if isinstance(offers, list):
+        for offer in offers:
+            if not isinstance(offer, dict):
+                continue
+            image_candidates.append(offer.get("image"))
 
-    payload["image"] = image_value
+    payload["image"] = resolve_image_with_placeholder(
+        image_candidates,
+        name=payload.get("name"),
+        brand=payload.get("brand"),
+    )
     return payload
 
 
