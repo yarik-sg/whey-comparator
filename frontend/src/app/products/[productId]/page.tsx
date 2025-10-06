@@ -13,6 +13,16 @@ interface ProductDetailPageProps {
   params: { productId: string };
 }
 
+function buildComparisonHref(...productIds: number[]): string {
+  const uniqueIds = Array.from(
+    new Set(productIds.filter((id) => Number.isFinite(id)).map((id) => String(id).trim())),
+  );
+
+  return uniqueIds.length > 0
+    ? `/comparison?ids=${encodeURIComponent(uniqueIds.join(","))}`
+    : "/comparison";
+}
+
 async function fetchProductOffers(productId: number) {
   try {
     const data = await apiClient.get<ProductOffersResponse>(
@@ -96,7 +106,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             {product.brand && <p className="text-gray-300">{product.brand}</p>}
           </div>
           <CompareLinkButton
-            href={`/comparison?ids=${product.id}`}
+            href={buildComparisonHref(product.id)}
             className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
             aria-label={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
             title={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
@@ -186,7 +196,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                         <div className="flex items-center justify-between text-xs text-gray-400">
                           <span>ID #{relatedProduct.id}</span>
                           <CompareLinkButton
-                            href={`/comparison?ids=${product.id},${relatedProduct.id}`}
+                            href={buildComparisonHref(product.id, relatedProduct.id)}
                             className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
                             aria-label={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name} avec ${relatedProduct.brand ? `${relatedProduct.brand} ` : ""}${relatedProduct.name}`}
                             title={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name} avec ${relatedProduct.brand ? `${relatedProduct.brand} ` : ""}${relatedProduct.name}`}

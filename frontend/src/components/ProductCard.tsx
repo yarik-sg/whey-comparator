@@ -2,8 +2,23 @@ import Link from "next/link";
 
 import type { ProductSummary } from "@/types/api";
 
+function pickImageUrl(
+  ...candidates: Array<string | null | undefined>
+): string | null {
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string") {
+      continue;
+    }
+    const trimmed = candidate.trim();
+    if (trimmed.length > 0) {
+      return trimmed;
+    }
+  }
+  return null;
+}
+
 function getProductImage(product: ProductSummary): { src: string; alt: string } | null {
-  const imageUrl = product.image ?? product.bestDeal?.image ?? null;
+  const imageUrl = pickImageUrl(product.image, product.bestDeal?.image);
 
   if (!imageUrl) {
     return null;

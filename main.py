@@ -73,6 +73,16 @@ def is_http_url(u: Optional[str]) -> bool:
         return False
 
 
+def normalize_image_url(value: Any) -> Optional[str]:
+    """Return a trimmed image URL or ``None`` when empty/invalid."""
+
+    if isinstance(value, str):
+        trimmed = value.strip()
+        if trimmed:
+            return trimmed
+    return None
+
+
 def isoformat_utc(dt: datetime) -> str:
     return dt.replace(microsecond=0).isoformat() + "Z"
 
@@ -671,9 +681,20 @@ def build_product_summary(
         "formatted": best_formatted,
     }
 
-    product_image = base_payload.get("image")
+    product_image = normalize_image_url(base_payload.get("image"))
     if not product_image and best_offer:
-        product_image = best_offer.get("image")
+        candidate = normalize_image_url(best_offer.get("image") if isinstance(best_offer, dict) else None)
+        if candidate:
+            product_image = candidate
+
+    if not product_image:
+        for deal in aggregated:
+            if not isinstance(deal, dict):
+                continue
+            candidate = normalize_image_url(deal.get("image"))
+            if candidate:
+                product_image = candidate
+                break
 
     return {
         **base_payload,
@@ -704,7 +725,30 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
         "serving_size_g",
         "category",
     ]
-    return {key: product.get(key) for key in keys}
+    payload = {key: product.get(key) for key in keys}
+
+    image_value = normalize_image_url(payload.get("image"))
+
+    if not image_value:
+        offers = product.get("offers")
+        if isinstance(offers, list):
+            for offer in offers:
+                if not isinstance(offer, dict):
+                    continue
+                candidate = normalize_image_url(offer.get("image"))
+                if not candidate:
+                    continue
+                if (
+                    is_http_url(candidate)
+                    or candidate.startswith("//")
+                    or candidate.startswith("/")
+                    or candidate.startswith("data:")
+                ):
+                    image_value = candidate
+                    break
+
+    payload["image"] = image_value
+    return payload
 
 
 def compute_similarity_score(
