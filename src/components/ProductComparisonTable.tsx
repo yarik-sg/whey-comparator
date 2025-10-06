@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import type { Product } from '../data/products';
 import { useProductSelectionStore } from '../store/productSelectionStore';
+import { ProductImage } from './ProductImage';
 
 interface ProductComparisonTableProps {
   products: Product[];
@@ -174,15 +175,20 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
                   key={product.id}
                   className="border-b border-slate-200 pb-3 text-left text-base font-semibold text-slate-900"
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
+                  <div className="flex items-start gap-3">
+                    <ProductImage
+                      imageUrl={product.imageUrl}
+                      alt={product.imageAlt ?? product.name}
+                      className="h-16 w-16 flex-shrink-0 rounded-xl"
+                    />
+                    <div className="flex flex-1 flex-col">
                       <div>{product.name}</div>
                       <div className="text-xs text-slate-500">{product.brand}</div>
                     </div>
                     <button
                       type="button"
                       onClick={() => toggleProductSelection(product.id)}
-                      className="text-xs font-medium text-primary-600 hover:text-primary-700"
+                      className="ml-auto text-xs font-medium text-primary-600 hover:text-primary-700"
                     >
                       Retirer
                     </button>

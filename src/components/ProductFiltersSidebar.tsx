@@ -8,6 +8,7 @@ import {
   selectSelectedProductIds,
   useProductSelectionStore,
 } from '../store/productSelectionStore';
+import { ProductImage } from './ProductImage';
 
 interface ProductFiltersSidebarProps {
   allProducts: Product[];
@@ -191,26 +192,41 @@ export const ProductFiltersSidebar = ({
           <span className="text-xs text-slate-400">Comparer 2 à 4 produits</span>
         </div>
         <div className="space-y-2">
-          {filteredSelection.map(({ product, disabled }) => (
-            <label
-              key={product.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"
-            >
-              <div className="flex flex-col">
-                <span className="font-medium text-slate-900">{product.name}</span>
-                <span className="text-xs text-slate-500">
-                  {product.brand} • {typeLabels[product.type]}
-                </span>
-              </div>
-              <input
-                type="checkbox"
-                checked={selectedProductIds.includes(product.id)}
-                disabled={disabled}
-                onChange={() => toggleProductSelection(product.id)}
-                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 disabled:opacity-40"
-              />
-            </label>
-          ))}
+          {filteredSelection.map(({ product, disabled }) => {
+            const isSelected = selectedProductIds.includes(product.id);
+            const labelClasses = [
+              'flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm text-slate-700 transition',
+              isSelected ? 'border-primary-300 bg-primary-50/70' : 'border-slate-200 bg-white',
+              disabled ? 'opacity-60' : 'hover:border-primary-200 hover:shadow-sm',
+            ]
+              .filter(Boolean)
+              .join(' ');
+
+            return (
+              <label key={product.id} className={labelClasses}>
+                <div className="flex items-center gap-3">
+                  <ProductImage
+                    imageUrl={product.imageUrl}
+                    alt={product.imageAlt ?? product.name}
+                    className="h-12 w-12 flex-shrink-0 rounded-lg"
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-medium text-slate-900">{product.name}</span>
+                    <span className="text-xs text-slate-500">
+                      {product.brand} • {typeLabels[product.type]}
+                    </span>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  disabled={disabled}
+                  onChange={() => toggleProductSelection(product.id)}
+                  className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 disabled:opacity-40"
+                />
+              </label>
+            );
+          })}
           {!isLoading && filteredSelection.length === 0 && (
             <p className="text-sm text-slate-500">Aucun produit ne correspond aux filtres.</p>
           )}

@@ -83,6 +83,8 @@ def normalize_image_url(value: Any) -> Optional[str]:
     if isinstance(value, str):
         trimmed = value.strip()
         if trimmed:
+            if trimmed.startswith("//"):
+                return "https:" + trimmed
             return trimmed
     return None
 
