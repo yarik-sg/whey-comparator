@@ -2,6 +2,8 @@ import js from '@eslint/js';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
+const browserGlobals = js.environments?.browser?.globals ?? {};
+
 export default [
   js.configs.recommended,
   {
@@ -9,7 +11,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2020,
       globals: {
-        ...js.environments.browser.globals,
+        ...browserGlobals,
       },
       parserOptions: {
         ecmaVersion: 2020,
