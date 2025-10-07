@@ -15,13 +15,13 @@ const OPTIONS: Array<{ value: string; label: string }> = [
 
 export function SortDropdown({ value, onChange, disabled = false }: SortDropdownProps) {
   return (
-    <label className="flex flex-col gap-2 text-xs text-gray-400">
+    <label className="flex flex-col gap-2 text-xs text-slate-500">
       Tri
       <select
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        className="min-w-[180px] rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-w-[180px] rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>

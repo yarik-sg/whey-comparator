@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { BadgeCheck, LineChart, Sparkles } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
+
 const pillars = [
   {
     icon: BadgeCheck,
@@ -38,9 +40,8 @@ const pillars = [
 
 export function WhyChooseUsSection() {
   return (
-    <section className="relative overflow-hidden bg-[#0d1b2a] py-20">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(255,140,0,0.15),transparent_55%)]" />
-      <div className="container mx-auto px-6">
+    <section className="bg-white py-20">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -48,45 +49,46 @@ export function WhyChooseUsSection() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-center"
         >
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-300/80">
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
             Pourquoi nous choisir ?
           </p>
-          <h2 className="mt-4 text-3xl font-bold text-white sm:text-4xl">
+          <h2 className="mt-4 text-3xl font-bold text-slate-900 sm:text-4xl">
             Une proposition de valeur taillée pour les sportifs exigeants
           </h2>
-          <p className="mt-5 text-base text-gray-300">
-            Notre équipe combine technologie, expertise nutritionnelle et expérience utilisateur pour transformer la comparaison
-            en un accompagnement complet avant achat.
+          <p className="mt-5 text-base text-slate-500">
+            Notre équipe combine technologie, expertise nutritionnelle et accompagnement personnalisé pour faire de la
+            comparaison un vrai coach avant achat.
           </p>
         </motion.div>
 
         <div className="mt-14 grid gap-8 lg:grid-cols-3">
           {pillars.map(({ icon: Icon, title, description, details }) => (
-            <motion.article
+            <motion.div
               key={title}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.5 }}
-              className="group flex flex-col justify-between rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur"
             >
-              <div>
-                <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/15 text-orange-300 ring-2 ring-orange-500/30">
-                  <Icon className="h-7 w-7" aria-hidden="true" />
-                </span>
-                <h3 className="mt-6 text-xl font-semibold text-white">{title}</h3>
-                <p className="mt-3 text-sm text-gray-200/90">{description}</p>
-                <ul className="mt-5 space-y-2 text-sm text-gray-300">
-                  {details.map((detail) => (
-                    <li key={detail} className="flex items-start gap-3">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-orange-400" />
-                      <span className="leading-relaxed">{detail}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-6 h-0.5 w-full rounded-full bg-gradient-to-r from-orange-500/0 via-orange-500/40 to-orange-500/0 opacity-0 transition duration-500 group-hover:opacity-100" />
-            </motion.article>
+              <Card className="group flex h-full flex-col justify-between border-orange-100/70 bg-white/90 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+                <div>
+                  <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-orange-500 ring-4 ring-orange-100">
+                    <Icon className="h-7 w-7" aria-hidden="true" />
+                  </span>
+                  <h3 className="mt-6 text-xl font-semibold text-slate-900">{title}</h3>
+                  <p className="mt-3 text-sm text-slate-500">{description}</p>
+                  <ul className="mt-5 space-y-2 text-sm text-slate-500">
+                    {details.map((detail) => (
+                      <li key={detail} className="flex items-start gap-3">
+                        <span className="mt-1 h-2 w-2 rounded-full bg-orange-400" />
+                        <span className="leading-relaxed">{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mt-6 h-1 w-24 rounded-full bg-orange-200 transition group-hover:bg-orange-400" />
+              </Card>
+            </motion.div>
           ))}
         </div>
       </div>

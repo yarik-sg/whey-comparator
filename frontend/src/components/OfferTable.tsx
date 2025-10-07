@@ -47,54 +47,58 @@ function formatShipping(offer: DealItem) {
 
 function getAvailability(offer: DealItem) {
   if (offer.inStock === true) {
-    return { icon: "✅", label: "En stock" };
+    return { icon: "🟢", label: "En stock" };
   }
 
   if (offer.inStock === false) {
-    return { icon: "❌", label: offer.stockStatus ?? "Rupture" };
+    return { icon: "🔴", label: offer.stockStatus ?? "Rupture" };
   }
 
-  return { icon: "ℹ️", label: offer.stockStatus ?? "Indisponible" };
+  return { icon: "⚪", label: offer.stockStatus ?? "Indisponible" };
 }
 
 export function OfferTable({ offers, caption }: OfferTableProps) {
   if (offers.length === 0) {
-    return <p className="text-sm text-gray-300">Aucune offre disponible pour le moment.</p>;
+    return (
+      <p className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+        Aucune offre disponible pour le moment.
+      </p>
+    );
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 shadow-inner">
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       {caption && (
-        <div className="border-b border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold text-white">
+        <div className="border-b border-slate-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-600">
           {caption}
         </div>
       )}
 
       <div className="hidden md:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm text-gray-200">
+          <table className="min-w-full text-left text-sm text-slate-600">
             {caption && <caption className="sr-only">{caption}</caption>}
-            <thead className="bg-white/5 text-xs uppercase tracking-wide text-gray-300">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th scope="col" className="px-4 py-3">
+                <th scope="col" className="px-4 py-3 font-semibold">
                   Vendeur
                 </th>
-                <th scope="col" className="px-4 py-3">
+                <th scope="col" className="px-4 py-3 font-semibold">
                   Prix
                 </th>
-                <th scope="col" className="px-4 py-3">
+                <th scope="col" className="px-4 py-3 font-semibold">
                   Livraison
                 </th>
-                <th scope="col" className="px-4 py-3">
+                <th scope="col" className="px-4 py-3 font-semibold">
                   Total
                 </th>
-                <th scope="col" className="px-4 py-3">
+                <th scope="col" className="px-4 py-3 font-semibold">
                   Stock
                 </th>
-                <th scope="col" className="px-4 py-3">
+                <th scope="col" className="px-4 py-3 font-semibold">
                   Source
                 </th>
-                <th scope="col" className="px-4 py-3">
+                <th scope="col" className="px-4 py-3 font-semibold">
                   Actions
                 </th>
               </tr>
@@ -105,61 +109,59 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
                 return (
                   <tr
                     key={offer.id}
-                    className={`border-t border-white/10 transition hover:bg-white/5 ${
-                      highlight ? "bg-emerald-500/10" : "bg-transparent"
+                    className={`border-t border-slate-200 transition ${
+                      highlight ? "bg-orange-50" : "hover:bg-slate-50"
                     }`}
                   >
-                    <th scope="row" className="px-4 py-3 font-medium text-white">
+                    <th scope="row" className="px-4 py-4 font-semibold text-slate-900">
                       <div className="flex flex-col gap-1">
                         <span className="flex items-center gap-2">
                           {offer.vendor}
                           {highlight && (
-                            <span className="inline-flex items-center rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200">
+                            <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-600">
                               Meilleur prix
                             </span>
                           )}
                         </span>
-                        <span className="text-xs text-gray-400">{offer.title}</span>
+                        {offer.title && <span className="text-xs text-slate-400">{offer.title}</span>}
                       </div>
                     </th>
-                    <td className="px-4 py-3 text-white">
+                    <td className="px-4 py-4">
                       <div className="flex flex-col">
-                        <span className="font-semibold">{formatPrice(offer.price)}</span>
+                        <span className="font-semibold text-slate-900">{formatPrice(offer.price)}</span>
                         {typeof offer.pricePerKg === "number" && (
-                          <span className="text-xs text-gray-400">{offer.pricePerKg.toFixed(2)} €/kg</span>
+                          <span className="text-xs text-slate-400">{offer.pricePerKg.toFixed(2)} €/kg</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-200">{formatShipping(offer)}</td>
-                    <td className="px-4 py-3 text-white">
-                      <span className="font-semibold">
-                        {formatPrice(offer.totalPrice ?? offer.price)}
-                      </span>
+                    <td className="px-4 py-4 text-slate-500">{formatShipping(offer)}</td>
+                    <td className="px-4 py-4 font-semibold text-slate-900">
+                      {formatPrice(offer.totalPrice ?? offer.price)}
                     </td>
-                    <td className="px-4 py-3 text-white">
+                    <td className="px-4 py-4 text-slate-500">
                       {(() => {
                         const availability = getAvailability(offer);
                         return (
                           <span className="inline-flex items-center gap-2" aria-label={availability.label}>
                             <span aria-hidden>{availability.icon}</span>
-                            <span className="text-xs text-gray-300">{availability.label}</span>
+                            <span className="text-xs text-slate-500">{availability.label}</span>
                           </span>
                         );
                       })()}
                     </td>
-                    <td className="px-4 py-3 text-gray-300">{offer.source}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4 text-slate-500">{offer.source}</td>
+                    <td className="px-4 py-4">
                       {offer.link ? (
                         <a
                           href={offer.link}
                           target="_blank"
                           rel="noopener noreferrer nofollow"
-                          className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-orange-600"
+                          className="inline-flex items-center gap-2 rounded-full border border-orange-200 px-3 py-1 text-xs font-semibold text-orange-600 transition hover:border-orange-300 hover:text-orange-500"
                         >
                           Consulter →
                         </a>
                       ) : (
-                        <span className="text-xs text-gray-500">Lien indisponible</span>
+                        <span className="text-xs text-slate-400">Lien indisponible</span>
                       )}
                     </td>
                   </tr>
@@ -177,65 +179,69 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
           return (
             <article
               key={offer.id}
-              className={`rounded-xl border border-white/10 bg-slate-900/60 p-4 shadow-sm transition ${
+              className={`rounded-2xl border p-4 shadow-sm transition ${
                 highlight
-                  ? "border-emerald-400/60 bg-emerald-500/10"
-                  : "hover:border-white/20 hover:bg-white/5"
+                  ? "border-orange-200 bg-orange-50"
+                  : "border-slate-200 bg-white hover:border-orange-200"
               }`}
             >
               <header className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="flex items-center gap-2 text-base font-semibold text-white">
+                  <p className="flex items-center gap-2 text-base font-semibold text-slate-900">
                     {offer.vendor}
                     {highlight && (
-                      <span className="inline-flex items-center rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200">
+                      <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-600">
                         Meilleur prix
                       </span>
                     )}
                   </p>
-                  {offer.title && <p className="mt-1 text-xs text-gray-400">{offer.title}</p>}
+                  {offer.title && <p className="mt-1 text-xs text-slate-400">{offer.title}</p>}
                 </div>
-                {offer.source && <span className="text-xs text-gray-400">{offer.source}</span>}
+                {offer.source && <span className="text-xs text-slate-400">{offer.source}</span>}
               </header>
 
-              <dl className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-200">
-                <div className="flex items-center justify-between gap-6">
-                  <dt className="text-gray-400">Prix</dt>
-                  <dd className="text-right">
-                    <p className="font-semibold text-white">{formatPrice(offer.price)}</p>
-                    {typeof offer.pricePerKg === "number" && (
-                      <p className="text-xs text-gray-400">{offer.pricePerKg.toFixed(2)} €/kg</p>
-                    )}
+              <dl className="mt-4 space-y-2 text-sm text-slate-600">
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Prix</dt>
+                  <dd className="font-semibold text-slate-900">{formatPrice(offer.price)}</dd>
+                </div>
+                {typeof offer.pricePerKg === "number" && (
+                  <div className="flex justify-between">
+                    <dt className="text-slate-500">€/kg</dt>
+                    <dd>{offer.pricePerKg.toFixed(2)}</dd>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Livraison</dt>
+                  <dd>{formatShipping(offer)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Total</dt>
+                  <dd className="font-semibold text-slate-900">{formatPrice(offer.totalPrice ?? offer.price)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Disponibilité</dt>
+                  <dd className="inline-flex items-center gap-2 text-slate-600" aria-label={availability.label}>
+                    <span aria-hidden>{availability.icon}</span>
+                    <span className="text-xs">{availability.label}</span>
                   </dd>
-                </div>
-                <div className="flex items-center justify-between gap-6">
-                  <dt className="text-gray-400">Livraison</dt>
-                  <dd className="font-medium text-white">{formatShipping(offer)}</dd>
-                </div>
-                <div className="flex items-center justify-between gap-6">
-                  <dt className="text-gray-400">Total</dt>
-                  <dd className="font-semibold text-white">{formatPrice(offer.totalPrice ?? offer.price)}</dd>
                 </div>
               </dl>
 
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-gray-200">
-                <span className="inline-flex items-center gap-2" aria-label={availability.label}>
-                  <span aria-hidden>{availability.icon}</span>
-                  <span className="text-xs text-gray-300">{availability.label}</span>
-                </span>
+              <footer className="mt-4">
                 {offer.link ? (
                   <a
                     href={offer.link}
                     target="_blank"
                     rel="noopener noreferrer nofollow"
-                    className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-3 py-1 text-xs font-semibold text-white transition hover:bg-orange-600"
+                    className="inline-flex w-full items-center justify-center rounded-full border border-orange-200 px-3 py-2 text-sm font-semibold text-orange-600 transition hover:border-orange-300 hover:text-orange-500"
                   >
-                    Consulter →
+                    Consulter l&apos;offre →
                   </a>
                 ) : (
-                  <span className="text-xs text-gray-500">Lien indisponible</span>
+                  <span className="text-xs text-slate-400">Lien indisponible</span>
                 )}
-              </div>
+              </footer>
             </article>
           );
         })}

@@ -2,6 +2,10 @@
 
 import { ChangeEvent, FormEvent, useCallback, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
 interface FormState {
   email: string;
   product: string;
@@ -61,7 +65,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
 
       return currentErrors;
     },
-    [emailRegex]
+    [emailRegex],
   );
 
   const handleChange = useCallback((key: keyof FormState) => {
@@ -118,24 +122,22 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
         setStatus({ state: "error", message });
       }
     },
-    [formState, validate]
+    [formState, validate],
   );
 
-  const containerClassName = [
-    "space-y-6 rounded-3xl border border-white/10 bg-[#0d1b2a] p-8 shadow-lg",
-    className?.trim(),
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const containerClassName = cn(
+    "space-y-6 rounded-3xl border border-orange-100 bg-white p-8 shadow-lg",
+    className,
+  );
 
   return (
     <form onSubmit={handleSubmit} className={containerClassName} autoComplete="off" noValidate>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div className="sm:col-span-2" suppressHydrationWarning>
-          <label htmlFor="alert-email" className="block text-sm font-medium text-gray-200">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <label htmlFor="alert-email" className="block text-sm font-semibold text-slate-700">
             Adresse e-mail
           </label>
-          <input
+          <Input
             id="alert-email"
             type="email"
             inputMode="email"
@@ -144,35 +146,33 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
             data-lastpass-icon="false"
             value={formState.email}
             onChange={handleChange("email")}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/40"
             placeholder="vous@exemple.com"
-            required
+            aria-invalid={errors.email ? "true" : undefined}
           />
-          {errors.email && <p className="mt-2 text-sm text-red-400">{errors.email}</p>}
+          {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
         </div>
 
-        <div className="sm:col-span-2">
-          <label htmlFor="alert-product" className="block text-sm font-medium text-gray-200">
+        <div className="space-y-2">
+          <label htmlFor="alert-product" className="block text-sm font-semibold text-slate-700">
             Produit ciblé
           </label>
-          <input
+          <Input
             id="alert-product"
             type="text"
             data-lastpass-icon="false"
             value={formState.product}
             onChange={handleChange("product")}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/40"
             placeholder="Ex. Whey Native Chocolat 1kg"
-            required
+            aria-invalid={errors.product ? "true" : undefined}
           />
-          {errors.product && <p className="mt-2 text-sm text-red-400">{errors.product}</p>}
+          {errors.product && <p className="text-sm text-red-500">{errors.product}</p>}
         </div>
 
-        <div>
-          <label htmlFor="alert-threshold" className="block text-sm font-medium text-gray-200">
+        <div className="space-y-2">
+          <label htmlFor="alert-threshold" className="block text-sm font-semibold text-slate-700">
             Seuil de prix (€)
           </label>
-          <input
+          <Input
             id="alert-threshold"
             type="number"
             inputMode="decimal"
@@ -181,33 +181,38 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
             data-lastpass-icon="false"
             value={formState.priceThreshold}
             onChange={handleChange("priceThreshold")}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-500/40"
             placeholder="Ex. 24.90"
-            required
+            aria-invalid={errors.priceThreshold ? "true" : undefined}
           />
           {errors.priceThreshold && (
-            <p className="mt-2 text-sm text-red-400">{errors.priceThreshold}</p>
+            <p className="text-sm text-red-500">{errors.priceThreshold}</p>
           )}
         </div>
       </div>
 
       {status.state !== "idle" && status.message && (
         <p
-          className={`text-sm ${
-            status.state === "success" ? "text-emerald-300" : "text-red-400"
-          }`}
+          className={cn(
+            "rounded-2xl border px-4 py-3 text-sm",
+            status.state === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-red-200 bg-red-50 text-red-600",
+          )}
         >
           {status.message}
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
-        className="w-full rounded-full bg-orange-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300 disabled:cursor-not-allowed disabled:opacity-70"
+        className="w-full rounded-full"
         disabled={isSubmitting}
       >
         {isSubmitting ? "Enregistrement..." : "Créer l'alerte"}
-      </button>
+      </Button>
+      <p className="text-xs text-slate-400">
+        Vous pouvez vous désinscrire à tout moment via le lien présent dans chaque e-mail.
+      </p>
     </form>
   );
 }

@@ -45,31 +45,30 @@ const partnerLogos: Array<{
 
 export function PartnerLogos() {
   return (
-    <section className="bg-[#0d1b2a] py-16">
-      <div className="container mx-auto px-6">
+    <section className="bg-orange-50/40 py-16">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-300">
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
             Ils nous font confiance
           </p>
-          <h2 className="mt-4 text-3xl font-bold text-white">
+          <h2 className="mt-4 text-3xl font-bold text-slate-900">
             Des partenariats pour dénicher les meilleures offres
           </h2>
-          <p className="mt-4 text-base text-gray-300">
-            Nous collaborons avec les leaders européens des compléments pour garantir
-            des tarifs négociés, des stocks fiables et des informations produit
-            vérifiées.
+          <p className="mt-4 text-base text-slate-500">
+            Nous collaborons avec les leaders européens des compléments pour garantir des tarifs négociés,
+            des stocks fiables et une information produit transparente.
           </p>
         </div>
         <div className="mt-12 grid gap-8 sm:grid-cols-3 lg:grid-cols-6">
           {partnerLogos.map(({ name, alt, logoUrl }) => (
             <div
               key={name}
-              className="group flex items-center justify-center rounded-2xl border border-white/5 bg-white/5 px-6 py-6 backdrop-blur"
+              className="group flex items-center justify-center rounded-2xl border border-orange-100 bg-white px-6 py-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
             >
               <img
                 src={logoUrl}
                 alt={alt}
-                className="h-12 w-full max-w-[150px] object-contain opacity-70 transition duration-300 ease-out group-hover:opacity-100 group-hover:grayscale-0 grayscale"
+                className="h-12 w-full max-w-[150px] object-contain opacity-80 transition duration-300 ease-out group-hover:opacity-100"
                 loading="lazy"
                 decoding="async"
               />
