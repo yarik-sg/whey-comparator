@@ -34,6 +34,16 @@ SERPAPI_KEY = os.getenv(
 SERPAPI_BASE = "https://serpapi.com/search.json"
 SCRAPER_BASE_URL = os.getenv("SCRAPER_BASE_URL", "http://localhost:8001")
 
+
+def _env_flag(name: str, *, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+FORCE_IMAGE_HTTPS = _env_flag("FORCE_IMAGE_HTTPS", default=False)
+
 # Domaines que l’on préfère (priorisation quand plusieurs vendeurs)
 PREFERRED_DOMAINS = [
     "myprotein.fr",
@@ -116,19 +126,21 @@ def normalize_image_url(value: Any) -> Optional[str]:
             if trimmed.startswith("//"):
                 return "https:" + trimmed
             if trimmed.startswith("http://"):
-                try:
-                    parsed = urlparse(trimmed)
-                    host = (parsed.hostname or "").lower()
-                except Exception:
-                    host = ""
+                if FORCE_IMAGE_HTTPS:
+                    try:
+                        parsed = urlparse(trimmed)
+                        host = (parsed.hostname or "").lower()
+                    except Exception:
+                        host = ""
 
-                if host and not (
-                    host == "localhost"
-                    or host.startswith("localhost:")
-                    or host.startswith("127.")
-                    or host.endswith(".local")
-                ):
-                    return "https://" + trimmed[len("http://") :]
+                    if host and not (
+                        host == "localhost"
+                        or host.startswith("localhost:")
+                        or host.startswith("127.")
+                        or host.endswith(".local")
+                    ):
+                        return "https://" + trimmed[len("http://") :]
+                return trimmed
             return trimmed
     return None
 
