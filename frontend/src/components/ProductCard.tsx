@@ -76,24 +76,26 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
     <div className="flex flex-1 flex-col justify-between">
       <div>
         <div className="relative mb-4 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-          {showImage ? (
-            // eslint-disable-next-line @next/next/no-img-element -- remote catalogue assets
-            <img
-              src={productImage.src}
-              alt={productImage.alt}
-              className="h-40 w-full object-cover object-center"
-              loading="lazy"
-              onError={() => setImageFailed(true)}
-            />
-          ) : (
-            <div className="flex h-40 w-full items-center justify-center bg-gradient-to-br from-slate-800/60 to-slate-900/80 text-sm text-gray-400">
-              <span className="flex items-center gap-2">
-                <span aria-hidden>📦</span>
+          <div className="flex aspect-[4/3] w-full items-center justify-center bg-gradient-to-br from-slate-900/40 via-slate-900/20 to-slate-900/60 p-4">
+            {showImage ? (
+              // eslint-disable-next-line @next/next/no-img-element -- remote catalogue assets
+              <img
+                src={productImage.src}
+                alt={productImage.alt}
+                className="h-full w-full object-contain object-center drop-shadow-sm"
+                loading="lazy"
+                onError={() => setImageFailed(true)}
+              />
+            ) : (
+              <span className="flex flex-col items-center gap-2 text-sm text-gray-400">
+                <span aria-hidden className="text-lg">
+                  📦
+                </span>
                 <span>Image indisponible</span>
               </span>
-            </div>
-          )}
-          <div className="absolute inset-x-3 bottom-3 inline-flex items-center rounded-full bg-black/60 px-3 py-1 text-xs text-orange-200">
+            )}
+          </div>
+          <div className="pointer-events-none absolute inset-x-3 bottom-3 inline-flex items-center rounded-full bg-black/60 px-3 py-1 text-xs text-orange-200 shadow-md">
             {product.brand ?? "Produit"}
           </div>
         </div>
@@ -103,36 +105,37 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
             <p className="text-sm text-gray-300">Saveur : {product.flavour}</p>
           )}
           <div className="rounded-xl bg-white/5 p-3 text-sm text-gray-100">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-gray-400">Meilleur prix</p>
-              <p className="text-lg font-semibold text-white">{formatBestPrice(product.bestPrice)}</p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-400">Meilleur prix</p>
+                <p className="text-lg font-semibold text-white">{formatBestPrice(product.bestPrice)}</p>
+              </div>
+              <div className="text-right text-xs text-gray-300">
+                <p>{product.bestVendor ?? "Vendeur"}</p>
+                {product.inStock !== undefined && product.inStock !== null && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-gray-200">
+                    <span aria-hidden>{product.inStock ? "✅" : "❌"}</span>
+                    <span className="sr-only">{product.inStock ? "Disponible" : "Indisponible"}</span>
+                    <span className="text-gray-300">{product.inStock ? "En stock" : "Rupture"}</span>
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="text-right text-xs text-gray-300">
-              <p>{product.bestVendor ?? "Vendeur"}</p>
-              {product.inStock !== undefined && product.inStock !== null && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-gray-200">
-                  <span aria-hidden>{product.inStock ? "✅" : "❌"}</span>
-                  <span className="sr-only">{product.inStock ? "Disponible" : "Indisponible"}</span>
-                  <span className="text-gray-300">{product.inStock ? "En stock" : "Rupture"}</span>
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="mt-2 grid grid-cols-2 gap-3 text-xs text-gray-300">
-            <div>
-              <span className="block uppercase tracking-wide text-[11px] text-gray-500">Protéines/€</span>
-              <span className="font-semibold text-white">
-                {typeof product.proteinPerEuro === "number"
-                  ? `${product.proteinPerEuro.toFixed(2)} g`
-                  : "—"}
-              </span>
-            </div>
-            <div>
-              <span className="block uppercase tracking-wide text-[11px] text-gray-500">Note</span>
-              <span className="font-semibold text-white">
-                {typeof product.rating === "number" ? `${product.rating.toFixed(1)} ★` : "—"}
-              </span>
+            <div className="mt-2 grid grid-cols-2 gap-3 text-xs text-gray-300">
+              <div>
+                <span className="block uppercase tracking-wide text-[11px] text-gray-500">Protéines/€</span>
+                <span className="font-semibold text-white">
+                  {typeof product.proteinPerEuro === "number"
+                    ? `${product.proteinPerEuro.toFixed(2)} g`
+                    : "—"}
+                </span>
+              </div>
+              <div>
+                <span className="block uppercase tracking-wide text-[11px] text-gray-500">Note</span>
+                <span className="font-semibold text-white">
+                  {typeof product.rating === "number" ? `${product.rating.toFixed(1)} ★` : "—"}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -154,7 +157,6 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
             </dd>
           </div>
         </dl>
-      </div>
       </div>
     </div>
   );
