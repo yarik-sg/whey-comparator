@@ -61,9 +61,9 @@ export function SiteHeader() {
         <div className="flex items-center gap-3">
           <Link
             href="/comparison"
-            className={`${buttonClassName({ size: "sm" })} hidden shadow-sm md:inline-flex`}
+            className={`${buttonClassName({ size: "sm" })} hidden shadow-md md:inline-flex`}
           >
-            Lancer une comparaison
+            Comparer maintenant
           </Link>
           <Button
             variant="ghost"

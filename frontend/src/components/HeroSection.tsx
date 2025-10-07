@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useMemo, useState } from "react";
 
@@ -43,7 +44,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
 
   return (
     <section className="relative overflow-hidden bg-white pb-24 pt-16">
-      <div className="absolute inset-x-0 top-0 -z-10 h-full bg-gradient-to-br from-orange-50 via-white to-white" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-full bg-gradient-to-br from-orange-100 via-white to-orange-50" />
       <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1.1fr,0.9fr]">
         <motion.div
           initial={{ opacity: 0, y: 32 }}
@@ -51,15 +52,15 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           transition={{ duration: 0.6 }}
           className="space-y-8"
         >
-          <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-orange-500">
-            Comparateur nouvelle génération
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-orange-500 shadow-sm ring-1 ring-orange-200/60 backdrop-blur">
+            Comparateur fitness
           </div>
           <h1 className="text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-            Le meilleur prix pour vos compléments sportifs
+            Trouvez les meilleurs suppléments au meilleur prix
           </h1>
           <p className="text-lg leading-relaxed text-slate-600">
-            Accédez instantanément aux offres les plus compétitives sur la whey, les protéines végétales
-            ou les packs de nutrition. Analysez les notes, les économies et les tendances pour acheter au moment idéal.
+            Comparez les prix de vos protéines, créatines et compléments préférés sur les plus grandes marques.
+            Visualisez les économies réalisables et laissez-vous guider vers le meilleur rapport qualité/prix.
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -74,9 +75,10 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Recherchez une whey par marque, objectif ou type"
                 aria-describedby="popular-searches"
-                className="h-14 rounded-full border-orange-100 bg-white shadow-md"
+                className="h-14 rounded-full border-orange-200 bg-white/90 shadow-lg shadow-orange-100/50 backdrop-blur"
               />
               <Button type="submit" size="lg" className="sm:w-auto">
+                <Search className="mr-2 h-5 w-5" aria-hidden="true" />
                 Rechercher
               </Button>
             </div>
@@ -95,7 +97,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
                     setSearchQuery(suggestion);
                     handleSearch(suggestion);
                   }}
-                  className="rounded-full border border-orange-100 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-orange-200 hover:text-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
+                  className="rounded-full border border-white/60 bg-white/60 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm backdrop-blur transition hover:border-orange-200 hover:bg-white hover:text-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
                   aria-label={`Rechercher ${suggestion}`}
                 >
                   {suggestion}
@@ -103,6 +105,9 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
               ))}
             </div>
           </form>
+          <p className="text-sm text-slate-500">
+            +900 produits comparés · 70 marques suivies · mises à jour en continu
+          </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button size="lg" onClick={onStartComparison} className="shadow-md">
               Lancer le comparateur

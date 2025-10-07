@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { Award, Star } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -16,8 +17,6 @@ const priceFormatter = new Intl.NumberFormat("fr-FR", {
 });
 
 type FetchState = "idle" | "loading" | "success" | "error";
-
-const starArray = Array.from({ length: 5 });
 
 const formatRemainingTime = (deadline: string) => {
   const diff = new Date(deadline).getTime() - Date.now();
@@ -73,8 +72,7 @@ function DealCard({
 }) {
   const countdown = useDealCountdown(deal.expiresAt, hydrated);
   const ratingValue = typeof deal.rating === "number" ? deal.rating : null;
-  const reviewCount =
-    typeof deal.reviewsCount === "number" ? deal.reviewsCount : null;
+  const reviewCount = typeof deal.reviewsCount === "number" ? deal.reviewsCount : null;
 
   const formattedPrice = useMemo(() => {
     if (deal.price?.formatted) {
@@ -90,6 +88,31 @@ function DealCard({
     return "Prix non disponible";
   }, [deal.price]);
 
+  const referencePrice = useMemo(() => {
+    if (deal.totalPrice?.formatted) {
+      return deal.totalPrice.formatted;
+    }
+
+    if (typeof deal.totalPrice?.amount === "number") {
+      const currency = deal.totalPrice.currency ?? "EUR";
+      const formatted = priceFormatter.format(deal.totalPrice.amount);
+      return currency === "EUR" ? formatted : `${formatted} ${currency}`;
+    }
+
+    return null;
+  }, [deal.totalPrice]);
+
+  const discountPercentage = useMemo(() => {
+    if (
+      typeof deal.price?.amount === "number" &&
+      typeof deal.totalPrice?.amount === "number" &&
+      deal.totalPrice.amount > deal.price.amount
+    ) {
+      return Math.round(((deal.totalPrice.amount - deal.price.amount) / deal.totalPrice.amount) * 100);
+    }
+    return null;
+  }, [deal.price?.amount, deal.totalPrice?.amount]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -97,22 +120,24 @@ function DealCard({
       viewport={{ once: true, amount: 0.2 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Card className="flex h-full flex-col overflow-hidden">
+      <Card className="group flex h-full flex-col overflow-hidden border-orange-100 bg-white/95 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
         <CardHeader className="space-y-4">
           <div className="relative overflow-hidden rounded-3xl">
             <img
               src={buildDisplayImageUrl(deal.image) || "/placeholder.png"}
               alt={deal.title}
-              className="h-52 w-full rounded-3xl object-cover"
+              className="h-56 w-full rounded-3xl object-cover transition duration-500 group-hover:scale-105"
               loading="lazy"
               decoding="async"
             />
-            <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-orange-500 shadow">
-              {deal.source}
-            </div>
+            {discountPercentage && (
+              <div className="absolute right-4 top-4 rounded-full bg-orange-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
+                -{discountPercentage}%
+              </div>
+            )}
             {deal.bestPrice && (
-              <div className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-600 shadow">
-                🏆 Meilleur prix
+              <div className="absolute left-4 bottom-4 inline-flex items-center gap-1 rounded-full bg-emerald-500/95 px-3 py-1 text-xs font-semibold text-white shadow">
+                <Award className="h-3 w-3" aria-hidden="true" /> Meilleur prix
               </div>
             )}
           </div>
@@ -128,6 +153,7 @@ function DealCard({
           <div>
             <h3 className="text-xl font-semibold text-slate-900">{deal.title}</h3>
             <p className="mt-1 text-sm text-slate-500">{deal.vendor}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{deal.source}</p>
           </div>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col justify-between space-y-6">
@@ -144,16 +170,15 @@ function DealCard({
             {ratingValue ? (
               <>
                 <div className="flex items-center gap-0.5" aria-hidden="true">
-                  {starArray.map((_, starIndex) => {
+                  {Array.from({ length: 5 }).map((_, starIndex) => {
                     const isFilled = starIndex + 1 <= Math.round(ratingValue);
 
                     return (
-                      <span
+                      <Star
                         key={`${deal.id}-star-${starIndex}`}
-                        className={isFilled ? "text-orange-400" : "text-slate-200"}
-                      >
-                        ★
-                      </span>
+                        className={`h-4 w-4 ${isFilled ? "fill-orange-400 text-orange-400" : "text-slate-200"}`}
+                        aria-hidden="true"
+                      />
                     );
                   })}
                 </div>
@@ -171,15 +196,18 @@ function DealCard({
             )}
           </div>
           <div>
-            <p className="text-3xl font-bold text-slate-900">{formattedPrice}</p>
-            {deal.shippingText && (
-              <p className="text-xs text-slate-400">{deal.shippingText}</p>
-            )}
+            <div className="flex items-end gap-2">
+              <p className="text-3xl font-bold text-emerald-600">{formattedPrice}</p>
+              {referencePrice && (
+                <span className="text-sm text-slate-400 line-through">{referencePrice}</span>
+              )}
+            </div>
+            {deal.shippingText && <p className="text-xs text-slate-400">{deal.shippingText}</p>}
           </div>
           {deal.link ? (
             <Button asChild className="w-full rounded-full">
               <a href={deal.link} target="_blank" rel="noopener noreferrer nofollow">
-                Voir l&apos;offre
+                Comparer les prix
               </a>
             </Button>
           ) : (
@@ -234,7 +262,7 @@ export function DealsShowcase() {
   const hasDeals = deals.length > 0;
 
   return (
-    <section id="promotions" className="bg-white py-20">
+    <section id="promotions" className="bg-[#f9fafb] py-20">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
@@ -258,7 +286,7 @@ export function DealsShowcase() {
             ? Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={`skeleton-${index}`}
-                  className="h-[420px] animate-pulse rounded-3xl border border-orange-50 bg-orange-50/60"
+                  className="h-[420px] animate-pulse rounded-3xl border border-orange-100 bg-white"
                   aria-hidden
                 />
               ))
