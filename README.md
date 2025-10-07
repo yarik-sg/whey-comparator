@@ -1,78 +1,81 @@
 # 🧬 Whey Comparator
 
-Application web construite avec **React 18 + Vite** pour comparer rapidement les compléments alimentaires (whey, créatine, etc.) et suivre leurs meilleures offres comme sur idealo.
+Comparateur multi-sources pour les compléments alimentaires (whey, créatine, etc.). Le projet regroupe une API **FastAPI** qui agrège des offres SerpAPI/scraper et une interface **Next.js 14** optimisée pour consulter, comparer et analyser les prix.
 
-## 🚀 Fonctionnalités principales
+## ✨ Fonctionnalités clés
 
-- **Catalogue interactif** : liste fictive de whey et créatines exposée via React Query avec un délai simulé pour représenter un appel API réel.
-- **Filtres dynamiques** : filtrage par marque, type de produit et fourchette de prix avec calcul automatique des bornes.
-- **Comparateur de 2 à 4 produits** : tableau responsive affichant prix, remises, nutrition et liens externes.
-- **KPI instantanés** : calcul du prix moyen et du meilleur rapport qualité/prix basé sur les protéines par 100 g.
-- **Alertes prix** : formulaire avec validation côté client et gestion d'état (Zustand) pour simuler l'inscription à une notification e-mail.
+- **Catalogue unifié** : liste des produits enrichie (prix, disponibilité, notation, rapport protéines/€) avec sélection automatique de la meilleure offre.  
+- **Comparateur multi-produits** : page dédiée permettant de juxtaposer plusieurs références, d'afficher un résumé des meilleurs prix et d'accéder rapidement aux marchands.  
+- **Historique et fallback** : données de secours embarquées lorsque le scraper est indisponible, avec génération d'images réalistes et normalisation automatique des URLs distantes.  
+- **Front moderne** : composants Tailwind réutilisables, mode sombre natif, navigation fluide entre catalogue, promotions et comparateur.
 
-## 🧱 Architecture du projet
+## 🏗️ Architecture du dépôt
 
 ```
 whey-comparator/
-├── src/
-│   ├── components/        # UI modulaire (filtres, tableau comparatif, KPI, formulaires)
-│   ├── data/              # Catalogue de produits statique (mock)
-│   ├── hooks/             # Hooks React Query pour la récupération des données
-│   ├── store/             # Stores Zustand (sélection produits, alertes prix)
-│   └── App.tsx            # Composition de la page principale
-├── index.html             # Point d'entrée Vite
-├── package.json           # Scripts npm et dépendances
-└── vite.config.ts         # Configuration Vite + React
+├── main.py                  # API FastAPI (agrégation, normalisation, comparaison)
+├── fallback_catalogue.py    # Données de secours utilisées par l'API
+├── services/                # Intégrations externes et utilitaires scraping
+├── frontend/                # Application Next.js 14 (app router)
+│   ├── src/app/             # Pages (catalogue, comparaison, produits…)
+│   ├── src/components/      # UI (ProductCard, OfferTable, etc.)
+│   └── src/lib/             # Client HTTP, helpers
+├── docs/                    # Documentation annexe
+└── docker-compose.yml       # Orchestration locale API + frontend
 ```
 
-## 🔧 Prérequis
+## 🚀 Mise en route
 
-- Node.js 18 ou version supérieure
-- npm 9+ (ou pnpm/yarn si vous adaptez les scripts)
+### Prérequis
 
-## ▶️ Démarrer le projet
+- Python 3.11+
+- Node.js 18+
+- npm 9+ ou pnpm/yarn (adapter les commandes si besoin)
+
+### Lancer l'API FastAPI
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate  # sous Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+Variables utiles :
+
+- `SERPAPI_KEY` : clé API SerpAPI (une valeur de développement est fournie par défaut).
+- `SCRAPER_BASE_URL` : URL du service scraper (défaut `http://localhost:8001`).
+
+### Lancer le frontend Next.js
+
+```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-Le serveur Vite démarre généralement sur [http://localhost:5173](http://localhost:5173). Le mode `dev` recharge automatiquement la page.
+L'application sera disponible sur [http://localhost:3000](http://localhost:3000). Pour relier le frontend à l'API locale, définissez `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000` (ou utilisez le proxy `/api/proxy`).
 
-### Autres scripts utiles
+### Scripts utiles
 
-| Commande         | Description                                         |
-|------------------|-----------------------------------------------------|
-| `npm run build`  | Vérifie les types TypeScript et génère le bundle.   |
-| `npm run preview`| Sert la version buildée.                            |
-| `npm run lint`   | Analyse le code avec ESLint (règles React + TS).    |
+| Commande                 | Description                                                |
+|--------------------------|------------------------------------------------------------|
+| `npm run lint`           | Analyse TypeScript/ESLint.                                |
+| `npm run build`          | Génère la version production de l'interface.              |
+| `npm run preview`        | Sert l'app Next.js buildée.                               |
+| `uvicorn main:app --reload` | Démarre l'API avec rechargement à chaud.              |
 
-## 🌐 Variables d'environnement
+## 🔍 Historique des actions réalisées
 
-Le store des alertes prix peut envoyer les inscriptions vers un service externe.
-Définissez l'URL dans un fichier `.env` à la racine :
+1. **Tâche 1 – Fondations backend** : création de l'API FastAPI, du catalogue de secours et des routines d'agrégation (normalisation des prix, calcul des indicateurs, sélection du meilleur deal).  
+2. **Tâche 2 – Interface Next.js** : mise en place de l'app Next 14, pages catalogue/produits/comparateur, composants principaux (ProductCard, OfferTable, SiteFooter) et intégration du client HTTP.  
+3. **Tâche 3 – Améliorations continues** : comparaison pré-remplie, meilleur rendu mobile/desktop, correction de l'affichage des images produits, mise à jour de la documentation.
 
-```bash
-VITE_SERPAI_PRICE_ALERT_URL=https://votre-api.exemple.com/alerts
-```
+## 🧪 Tests & Qualité
 
-Si la variable n'est pas définie, une simulation locale s'exécute (latence + erreurs aléatoires) pour faciliter le développement.
-
-## 🧠 Points clés de l'implémentation
-
-- **React Query** gère le cache produit (`src/hooks/useProducts.ts`) avec un temps de conservation de 5 minutes.
-- **Zustand** gère :
-  - la sélection de 2 à 4 produits (`src/store/productSelectionStore.ts`),
-  - le formulaire d'alertes prix (`src/store/priceAlertStore.ts`).
-- **Tailwind CSS** fournit les styles utilitaires utilisés dans toute l'application.
-- Le composant `PriceAlertsSection` encapsule le formulaire, la mise en page marketing et les états de chargement.
-
-## 🔭 Prochaines évolutions envisagées
-
-- Remplacer les données statiques par une API FastAPI/Node et un scraper temps réel.
-- Ajouter l'authentification utilisateur pour sauvegarder favoris et alertes.
-- Intégrer de vrais graphiques d'historique des prix (Recharts est déjà installé).
+- ESLint et TypeScript garantissent la cohérence du frontend (`npm run lint`).
+- L'API s'accompagne de validations runtime et de données de fallback pour un comportement prévisible même sans services externes.
 
 ---
 
-💡 Ce dépôt sert de base front-end : structure, expérience utilisateur et gestion d'état sont prêtes pour une intégration ultérieure avec des services back-end et des données en temps réel.
+💡 Besoin d'intégrer de nouvelles sources ou d'étendre les métriques ? Ajoutez simplement un service dans `services/` et exposez-le via l'API : le frontend consommera automatiquement les champs normalisés.

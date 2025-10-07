@@ -85,6 +85,20 @@ def normalize_image_url(value: Any) -> Optional[str]:
         if trimmed:
             if trimmed.startswith("//"):
                 return "https:" + trimmed
+            if trimmed.startswith("http://"):
+                try:
+                    parsed = urlparse(trimmed)
+                    host = (parsed.hostname or "").lower()
+                except Exception:
+                    host = ""
+
+                if host and not (
+                    host == "localhost"
+                    or host.startswith("localhost:")
+                    or host.startswith("127.")
+                    or host.endswith(".local")
+                ):
+                    return "https://" + trimmed[len("http://") :]
             return trimmed
     return None
 
