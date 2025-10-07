@@ -77,6 +77,36 @@ def is_http_url(u: Optional[str]) -> bool:
 PLACEHOLDER_IMAGE_DOMAINS = {"example.com"}
 
 
+def _is_serpapi_host(url: str) -> bool:
+    try:
+        host = urlparse(url).hostname or ""
+    except Exception:
+        return False
+    return host.endswith("serpapi.com")
+
+
+def pick_best_image_candidate(candidates: List[Optional[str]]) -> Optional[str]:
+    """Pick the most suitable image URL for display."""
+
+    preferred: List[str] = []
+    fallback: List[str] = []
+
+    for candidate in candidates:
+        normalized = normalize_image_url(candidate)
+        if not normalized:
+            continue
+        if _is_serpapi_host(normalized):
+            fallback.append(normalized)
+        else:
+            preferred.append(normalized)
+
+    if preferred:
+        return preferred[0]
+    if fallback:
+        return fallback[0]
+    return None
+
+
 def normalize_image_url(value: Any) -> Optional[str]:
     """Return a trimmed image URL or ``None`` when empty/invalid."""
 
@@ -156,10 +186,9 @@ def build_placeholder_image(*, name: Optional[str], brand: Optional[str]) -> str
 def resolve_image_with_placeholder(
     candidates: List[Optional[str]], *, name: Optional[str], brand: Optional[str]
 ) -> str:
-    for candidate in candidates:
-        normalized = normalize_image_url(candidate)
-        if normalized and not looks_like_placeholder_image(normalized):
-            return normalized
+    candidate = pick_best_image_candidate(candidates)
+    if candidate and not looks_like_placeholder_image(candidate):
+        return candidate
     return build_placeholder_image(name=name, brand=brand)
 
 
@@ -514,7 +543,21 @@ def collect_serp_deals(
             continue
 
         product_id = item.get("product_id")
-        img = item.get("thumbnail")
+
+        image_candidates: List[Optional[str]] = [
+            item.get("thumbnail"),
+            item.get("image"),
+        ]
+
+        product_photos = item.get("product_photos")
+        if isinstance(product_photos, list):
+            for photo in product_photos:
+                if isinstance(photo, dict):
+                    image_candidates.extend(
+                        photo.get(key)
+                        for key in ("image", "link", "thumbnail", "source")
+                    )
+
         g_price = sanitize_price_str(item.get("price"))
         source_name = item.get("source") or item.get("merchant") or "Vendeur"
         display_link = decode_google_redirect(
@@ -526,6 +569,7 @@ def collect_serp_deals(
         rating_val = parse_float(item.get("rating"))
         reviews_count = parse_int(item.get("reviews"))
 
+        prod: Optional[Dict[str, Any]] = None
         if product_id:
             prod = serpapi_product_offers(str(product_id))
             sellers_results = prod.get("sellers_results") or {}
@@ -546,17 +590,34 @@ def collect_serp_deals(
                 rating_val = parse_float(best.get("rating") or rating_val)
                 reviews_count = parse_int(best.get("reviews") or reviews_count)
 
-            if not img:
-                media = (prod.get("product_results") or {}).get("media", [])
+            product_results = prod.get("product_results") if isinstance(prod, dict) else {}
+            if isinstance(product_results, dict):
+                media = product_results.get("media", [])
                 if isinstance(media, list):
                     for media_item in media:
-                        if (
-                            isinstance(media_item, dict)
-                            and media_item.get("type") == "image"
-                            and media_item.get("link")
-                        ):
-                            img = media_item["link"]
-                            break
+                        if isinstance(media_item, dict) and media_item.get("type") == "image":
+                            image_candidates.extend(
+                                media_item.get(key)
+                                for key in ("link", "image", "thumbnail", "source")
+                            )
+
+                inline_images = product_results.get("inline_images", [])
+                if isinstance(inline_images, list):
+                    for image_item in inline_images:
+                        if isinstance(image_item, dict):
+                            image_candidates.extend(
+                                image_item.get(key)
+                                for key in ("image", "link", "thumbnail", "source")
+                            )
+
+                product_images = product_results.get("images", [])
+                if isinstance(product_images, list):
+                    for image_item in product_images:
+                        if isinstance(image_item, dict):
+                            image_candidates.extend(
+                                image_item.get(key)
+                                for key in ("link", "image", "thumbnail", "source")
+                            )
 
         if not is_http_url(display_link):
             display_link = None
@@ -604,7 +665,7 @@ def collect_serp_deals(
                 in_stock=in_stock,
                 stock_status=stock_status,
                 link=display_link,
-                image=img,
+                image=pick_best_image_candidate(image_candidates),
                 rating=rating_val,
                 reviews_count=reviews_count,
                 source="Google Shopping",
