@@ -25,7 +25,11 @@ const initialState: FormState = {
   priceThreshold: "",
 };
 
-export function PriceAlertForm() {
+interface PriceAlertFormProps {
+  className?: string;
+}
+
+export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
   const [formState, setFormState] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<SubmissionStatus>({ state: "idle" });
@@ -117,13 +121,15 @@ export function PriceAlertForm() {
     [formState, validate]
   );
 
+  const containerClassName = [
+    "space-y-6 rounded-3xl border border-white/10 bg-[#0d1b2a] p-8 shadow-lg",
+    className?.trim(),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-6 rounded-3xl border border-white/10 bg-[#0d1b2a] p-8 shadow-lg"
-      autoComplete="off"
-      noValidate
-    >
+    <form onSubmit={handleSubmit} className={containerClassName} autoComplete="off" noValidate>
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="sm:col-span-2" suppressHydrationWarning>
           <label htmlFor="alert-email" className="block text-sm font-medium text-gray-200">
