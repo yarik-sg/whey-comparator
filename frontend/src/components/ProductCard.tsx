@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 
 import type { ProductSummary } from "@/types/api";
-import { buildDisplayImageUrl } from "@/lib/images";
 
 function pickImageUrl(
   ...candidates: Array<string | null | undefined>
@@ -27,7 +26,7 @@ function getProductImage(product: ProductSummary): { src: string; alt: string } 
     product.image,
     product.bestDeal?.image,
   );
-  const resolvedUrl = buildDisplayImageUrl(imageUrl);
+  const resolvedUrl = imageUrl;
 
   if (!resolvedUrl) {
     return null;
