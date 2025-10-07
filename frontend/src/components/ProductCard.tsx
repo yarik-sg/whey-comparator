@@ -22,7 +22,11 @@ function pickImageUrl(
 }
 
 function getProductImage(product: ProductSummary): { src: string; alt: string } | null {
-  const imageUrl = pickImageUrl(product.image, product.bestDeal?.image);
+  const imageUrl = pickImageUrl(
+    product.image_url,
+    product.image,
+    product.bestDeal?.image,
+  );
   const resolvedUrl = buildDisplayImageUrl(imageUrl);
 
   if (!resolvedUrl) {

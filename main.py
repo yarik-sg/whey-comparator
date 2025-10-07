@@ -839,16 +839,36 @@ def build_product_summary(
         "formatted": best_formatted,
     }
 
-    image_candidates: List[Optional[str]] = [base_payload.get("image")]
+    image_candidates: List[Optional[str]] = [
+        base_payload.get("image_url"),
+        base_payload.get("image"),
+    ]
 
     if best_offer and isinstance(best_offer, dict):
-        image_candidates.append(best_offer.get("image"))
+        image_candidates.extend(
+            [
+                best_offer.get("image"),
+                best_offer.get("image_url"),
+                best_offer.get("imageUrl"),
+                best_offer.get("thumbnail"),
+                best_offer.get("img"),
+            ]
+        )
 
     for deal in aggregated:
         if not isinstance(deal, dict):
             continue
-        image_candidates.append(deal.get("image"))
+        image_candidates.extend(
+            [
+                deal.get("image"),
+                deal.get("image_url"),
+                deal.get("imageUrl"),
+                deal.get("thumbnail"),
+                deal.get("img"),
+            ]
+        )
 
+    resolved_product_image_url = pick_best_image_candidate(image_candidates)
     product_image = resolve_image_with_placeholder(
         image_candidates,
         name=base_payload.get("name"),
@@ -858,6 +878,11 @@ def build_product_summary(
     return {
         **base_payload,
         "image": product_image,
+        "image_url": (
+            resolved_product_image_url
+            or base_payload.get("image_url")
+            or base_payload.get("image")
+        ),
         "category": base_payload.get("category"),
         "bestPrice": best_price_payload,
         "bestDeal": best_offer,
@@ -887,14 +912,31 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
     payload = {key: product.get(key) for key in keys}
 
     offers = product.get("offers")
-    image_candidates: List[Optional[str]] = [payload.get("image")]
+    image_candidates: List[Optional[str]] = [
+        payload.get("image"),
+        product.get("image_url"),
+        product.get("imageUrl"),
+        product.get("thumbnail"),
+        product.get("img"),
+    ]
 
     if isinstance(offers, list):
         for offer in offers:
             if not isinstance(offer, dict):
                 continue
-            image_candidates.append(offer.get("image"))
+            image_candidates.extend(
+                [
+                    offer.get("image"),
+                    offer.get("image_url"),
+                    offer.get("imageUrl"),
+                    offer.get("thumbnail"),
+                    offer.get("img"),
+                ]
+            )
 
+    resolved_image_url = pick_best_image_candidate(image_candidates)
+
+    payload["image_url"] = resolved_image_url or payload.get("image")
     payload["image"] = resolve_image_with_placeholder(
         image_candidates,
         name=payload.get("name"),
