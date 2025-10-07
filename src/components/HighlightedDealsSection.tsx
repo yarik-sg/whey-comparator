@@ -50,9 +50,9 @@ export const HighlightedDealsSection = ({ deals, products, isLoading }: Highligh
 
   if (isLoading) {
     return (
-      <section className="surface-card glass-effect grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-4 rounded-2xl bg-white/80 p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div key={index} className="h-48 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-slate-700/40" />
+          <div key={index} className="h-48 animate-pulse rounded-xl bg-slate-200" />
         ))}
       </section>
     );
@@ -63,14 +63,14 @@ export const HighlightedDealsSection = ({ deals, products, isLoading }: Highligh
   }
 
   return (
-    <section className="surface-card glass-effect space-y-6 p-8">
+    <section className="space-y-6 rounded-2xl bg-white/80 p-6 shadow-sm">
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Offres à ne pas manquer</h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <h2 className="text-lg font-semibold text-slate-900">Offres à ne pas manquer</h2>
+        <p className="text-sm text-slate-500">
           Promotions vérifiées et remises limitées dans le temps pour optimiser votre panier.
         </p>
       </div>
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(({ deal, product }) => {
           const discountPercent = Math.round(product.discountRate * 100);
           const endsAtLabel = formatDate(product.promotionEndsAt);
@@ -78,51 +78,51 @@ export const HighlightedDealsSection = ({ deals, products, isLoading }: Highligh
           return (
             <article
               key={deal.id}
-              className="group flex h-full flex-col justify-between gap-6 rounded-3xl border border-transparent bg-white/70 p-6 shadow-lg shadow-slate-900/5 transition hover:-translate-y-1 hover:border-primary-200 hover:shadow-glow-primary dark:bg-slate-900/60"
+              className="flex h-full flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
             >
               <div className="space-y-3">
                 <ProductImage
                   imageUrl={product.imageUrl}
                   alt={product.imageAlt ?? product.name}
-                  className="h-40 w-full rounded-2xl"
+                  className="h-40 w-full rounded-xl"
                   fallbackLabel={`${product.brand} ${product.name}`}
                 />
-                <div className="flex flex-wrap items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-600">
                   {product.badges.map((badge) => (
                     <span
                       key={badge}
-                      className="rounded-full bg-primary-50 px-2 py-1 text-primary-700 shadow-sm dark:bg-primary-500/10 dark:text-primary-200"
+                      className="rounded-full bg-primary-50 px-2 py-1 text-primary-700"
                     >
                       {badge}
                     </span>
                   ))}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{product.brand}</p>
-                  <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{product.name}</h3>
+                  <p className="text-sm font-medium text-slate-500">{product.brand}</p>
+                  <h3 className="text-xl font-semibold text-slate-900">{product.name}</h3>
                 </div>
-                <p className="text-sm text-slate-600 dark:text-slate-300">{deal.description}</p>
+                <p className="text-sm text-slate-600">{deal.description}</p>
               </div>
               <div className="mt-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <span className="price-tag text-base">{formatCurrency(product.price)}</span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-slate-900">{formatCurrency(product.price)}</span>
                   {product.discountRate > 0 ? (
                     <>
-                      <span className="text-sm text-slate-400 line-through dark:text-slate-500">
+                      <span className="text-sm text-slate-400 line-through">
                         {formatCurrency(product.originalPrice)}
                       </span>
-                      <span className="text-sm font-semibold text-accent-500">-{discountPercent}%</span>
+                      <span className="text-sm font-semibold text-emerald-600">-{discountPercent}%</span>
                     </>
                   ) : null}
                 </div>
                 {endsAtLabel ? (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Offre valable jusqu’au {endsAtLabel}.</p>
+                  <p className="text-xs text-slate-500">Offre valable jusqu’au {endsAtLabel}.</p>
                 ) : (
-                  <p className="text-xs text-slate-400 dark:text-slate-500">Offre permanente.</p>
+                  <p className="text-xs text-slate-400">Offre permanente.</p>
                 )}
                 <a
                   href={product.link ?? '#'}
-                  className="btn-primary inline-flex w-full justify-center"
+                  className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700"
                 >
                   {deal.ctaLabel}
                 </a>

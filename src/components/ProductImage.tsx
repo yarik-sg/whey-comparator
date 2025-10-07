@@ -9,8 +9,8 @@ type ProductImageProps = {
   fallbackLabel?: string;
 };
 
-const baseContainerClasses = 'relative overflow-hidden bg-slate-100 dark:bg-slate-800/60';
-const fallbackClasses = 'text-lg font-semibold uppercase tracking-wide text-white drop-shadow-md';
+const baseContainerClasses = 'relative overflow-hidden bg-slate-100';
+const fallbackClasses = 'text-lg font-semibold uppercase tracking-wide text-white';
 
 const fallbackGradients = [
   'from-primary-500 via-primary-500/95 to-primary-600',
