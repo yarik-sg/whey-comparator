@@ -209,6 +209,7 @@ export const ProductFiltersSidebar = ({
                     imageUrl={product.imageUrl}
                     alt={product.imageAlt ?? product.name}
                     className="h-12 w-12 flex-shrink-0 rounded-lg"
+                    fallbackLabel={`${product.brand} ${product.name}`}
                   />
                   <div className="flex flex-col">
                     <span className="font-medium text-slate-900">{product.name}</span>

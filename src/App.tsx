@@ -7,7 +7,6 @@ import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
 import { ProductComparisonTable } from './components/ProductComparisonTable';
 
 import { HighlightedDealsSection } from './components/HighlightedDealsSection';
-import { PriceAlertsSection } from './components/PriceAlertsSection';
 import { highlightedDeals } from './data/products';
 import { useProducts } from './hooks/useProducts';
 import {

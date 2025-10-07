@@ -85,6 +85,7 @@ export const HighlightedDealsSection = ({ deals, products, isLoading }: Highligh
                   imageUrl={product.imageUrl}
                   alt={product.imageAlt ?? product.name}
                   className="h-40 w-full rounded-xl"
+                  fallbackLabel={`${product.brand} ${product.name}`}
                 />
                 <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-600">
                   {product.badges.map((badge) => (
