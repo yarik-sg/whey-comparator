@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 
+import { Card } from "@/components/ui/card";
+
 import {
   fetchPopularCategoryCounts,
   popularCategories,
@@ -51,13 +53,14 @@ export function PopularCategories({ onSelectCategory }: PopularCategoriesProps) 
   );
 
   return (
-    <section className="relative bg-[#0b1320] py-20">
-      <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/5 to-transparent"></div>
-      <div className="container relative mx-auto px-6">
+    <section className="bg-white py-20">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">Catégories populaires</h2>
-          <p className="mt-4 text-lg text-gray-300">
-            Explorez les segments les plus recherchés par notre communauté et lancez un comparatif en un clic.
+          <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+            Catégories populaires
+          </h2>
+          <p className="mt-4 text-lg text-slate-500">
+            Explorez les univers les plus recherchés par notre communauté et lancez un comparatif en un clic.
           </p>
         </div>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -70,28 +73,30 @@ export function PopularCategories({ onSelectCategory }: PopularCategoriesProps) 
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ delay: animationDelay, duration: 0.4 }}
-              className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 text-left shadow-lg transition duration-300 hover:-translate-y-1 hover:border-orange-400/60 hover:shadow-2xl"
+              className="text-left"
             >
-              <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-transparent" />
-              </div>
-              <div className="relative flex items-start justify-between">
-                <span
-                  className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-2xl ${iconColor} shadow-inner`}
-                  aria-hidden
-                >
-                  {icon}
+              <Card className="group relative h-full overflow-hidden border-orange-100 bg-white/90 p-6 text-left shadow-sm transition hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg">
+                <div className="absolute inset-x-0 top-0 h-20 rounded-3xl bg-gradient-to-r from-orange-50 via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
+                <div className="relative flex items-start justify-between">
+                  <span
+                    className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-2xl ${iconColor}`}
+                    aria-hidden
+                  >
+                    {icon}
+                  </span>
+                  <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-500">
+                    {count.toLocaleString("fr-FR")}&nbsp;produits
+                  </span>
+                </div>
+                <h3 className="relative mt-6 text-xl font-semibold text-slate-900">{label}</h3>
+                <p className="relative mt-3 text-sm text-slate-500">{description}</p>
+                <span className="relative mt-5 inline-flex items-center gap-2 text-sm font-medium text-orange-500">
+                  Découvrir
+                  <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
                 </span>
-                <span className="text-sm font-medium text-orange-200/90">{count.toLocaleString("fr-FR")} produits</span>
-              </div>
-              <h3 className="relative mt-6 text-xl font-semibold text-white">{label}</h3>
-              <p className="relative mt-3 text-sm text-gray-300">{description}</p>
-              <span className="relative mt-5 inline-flex items-center gap-2 text-sm font-medium text-orange-200">
-                Découvrir
-                <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
-              </span>
+              </Card>
             </motion.button>
           ))}
         </div>

@@ -22,7 +22,10 @@ export function Pagination({ page, totalPages, onPageChange, disabled = false }:
   };
 
   return (
-    <nav aria-label="Pagination" className="flex flex-col items-center gap-3 text-sm text-gray-300 sm:flex-row sm:justify-between">
+    <nav
+      aria-label="Pagination"
+      className="flex flex-col items-center gap-3 rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm sm:flex-row sm:justify-between"
+    >
       <p>
         Page <strong>{page}</strong> sur <strong>{totalPages || 1}</strong>
       </p>
@@ -31,7 +34,7 @@ export function Pagination({ page, totalPages, onPageChange, disabled = false }:
           type="button"
           onClick={() => goToPage(page - 1)}
           disabled={!hasPrev || disabled}
-          className="rounded-full border border-white/10 px-3 py-1 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-600 transition hover:border-orange-200 hover:text-orange-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Précédent
         </button>
@@ -39,7 +42,7 @@ export function Pagination({ page, totalPages, onPageChange, disabled = false }:
           type="button"
           onClick={() => goToPage(page + 1)}
           disabled={!hasNext || disabled}
-          className="rounded-full border border-white/10 px-3 py-1 text-sm font-medium text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-600 transition hover:border-orange-200 hover:text-orange-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Suivant
         </button>

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";
 import { buildDisplayImageUrl } from "@/lib/images";
 import type { DealItem } from "@/types/api";
@@ -15,6 +17,8 @@ const priceFormatter = new Intl.NumberFormat("fr-FR", {
 
 type FetchState = "idle" | "loading" | "success" | "error";
 
+const starArray = Array.from({ length: 5 });
+
 const formatRemainingTime = (deadline: string) => {
   const diff = new Date(deadline).getTime() - Date.now();
 
@@ -26,7 +30,6 @@ const formatRemainingTime = (deadline: string) => {
   const days = Math.floor(totalSeconds / (24 * 3600));
   const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
 
   if (days > 0) {
     return `${days}j ${hours}h ${minutes}m`;
@@ -34,11 +37,11 @@ const formatRemainingTime = (deadline: string) => {
 
   return `${hours.toString().padStart(2, "0")}:${minutes
     .toString()
-    .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    .padStart(2, "0")}:${(totalSeconds % 60).toString().padStart(2, "0")}`;
 };
 
 function useDealCountdown(deadline?: string | null, enabled?: boolean) {
-  const [remaining, setRemaining] = useState<string | undefined>(undefined);
+  const [remaining, setRemaining] = useState<string | undefined>();
 
   useEffect(() => {
     if (!deadline || !enabled) {
@@ -59,15 +62,6 @@ function useDealCountdown(deadline?: string | null, enabled?: boolean) {
   return remaining;
 }
 
-const starArray = Array.from({ length: 5 });
-const gradients = [
-  "from-orange-500/80 to-red-500/80",
-  "from-blue-500/80 to-cyan-500/80",
-  "from-purple-500/80 to-pink-500/80",
-  "from-emerald-500/80 to-lime-500/80",
-  "from-slate-900/70 to-slate-800/70",
-];
-
 function DealCard({
   deal,
   index,
@@ -78,7 +72,6 @@ function DealCard({
   hydrated: boolean;
 }) {
   const countdown = useDealCountdown(deal.expiresAt, hydrated);
-  const gradient = gradients[index % gradients.length];
   const ratingValue = typeof deal.rating === "number" ? deal.rating : null;
   const reviewCount =
     typeof deal.reviewsCount === "number" ? deal.reviewsCount : null;
@@ -98,122 +91,109 @@ function DealCard({
   }, [deal.price]);
 
   return (
-    <motion.article
-      key={deal.id}
-      initial={{ opacity: 0, y: 30 }}
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ delay: index * 0.1 }}
-      className={`relative flex h-full flex-col overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-6 shadow-lg`}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ delay: index * 0.05 }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wider text-white/80">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-2 rounded-full bg-black/30 px-3 py-1">
-            {deal.source}
-          </span>
-          {deal.bestPrice && (
-            <span
-              className="inline-flex items-center gap-2 rounded-full bg-lime-300/90 px-3 py-1 text-slate-900"
-              aria-label="Meilleur prix actuel"
-            >
-              🏆 Meilleur prix
-            </span>
-          )}
-        </div>
-        {deal.pricePerKg && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-black/30 px-3 py-1">
-            {deal.pricePerKg.toFixed(2)} €/kg
-          </span>
-        )}
-      </div>
-      <div className="mt-5 overflow-hidden rounded-xl bg-black/20">
-        <img
-          src={buildDisplayImageUrl(deal.image) || "/placeholder.png"}
-          alt={deal.title}
-          className="h-48 w-full object-cover object-center sm:h-52"
-          loading="lazy"
-          decoding="async"
-        />
-      </div>
-      <h3 className="mt-5 text-2xl font-semibold text-white">{deal.title}</h3>
-      <p className="mt-1 text-sm font-medium text-white/90">{deal.vendor}</p>
-      {deal.weightKg && (
-        <p className="mt-1 text-xs text-white/70">
-          Conditionnement : {deal.weightKg.toLocaleString("fr-FR")} kg
-        </p>
-      )}
-      <div
-        className="mt-4 flex flex-wrap items-center gap-2 text-white"
-        aria-label={
-          ratingValue
-            ? `Note ${ratingValue.toFixed(1)} sur 5${
-                reviewCount ? ` basée sur ${reviewCount} avis` : ""
-              }`
-            : undefined
-        }
-      >
-        {ratingValue ? (
-          <>
-            <div className="flex items-center gap-0.5" aria-hidden="true">
-              {starArray.map((_, starIndex) => {
-                const isFilled = starIndex + 1 <= Math.round(ratingValue);
-
-                return (
-                  <span
-                    key={`${deal.id}-star-${starIndex}`}
-                    className={isFilled ? "text-yellow-300" : "text-white/40"}
-                  >
-                    ★
-                  </span>
-                );
-              })}
+      <Card className="flex h-full flex-col overflow-hidden">
+        <CardHeader className="space-y-4">
+          <div className="relative overflow-hidden rounded-3xl">
+            <img
+              src={buildDisplayImageUrl(deal.image) || "/placeholder.png"}
+              alt={deal.title}
+              className="h-52 w-full rounded-3xl object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+            <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-orange-500 shadow">
+              {deal.source}
             </div>
-            <span className="text-sm font-medium">
-              {ratingValue.toFixed(1)}
-            </span>
-            {reviewCount && (
-              <span className="text-xs text-white/70">
-                ({reviewCount.toLocaleString("fr-FR")} avis)
+            {deal.bestPrice && (
+              <div className="absolute right-4 top-4 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-600 shadow">
+                🏆 Meilleur prix
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            {deal.weightKg && <span>{deal.weightKg.toLocaleString("fr-FR")} kg</span>}
+            {deal.pricePerKg && <span>{deal.pricePerKg.toFixed(2)} €/kg</span>}
+            {countdown && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-orange-500">
+                ⏱️ {countdown}
               </span>
             )}
-          </>
-        ) : (
-          <span className="text-xs text-white/70">Avis à venir</span>
-        )}
-      </div>
-      <div className="mt-5 flex items-end gap-3 text-white">
-        <span className="text-3xl font-bold">{formattedPrice}</span>
-      </div>
-      {countdown && (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-black/30 px-3 py-1 text-xs font-medium text-white/80">
-          <span>⏱️ Offre</span>
-          <span>{countdown}</span>
-        </div>
-      )}
-      {deal.link ? (
-        <motion.a
-          href={deal.link}
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.97 }}
-          className="mt-8 inline-flex items-center gap-2 rounded-full bg-black/30 px-4 py-2 text-sm font-medium text-white"
-        >
-          Voir l&apos;offre →
-        </motion.a>
-      ) : (
-        <span className="mt-8 inline-flex items-center gap-2 rounded-full bg-black/20 px-4 py-2 text-sm font-medium text-white/60">
-          Offre indisponible
-        </span>
-      )}
-    </motion.article>
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold text-slate-900">{deal.title}</h3>
+            <p className="mt-1 text-sm text-slate-500">{deal.vendor}</p>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-1 flex-col justify-between space-y-6">
+          <div
+            className="flex flex-wrap items-center gap-2 text-sm text-slate-600"
+            aria-label={
+              ratingValue
+                ? `Note ${ratingValue.toFixed(1)} sur 5${
+                    reviewCount ? ` basée sur ${reviewCount} avis` : ""
+                  }`
+                : undefined
+            }
+          >
+            {ratingValue ? (
+              <>
+                <div className="flex items-center gap-0.5" aria-hidden="true">
+                  {starArray.map((_, starIndex) => {
+                    const isFilled = starIndex + 1 <= Math.round(ratingValue);
+
+                    return (
+                      <span
+                        key={`${deal.id}-star-${starIndex}`}
+                        className={isFilled ? "text-orange-400" : "text-slate-200"}
+                      >
+                        ★
+                      </span>
+                    );
+                  })}
+                </div>
+                <span className="font-semibold text-slate-700">
+                  {ratingValue.toFixed(1)}
+                </span>
+                {reviewCount && (
+                  <span className="text-xs text-slate-400">
+                    ({reviewCount.toLocaleString("fr-FR")} avis)
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-xs text-slate-400">Avis à venir</span>
+            )}
+          </div>
+          <div>
+            <p className="text-3xl font-bold text-slate-900">{formattedPrice}</p>
+            {deal.shippingText && (
+              <p className="text-xs text-slate-400">{deal.shippingText}</p>
+            )}
+          </div>
+          {deal.link ? (
+            <Button asChild className="w-full rounded-full">
+              <a href={deal.link} target="_blank" rel="noopener noreferrer nofollow">
+                Voir l&apos;offre
+              </a>
+            </Button>
+          ) : (
+            <p className="text-sm text-slate-400">Offre en cours d&apos;actualisation.</p>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
 export function DealsShowcase() {
-  const [status, setStatus] = useState<FetchState>("idle");
   const [deals, setDeals] = useState<DealItem[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<FetchState>("idle");
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -221,94 +201,82 @@ export function DealsShowcase() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
 
-    const loadDeals = async () => {
-      setStatus("loading");
-      setError(null);
-
+    const fetchDeals = async () => {
+      setState("loading");
       try {
-        const data = await apiClient.get<DealItem[]>("/compare", {
-          query: { limit: 9 },
+        const data = await apiClient.get<DealItem[]>("/deals", {
           cache: "no-store",
         });
 
-        if (!isMounted) {
+        if (!mounted) {
           return;
         }
 
-        setDeals(Array.isArray(data) ? data : []);
-        setStatus("success");
-      } catch (err) {
-        if (!isMounted) {
-          return;
+        setDeals(data);
+        setState("success");
+      } catch (error) {
+        console.error("Erreur chargement deals", error);
+        if (mounted) {
+          setState("error");
         }
-
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Impossible de charger les promotions",
-        );
-        setStatus("error");
       }
     };
 
-    loadDeals();
+    fetchDeals();
 
     return () => {
-      isMounted = false;
+      mounted = false;
     };
   }, []);
 
-  const cards = useMemo(
-    () =>
-      deals.map((deal, index) => ({
-        deal,
-        index,
-      })),
-    [deals],
-  );
+  const hasDeals = deals.length > 0;
 
   return (
-    <section id="promotions" className="bg-[#0b1320] py-20">
-      <div className="container mx-auto px-6">
-        <div className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
-              Promos à ne pas manquer
+    <section id="promotions" className="bg-white py-20">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+              Promos du moment
             </h2>
-            <p className="mt-3 text-gray-300">
-              Des offres négociées avec les meilleurs e-shops spécialisés
-              fitness.
+            <p className="text-base text-slate-500">
+              Offres vérifiées et mises à jour plusieurs fois par jour auprès de nos partenaires.
             </p>
           </div>
-          <p className="text-sm text-gray-400">Actualisées plusieurs fois par jour</p>
         </div>
-        {status === "loading" && (
-          <p className="text-center text-gray-300">
-            Chargement des meilleures offres…
+
+        {state === "error" && (
+          <p className="mt-8 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
+            Impossible de charger les promotions. Réessayez plus tard.
           </p>
         )}
-        {status === "error" && error && (
-          <p className="text-center text-red-300">{error}</p>
-        )}
-        {status === "success" && cards.length === 0 && (
-          <p className="text-center text-gray-300">
-            Aucune promotion disponible pour le moment.
-          </p>
-        )}
-        {cards.length > 0 && (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {cards.map(({ deal, index }) => (
-              <DealCard
-                key={deal.id}
-                deal={deal}
-                index={index}
-                hydrated={hydrated}
-              />
-            ))}
-          </div>
-        )}
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {state !== "success"
+            ? Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={`skeleton-${index}`}
+                  className="h-[420px] animate-pulse rounded-3xl border border-orange-50 bg-orange-50/60"
+                  aria-hidden
+                />
+              ))
+            : hasDeals
+            ? deals.map((deal, index) => (
+                <DealCard
+                  key={deal.id ?? `${deal.vendor}-${deal.title}`}
+                  deal={deal}
+                  index={index}
+                  hydrated={hydrated}
+                />
+              ))
+            : (
+                <p className="col-span-full rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
+                  Aucune promotion disponible pour le moment.
+                </p>
+              )}
+        </div>
       </div>
     </section>
   );

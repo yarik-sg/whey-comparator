@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { OfferTable } from "@/components/OfferTable";
 import { ProductCard } from "@/components/ProductCard";
-import { SiteFooter } from "@/components/SiteFooter";
+import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
+import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import apiClient from "@/lib/apiClient";
 import type { ComparisonResponse, ProductListResponse, ProductSummary } from "@/types/api";
@@ -49,6 +50,22 @@ async function fetchDefaultComparisonProducts(
   }
 }
 
+function buildComparisonTitle(entries: ComparisonResponse["products"] | undefined) {
+  if (!entries || entries.length === 0) {
+    return "Comparateur multi-produits";
+  }
+
+  const names = entries
+    .map(({ product }) => product.name)
+    .filter((name): name is string => Boolean(name));
+
+  if (names.length === 0) {
+    return "Comparateur multi-produits";
+  }
+
+  return names.slice(0, 2).join(" vs ");
+}
+
 export default async function ComparisonPage({ searchParams }: ComparisonPageProps) {
   const resolvedSearchParams = await searchParams;
   const ids = Array.isArray(resolvedSearchParams.ids)
@@ -63,59 +80,52 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
   const comparisonIds = trimmedIds || (fallbackIds.length > 0 ? fallbackIds.join(",") : "");
   const data = comparisonIds ? await fetchComparison(comparisonIds) : null;
   const usedFallback = !trimmedIds && fallbackIds.length > 0;
+  const comparisonTitle = buildComparisonTitle(data?.products);
 
   return (
-    <div className="min-h-screen bg-[#0b1320] text-white">
-      <header className="border-b border-white/10 bg-[#0d1b2a]">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="text-2xl font-extrabold text-orange-500">
-            💪 Sport Comparator
-          </Link>
-          <nav className="flex items-center gap-4 text-sm text-gray-300">
-            <Link href="/products" className="transition hover:text-white">
-              Catalogue
+    <div className="space-y-16 pb-20">
+      <section className="bg-orange-50/80 py-12">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
+            Comparaison détaillée
+          </p>
+          <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">{comparisonTitle}</h1>
+              <p className="mt-3 max-w-2xl text-base text-slate-600">
+                Analysez les meilleures offres en croisant SerpAPI et notre base interne. Comparez les prix affichés, les notes
+                et le rapport protéines/prix pour prendre la meilleure décision.
+              </p>
+            </div>
+            <Link
+              href="/products"
+              className="inline-flex items-center justify-center rounded-full border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-orange-600 transition hover:border-orange-300 hover:text-orange-500"
+            >
+              Ajouter des produits
             </Link>
-            <Link href="/#promotions" className="transition hover:text-white">
-              Promotions
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-6xl px-6 py-12">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold sm:text-4xl">Comparateur multi-produits</h1>
-            <p className="mt-2 text-gray-300">
-              Analysez les meilleures offres en croisant SerpAPI et notre base scraper.
-            </p>
           </div>
-          <Link
-            href="/products"
-            className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600"
-          >
-            Ajouter des produits
-          </Link>
         </div>
+      </section>
 
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         {!trimmedIds && fallbackIds.length === 0 && (
-          <p className="mt-12 text-center text-gray-300">
+          <p className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
             Sélectionnez des produits via le catalogue pour lancer une comparaison.
           </p>
         )}
 
         {trimmedIds && !data && (
-          <p className="mt-12 text-center text-red-300">
+          <p className="rounded-3xl border border-red-100 bg-red-50 p-6 text-center text-red-600">
             Impossible de charger la comparaison. Vérifiez les identifiants : {trimmedIds}.
           </p>
         )}
 
         {data && (
-          <div className="mt-12 space-y-12">
+          <div className="space-y-12">
             {usedFallback && (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-200">
-                <p className="font-medium text-white">Sélection automatique</p>
-                <p className="mt-2 text-gray-300">
+              <div className="rounded-3xl border border-orange-100 bg-orange-50 p-6 text-sm text-slate-600">
+                <p className="font-semibold text-orange-600">Sélection automatique</p>
+                <p className="mt-2 text-slate-600">
                   Nous avons préchargé la comparaison avec&nbsp;
                   {defaultProducts
                     .map((product) => product.name)
@@ -127,12 +137,12 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
             )}
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold">Synthèse prix</h2>
+              <h2 className="text-2xl font-semibold text-slate-900">Synthèse prix</h2>
               <OfferTable offers={data.summary} caption="Offres les plus compétitives" />
             </section>
 
             <section className="space-y-8">
-              <h2 className="text-2xl font-semibold">Détail par produit</h2>
+              <h2 className="text-2xl font-semibold text-slate-900">Détail par produit</h2>
               <div className="grid gap-8 lg:grid-cols-2">
                 {data.products.map(({ product, offers }) => (
                   <div key={product.id} className="space-y-4">
@@ -140,12 +150,15 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
                       product={product}
                       href={`/products/${product.id}`}
                       footer={
-                        <CompareLinkButton
-                          href={`/comparison?ids=${product.id}`}
-                          className="inline-flex items-center gap-2 text-xs font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
-                        >
-                          Comparer individuellement →
-                        </CompareLinkButton>
+                        <div className="flex items-center justify-between text-xs text-slate-400">
+                          <span>ID #{product.id}</span>
+                          <CompareLinkButton
+                            href={`/comparison?ids=${product.id}`}
+                            className="inline-flex items-center gap-1 font-semibold text-orange-500 transition hover:text-orange-400"
+                          >
+                            Comparer individuellement →
+                          </CompareLinkButton>
+                        </div>
                       }
                     />
                     <OfferTable offers={offers} caption="Offres sélectionnées" />
@@ -155,9 +168,10 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
             </section>
           </div>
         )}
-      </main>
+      </div>
 
-      <SiteFooter />
+      <WhyChooseUsSection />
+      <PriceAlertsSection catalogueHref="/products" />
     </div>
   );
 }

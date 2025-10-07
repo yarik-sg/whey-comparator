@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
 interface HeroSectionProps {
   onStartComparison: () => void;
   onViewDeals: () => void;
@@ -39,49 +42,50 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
   );
 
   return (
-    <section className="relative overflow-hidden py-24 bg-gradient-to-br from-[#0d1b2a] via-[#1b263b] to-[#415a77] text-white">
-      <div className="container mx-auto px-6">
+    <section className="relative overflow-hidden bg-white pb-24 pt-16">
+      <div className="absolute inset-x-0 top-0 -z-10 h-full bg-gradient-to-br from-orange-50 via-white to-white" />
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1.1fr,0.9fr]">
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 32 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="max-w-3xl"
+          className="space-y-8"
         >
-          <p className="uppercase tracking-[0.3em] text-sm text-orange-400 mb-4">Comparateur nouvelle génération</p>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight">
-            Ne payez plus jamais votre whey au prix fort
+          <div className="inline-flex items-center gap-2 rounded-full bg-orange-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-orange-500">
+            Comparateur nouvelle génération
+          </div>
+          <h1 className="text-4xl font-bold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+            Le meilleur prix pour vos compléments sportifs
           </h1>
-          <p className="mt-6 text-lg text-gray-200">
-            Sport Comparator agrège les meilleures boutiques en ligne pour vous proposer
-            des suppléments, équipements et tenues de sport au meilleur tarif, en temps réel.
+          <p className="text-lg leading-relaxed text-slate-600">
+            Accédez instantanément aux offres les plus compétitives sur la whey, les protéines végétales
+            ou les packs de nutrition. Analysez les notes, les économies et les tendances pour acheter au moment idéal.
           </p>
-          <form onSubmit={handleSubmit} className="mt-10 space-y-4">
-            <div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <label htmlFor="hero-search" className="sr-only">
                 Recherche de compléments
               </label>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <input
-                  id="hero-search"
-                  name="query"
-                  type="search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Recherchez une whey par marque, type ou objectif"
-                  className="w-full rounded-full border border-white/10 bg-white/90 px-6 py-4 text-base text-slate-900 placeholder:text-slate-500 shadow-lg focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  aria-describedby="popular-searches"
-                />
-                <button
-                  type="submit"
-                  className="flex-shrink-0 rounded-full bg-orange-500 px-8 py-4 text-base font-semibold text-white shadow-lg transition-colors hover:bg-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2 focus:ring-offset-slate-900"
-                >
-                  Rechercher
-                </button>
-              </div>
+              <Input
+                id="hero-search"
+                name="query"
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Recherchez une whey par marque, objectif ou type"
+                aria-describedby="popular-searches"
+                className="h-14 rounded-full border-orange-100 bg-white shadow-md"
+              />
+              <Button type="submit" size="lg" className="sm:w-auto">
+                Rechercher
+              </Button>
             </div>
-            <div id="popular-searches" className="flex flex-wrap items-center gap-2 text-sm text-gray-200">
-              <span className="mr-2 font-medium uppercase tracking-wide text-xs text-orange-200">
-                Recherches populaires :
+            <div
+              id="popular-searches"
+              className="flex flex-wrap items-center gap-2 text-sm text-slate-500"
+            >
+              <span className="mr-2 text-xs font-semibold uppercase tracking-widest text-orange-400">
+                Recherches populaires
               </span>
               {popularSearches.map((suggestion) => (
                 <button
@@ -91,7 +95,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
                     setSearchQuery(suggestion);
                     handleSearch(suggestion);
                   }}
-                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:border-orange-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2 focus:ring-offset-slate-900"
+                  className="rounded-full border border-orange-100 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-orange-200 hover:text-orange-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
                   aria-label={`Rechercher ${suggestion}`}
                 >
                   {suggestion}
@@ -99,19 +103,53 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
               ))}
             </div>
           </form>
-          <div className="mt-8 flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={onStartComparison}
-              className="rounded-full bg-orange-500 hover:bg-orange-400 transition-colors px-8 py-3 font-semibold shadow-lg"
-            >
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button size="lg" onClick={onStartComparison} className="shadow-md">
               Lancer le comparateur
-            </button>
-            <button
+            </Button>
+            <Button
+              size="lg"
+              variant="ghost"
               onClick={onViewDeals}
-              className="rounded-full border border-white/40 hover:border-orange-300 hover:text-orange-200 transition-colors px-8 py-3 font-semibold"
+              className="border border-slate-200"
             >
-              Voir les promos
-            </button>
+              Voir les promotions
+            </Button>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.1 }}
+          className="relative"
+        >
+          <div className="relative overflow-hidden rounded-[2.5rem] border border-orange-100 bg-white shadow-2xl">
+            <div className="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-orange-100 blur-3xl" aria-hidden />
+            <div className="space-y-6 p-8">
+              <p className="text-sm font-semibold uppercase tracking-widest text-orange-500">
+                Aperçu en temps réel
+              </p>
+              <div className="space-y-4">
+                <div className="rounded-3xl bg-orange-50 p-4">
+                  <p className="text-sm font-semibold text-orange-500">Promo flash</p>
+                  <p className="mt-1 text-lg font-bold text-slate-900">Whey Isolate 1,5kg</p>
+                  <p className="text-sm text-slate-500">-18% vs prix moyen du mois dernier</p>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-3xl border border-slate-200/80 p-4 text-sm text-slate-600">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Prix moyen</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">27,90 €</p>
+                    <p className="text-xs text-green-500">-2,4% cette semaine</p>
+                  </div>
+                  <div className="rounded-3xl border border-slate-200/80 p-4 text-sm text-slate-600">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Marchands suivis</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">18</p>
+                    <p className="text-xs text-slate-400">Actualisation toutes les 2h</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>

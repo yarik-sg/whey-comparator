@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
+import { CheckCircle2, ExternalLink, Search, Store } from "lucide-react";
 
-import { SiteFooter } from "@/components/SiteFooter";
+import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
+import { PriceAlertsSection } from "@/components/PriceAlertsSection";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import apiClient from "@/lib/apiClient";
 import { buildDisplayImageUrl } from "@/lib/images";
 import type { ApiPrice, DealItem } from "@/types/api";
@@ -67,14 +72,15 @@ export default function Comparateur() {
   const [minPrix, setMinPrix] = useState("");
   const [maxPrix, setMaxPrix] = useState("");
 
-  const fetchProduits = () => {
+  const fetchProduits = (searchValue?: string) => {
+    const queryValue = searchValue ?? q;
     setLoading(true);
     setApiError(null);
 
     apiClient
       .get<DealItem[]>("/compare", {
         query: {
-          q,
+          q: queryValue,
           marque: marque || undefined,
           categorie: categorie || undefined,
           limit: 24,
@@ -98,168 +104,236 @@ export default function Comparateur() {
   };
 
   useEffect(() => {
-    fetchProduits();
+    setQ(qParam);
+    fetchProduits(qParam);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qParam]);
 
-  // Filtrage local par prix
-  const produitsFiltres = produits.filter((p) => {
-    const n = typeof p.price?.amount === "number" ? p.price.amount : undefined;
-    const min = minPrix ? parseFloat(minPrix) : undefined;
-    const max = maxPrix ? parseFloat(maxPrix) : undefined;
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    fetchProduits();
+  };
 
-    if (min !== undefined && (n === undefined || n < min)) return false;
-    if (max !== undefined && (n === undefined || n > max)) return false;
-    return true;
-  });
+  const produitsFiltres = useMemo(() => {
+    return produits.filter((p) => {
+      const n = typeof p.price?.amount === "number" ? p.price.amount : undefined;
+      const min = minPrix ? Number.parseFloat(minPrix) : undefined;
+      const max = maxPrix ? Number.parseFloat(maxPrix) : undefined;
+
+      if (min !== undefined && (n === undefined || n < min)) return false;
+      if (max !== undefined && (n === undefined || n > max)) return false;
+      return true;
+    });
+  }, [produits, maxPrix, minPrix]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col font-sans">
-      {/* Header */}
-      <header className="bg-[#0d1b2a] text-white py-4 shadow-lg sticky top-0 z-50">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <h1 className="text-2xl font-extrabold tracking-wide text-orange-500">
-            💪 Sport Comparator
-          </h1>
-
-          {/* Barre de recherche */}
-          <div className="flex w-full md:w-auto max-w-lg items-center bg-white rounded-lg overflow-hidden shadow-md">
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Ex: whey isolate chocolat 2kg"
-              className="flex-1 px-3 py-2 text-black outline-none"
-            />
-            <button
-              onClick={fetchProduits}
-              className="bg-orange-500 px-5 py-2 font-semibold text-white hover:bg-orange-600 transition"
-            >
-              🔍
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="bg-gradient-to-r from-[#0d1b2a] to-[#1b263b] text-white py-12 text-center">
-        <h2 className="text-3xl font-bold mb-2">Comparez les meilleures offres</h2>
-        <p className="text-gray-300">
-          Trouvez le meilleur prix 💰 et la meilleure qualité 🏋️‍♂️
-        </p>
-      </section>
-
-      {/* Filtres */}
-      <div className="container mx-auto px-6 mt-6 grid grid-cols-1 md:grid-cols-4 gap-3">
-        <input
-          value={marque}
-          onChange={(e) => setMarque(e.target.value)}
-          placeholder="Marque (ex: MyProtein)"
-          className="px-3 py-2 rounded border text-black"
-        />
-        <input
-          value={categorie}
-          onChange={(e) => setCategorie(e.target.value)}
-          placeholder="Catégorie (ex: créatine, bcaa)"
-          className="px-3 py-2 rounded border text-black"
-        />
-        <input
-          value={minPrix}
-          onChange={(e) => setMinPrix(e.target.value)}
-          placeholder="Prix min (€)"
-          className="px-3 py-2 rounded border text-black"
-        />
-        <input
-          value={maxPrix}
-          onChange={(e) => setMaxPrix(e.target.value)}
-          placeholder="Prix max (€)"
-          className="px-3 py-2 rounded border text-black"
-        />
-      </div>
-
-      {/* Produits */}
-      <main className="container mx-auto px-6 py-10 flex-1">
-        {loading ? (
-          <p className="text-center text-gray-600 animate-pulse text-lg">⏳ Chargement...</p>
-        ) : apiError ? (
-          <div className="text-red-600 text-center font-semibold">{apiError}</div>
-        ) : produitsFiltres.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {produitsFiltres.map((p, i) => (
-              <motion.div
-                key={`${p.id}-${i}`}
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="bg-white shadow-md rounded-xl overflow-hidden hover:shadow-xl transition flex flex-col"
-              >
-                <div className="aspect-square flex items-center justify-center p-4 bg-white">
-                  <img
-                    src={buildDisplayImageUrl(p.image) || "/placeholder.png"}
-                    alt={p.title}
-                    className="h-full w-full object-contain"
-                    loading="lazy"
-                    decoding="async"
+    <div className="space-y-16 pb-20">
+      <section className="bg-orange-50/80 py-12">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
+                Comparateur en temps réel
+              </p>
+              <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+                Affinez votre recherche de compléments
+              </h1>
+              <p className="max-w-2xl text-base text-slate-600">
+                Connecté à SerpAPI et à notre base interne, le comparateur détecte en quelques secondes les meilleures
+                offres whey, BCAA, créatine et plus encore. Renseignez une référence précise pour analyser prix, frais de
+                port et disponibilité.
+              </p>
+            </div>
+            <Card className="w-full max-w-md border-orange-100 bg-white/80 backdrop-blur">
+              <form className="space-y-4" onSubmit={handleSearchSubmit}>
+                <label htmlFor="search" className="text-sm font-medium text-slate-600">
+                  Produit ou référence à comparer
+                </label>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-orange-400" />
+                  <Input
+                    id="search"
+                    name="search"
+                    type="search"
+                    value={q}
+                    onChange={(event) => setQ(event.target.value)}
+                    placeholder="Ex. whey isolate chocolat 2kg"
+                    className="pl-12"
                   />
                 </div>
-                <div className="p-4 flex flex-col flex-1">
-                  <h2 className="text-md font-semibold text-gray-800 line-clamp-2">{p.title}</h2>
-                  <div className="mt-1 flex items-center justify-between text-sm text-gray-500">
-                    <span>{p.vendor}</span>
-                    {(p.isBestPrice || p.bestPrice) && (
-                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                        Meilleur prix
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-2 text-xl font-bold text-orange-600">
-                    {formatPriceValue(p.price)}
-                  </p>
-                  <p className="text-sm text-gray-600">Total : {formatPriceValue(p.totalPrice ?? p.price)}</p>
-                  {typeof p.pricePerKg === "number" && (
-                    <p className="text-sm text-gray-500">~ {p.pricePerKg.toFixed(2)} €/kg</p>
-                  )}
-                  <p className="mt-2 text-xs text-gray-500">{formatShipping(p)}</p>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
-                    {p.inStock === null || p.inStock === undefined ? (
-                      <span>{p.stockStatus ?? "Disponibilité inconnue"}</span>
-                    ) : (
-                      <>
-                        <span aria-hidden>{p.inStock ? "✅" : "❌"}</span>
-                        <span>{p.stockStatus ?? (p.inStock ? "Disponible" : "Vérifier le stock")}</span>
-                      </>
-                    )}
-                  </p>
-                  <span className="mt-2 text-xs bg-gray-200 px-2 py-1 rounded self-start text-gray-600">
-                    {p.source}
-                  </span>
-                  {p.link ? (
-                    <a
-                      href={p.link}
-                      target="_blank"
-                      rel="noopener noreferrer nofollow"
-                      className="mt-auto bg-orange-500 text-white px-4 py-2 rounded-lg text-center font-semibold hover:bg-orange-600 transition"
-                    >
-                      Voir le produit
-                    </a>
-                  ) : (
-                    <button
-                      disabled
-                      className="mt-auto bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed"
-                    >
-                      Lien indisponible
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                <Button type="submit" className="w-full rounded-full" disabled={loading}>
+                  Lancer la recherche
+                </Button>
+              </form>
+            </Card>
           </div>
-        ) : (
-          <p className="text-center text-red-600 text-lg">❌ Aucun produit disponible</p>
-        )}
-      </main>
+        </div>
+      </section>
 
-      {/* Footer */}
-      <SiteFooter />
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 space-y-10">
+        <Card className="border-slate-200">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xl font-semibold text-slate-900">Filtres rapides</h2>
+            <p className="text-sm text-slate-500">
+              Combinez marque, catégorie et budget pour épurer les offres affichées ci-dessous.
+            </p>
+          </div>
+          <div className="mt-6 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <Input
+              value={marque}
+              onChange={(event) => setMarque(event.target.value)}
+              placeholder="Marque (ex. MyProtein)"
+              aria-label="Filtrer par marque"
+            />
+            <Input
+              value={categorie}
+              onChange={(event) => setCategorie(event.target.value)}
+              placeholder="Catégorie (ex. BCAA, créatine)"
+              aria-label="Filtrer par catégorie"
+            />
+            <Input
+              value={minPrix}
+              onChange={(event) => setMinPrix(event.target.value)}
+              placeholder="Prix min (€)"
+              inputMode="decimal"
+              aria-label="Prix minimum"
+            />
+            <Input
+              value={maxPrix}
+              onChange={(event) => setMaxPrix(event.target.value)}
+              placeholder="Prix max (€)"
+              inputMode="decimal"
+              aria-label="Prix maximum"
+            />
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+            <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-600">
+              <Store className="h-4 w-4" />
+              Sources multi-marchands vérifiées
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-600">
+              <CheckCircle2 className="h-4 w-4" />
+              Statut de stock actualisé
+            </div>
+          </div>
+        </Card>
+
+        <section className="space-y-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold text-slate-900">Résultats</h2>
+              <p className="text-sm text-slate-500">
+                {loading
+                  ? "Analyse des offres en cours…"
+                  : `${produitsFiltres.length.toLocaleString("fr-FR")} produits correspondants`}
+              </p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => fetchProduits()} disabled={loading}>
+              Rafraîchir les prix
+            </Button>
+          </div>
+
+          {apiError && (
+            <div className="rounded-3xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">{apiError}</div>
+          )}
+
+          {loading ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-80 animate-pulse rounded-3xl border border-slate-200 bg-slate-100"
+                  aria-hidden
+                />
+              ))}
+            </div>
+          ) : produitsFiltres.length === 0 ? (
+            <div className="rounded-3xl border border-orange-100 bg-orange-50 p-8 text-center text-sm text-orange-600">
+              Aucun résultat ne correspond aux filtres sélectionnés. Essayez d&apos;élargir votre recherche.
+            </div>
+          ) : (
+            <AnimatePresence mode="popLayout">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {produitsFiltres.map((p, index) => (
+                  <motion.div
+                    key={`${p.id}-${index}`}
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 24 }}
+                    transition={{ duration: 0.25, delay: index * 0.04 }}
+                    className="group flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg"
+                  >
+                    <div className="relative flex items-center justify-center rounded-2xl bg-slate-50 p-6">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- remote images */}
+                      <img
+                        src={buildDisplayImageUrl(p.image) || "/placeholder.png"}
+                        alt={p.title}
+                        className="h-40 w-40 object-contain"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      <div className="space-y-1">
+                        <p className="text-xs uppercase tracking-wide text-orange-500">{p.vendor ?? "Marchand"}</p>
+                        <h3 className="line-clamp-2 text-lg font-semibold text-slate-900">{p.title}</h3>
+                      </div>
+                      {(p.isBestPrice || p.bestPrice) && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Meilleur prix détecté
+                        </span>
+                      )}
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className="text-2xl font-bold text-slate-900">{formatPriceValue(p.price)}</span>
+                        <span className="text-sm text-slate-500">Total : {formatPriceValue(p.totalPrice ?? p.price)}</span>
+                      </div>
+                      {typeof p.pricePerKg === "number" && (
+                        <p className="text-sm text-slate-500">≈ {p.pricePerKg.toFixed(2)} €/kg</p>
+                      )}
+                      <p className="text-xs text-slate-500">{formatShipping(p)}</p>
+                      <p className="flex items-center gap-2 text-xs text-slate-500">
+                        <CheckCircle2
+                          className={`h-4 w-4 ${p.inStock ? "text-emerald-500" : "text-slate-400"}`}
+                          aria-hidden
+                        />
+                        <span>
+                          {p.inStock === null || p.inStock === undefined
+                            ? p.stockStatus ?? "Disponibilité à confirmer"
+                            : p.stockStatus ?? (p.inStock ? "Disponible" : "Vérifier le stock")}
+                        </span>
+                      </p>
+                      <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                        {p.source}
+                      </span>
+                    </div>
+                    <div className="mt-6 pt-4">
+                      {p.link ? (
+                        <a
+                          href={p.link}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-orange-200 px-4 py-2 text-sm font-semibold text-orange-600 transition hover:border-orange-300 hover:text-orange-500"
+                        >
+                          Voir l&apos;offre
+                          <ExternalLink className="h-4 w-4" aria-hidden />
+                        </a>
+                      ) : (
+                        <span className="inline-flex w-full items-center justify-center rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400">
+                          Lien indisponible
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </AnimatePresence>
+          )}
+        </section>
+      </div>
+
+      <WhyChooseUsSection />
+      <PriceAlertsSection catalogueHref="/products" />
     </div>
   );
 }
