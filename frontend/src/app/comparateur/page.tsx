@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 
 import { SiteFooter } from "@/components/SiteFooter";
 import apiClient from "@/lib/apiClient";
+import { buildDisplayImageUrl } from "@/lib/images";
 import type { ApiPrice, DealItem } from "@/types/api";
 
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
@@ -193,9 +194,11 @@ export default function Comparateur() {
               >
                 <div className="aspect-square flex items-center justify-center p-4 bg-white">
                   <img
-                    src={p.image || "/placeholder.png"}
+                    src={buildDisplayImageUrl(p.image) || "/placeholder.png"}
                     alt={p.title}
                     className="h-full w-full object-contain"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <div className="p-4 flex flex-col flex-1">

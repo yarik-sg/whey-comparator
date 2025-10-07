@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import type { ProductSummary } from "@/types/api";
+import { buildDisplayImageUrl } from "@/lib/images";
 
 function pickImageUrl(
   ...candidates: Array<string | null | undefined>
@@ -22,15 +23,16 @@ function pickImageUrl(
 
 function getProductImage(product: ProductSummary): { src: string; alt: string } | null {
   const imageUrl = pickImageUrl(product.image, product.bestDeal?.image);
+  const resolvedUrl = buildDisplayImageUrl(imageUrl);
 
-  if (!imageUrl) {
+  if (!resolvedUrl) {
     return null;
   }
 
   const altText = `${product.brand ? `${product.brand} ` : ""}${product.name}`.trim();
 
   return {
-    src: imageUrl,
+    src: resolvedUrl,
     alt: altText.length > 0 ? altText : "Photo du produit",
   };
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 
 import apiClient from "@/lib/apiClient";
+import { buildDisplayImageUrl } from "@/lib/images";
 import type { DealItem } from "@/types/api";
 
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
@@ -127,7 +128,7 @@ function DealCard({
       </div>
       <div className="mt-5 overflow-hidden rounded-xl bg-black/20">
         <img
-          src={deal.image || "/placeholder.png"}
+          src={buildDisplayImageUrl(deal.image) || "/placeholder.png"}
           alt={deal.title}
           className="h-48 w-full object-cover object-center sm:h-52"
           loading="lazy"
