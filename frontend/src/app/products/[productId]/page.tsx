@@ -10,7 +10,7 @@ import apiClient from "@/lib/apiClient";
 import type { ProductOffersResponse, RelatedProductsResponse } from "@/types/api";
 
 interface ProductDetailPageProps {
-  params: { productId: string };
+  params: Promise<{ productId: string }>;
 }
 
 function buildComparisonHref(...productIds: number[]): string {
@@ -58,7 +58,8 @@ async function fetchRelatedProducts(productId: number, limit = 4) {
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const productId = Number(params.productId);
+  const resolvedParams = await params;
+  const productId = Number(resolvedParams.productId);
 
   if (Number.isNaN(productId)) {
     notFound();

@@ -8,7 +8,7 @@ import apiClient from "@/lib/apiClient";
 import type { ComparisonResponse, ProductListResponse, ProductSummary } from "@/types/api";
 
 interface ComparisonPageProps {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 async function fetchComparison(ids: string) {
@@ -50,9 +50,10 @@ async function fetchDefaultComparisonProducts(
 }
 
 export default async function ComparisonPage({ searchParams }: ComparisonPageProps) {
-  const ids = Array.isArray(searchParams.ids)
-    ? searchParams.ids.join(",")
-    : searchParams.ids ?? "";
+  const resolvedSearchParams = await searchParams;
+  const ids = Array.isArray(resolvedSearchParams.ids)
+    ? resolvedSearchParams.ids.join(",")
+    : resolvedSearchParams.ids ?? "";
 
   const trimmedIds = ids.trim();
   const defaultProducts = trimmedIds
