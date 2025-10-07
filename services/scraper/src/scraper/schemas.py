@@ -17,6 +17,7 @@ class OfferSchema(BaseModel):
     shipping_cost: float | None
     shipping_text: str | None
     last_checked: datetime | None
+    image: str | None = None
 
     class Config:
         from_attributes = True
@@ -29,6 +30,8 @@ class ProductSchema(BaseModel):
     flavour: str | None
     protein_per_serving_g: float | None
     serving_size_g: float | None
+    image: str | None = None
+    image_url: str | None = None
 
     class Config:
         from_attributes = True

@@ -23,6 +23,8 @@ async def upsert_product_with_offers(
             flavour=product.flavour,
             protein_per_serving_g=product.protein_per_serving_g,
             serving_size_g=product.serving_size_g,
+            image=product.image,
+            image_url=product.image_url or product.image,
         )
         session.add(existing)
         await session.flush()
@@ -30,6 +32,8 @@ async def upsert_product_with_offers(
         existing.flavour = product.flavour
         existing.protein_per_serving_g = product.protein_per_serving_g
         existing.serving_size_g = product.serving_size_g
+        existing.image = product.image or existing.image
+        existing.image_url = product.image_url or product.image or existing.image_url
 
     await _sync_offers(session, existing, product.offers)
     return existing
@@ -51,6 +55,7 @@ async def _sync_offers(
             db_offer.in_stock = offer.in_stock
             db_offer.shipping_cost = offer.shipping_cost
             db_offer.shipping_text = offer.shipping_text
+            db_offer.image = offer.image or db_offer.image
         else:
             session.add(
                 Offer(
@@ -64,6 +69,7 @@ async def _sync_offers(
                     in_stock=offer.in_stock,
                     shipping_cost=offer.shipping_cost,
                     shipping_text=offer.shipping_text,
+                    image=offer.image,
                 )
             )
 

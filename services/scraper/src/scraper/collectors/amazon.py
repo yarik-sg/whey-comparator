@@ -25,6 +25,9 @@ class AmazonCollector(Collector):
             link = result.css("h2 a::attr(href)").get()
             price_whole = result.css("span.a-price-whole::text").get()
             price_fraction = result.css("span.a-price-fraction::text").get()
+            image = result.css("img.s-image::attr(src)").get()
+            if image:
+                image = image.strip()
 
             if not title or not link or not price_whole:
                 continue
@@ -37,12 +40,15 @@ class AmazonCollector(Collector):
                 {
                     "name": title.strip(),
                     "brand": None,
+                    "image": image,
+                    "image_url": image,
                     "offers": [
                         {
                             "source": self.name,
                             "url": f"https://www.amazon.fr{link}",
                             "price": price,
                             "currency": "EUR",
+                            "image": image,
                         }
                     ],
                 }
