@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import apiClient from "@/lib/apiClient";
-import type { ComparisonResponse } from "@/types/api";
+import type { ComparisonResponse, ProductListResponse, ProductSummary } from "@/types/api";
 
 interface ComparisonPageProps {
   searchParams: Record<string, string | string[] | undefined>;
@@ -28,13 +28,40 @@ async function fetchComparison(ids: string) {
   }
 }
 
+const DEFAULT_PRESELECT_COUNT = 2;
+
+async function fetchDefaultComparisonProducts(
+  limit = DEFAULT_PRESELECT_COUNT,
+): Promise<ProductSummary[]> {
+  try {
+    const data = await apiClient.get<ProductListResponse>("/products", {
+      query: {
+        per_page: limit,
+        sort: "price_asc",
+      },
+      cache: "no-store",
+    });
+
+    return data.products.slice(0, limit);
+  } catch (error) {
+    console.error("Erreur chargement sélection par défaut", error);
+    return [];
+  }
+}
+
 export default async function ComparisonPage({ searchParams }: ComparisonPageProps) {
   const ids = Array.isArray(searchParams.ids)
     ? searchParams.ids.join(",")
     : searchParams.ids ?? "";
 
   const trimmedIds = ids.trim();
-  const data = trimmedIds ? await fetchComparison(trimmedIds) : null;
+  const defaultProducts = trimmedIds
+    ? []
+    : await fetchDefaultComparisonProducts(DEFAULT_PRESELECT_COUNT);
+  const fallbackIds = defaultProducts.map((product) => String(product.id));
+  const comparisonIds = trimmedIds || (fallbackIds.length > 0 ? fallbackIds.join(",") : "");
+  const data = comparisonIds ? await fetchComparison(comparisonIds) : null;
+  const usedFallback = !trimmedIds && fallbackIds.length > 0;
 
   return (
     <div className="min-h-screen bg-[#0b1320] text-white">
@@ -70,7 +97,7 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
           </Link>
         </div>
 
-        {!trimmedIds && (
+        {!trimmedIds && fallbackIds.length === 0 && (
           <p className="mt-12 text-center text-gray-300">
             Sélectionnez des produits via le catalogue pour lancer une comparaison.
           </p>
@@ -84,6 +111,20 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
 
         {data && (
           <div className="mt-12 space-y-12">
+            {usedFallback && (
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-gray-200">
+                <p className="font-medium text-white">Sélection automatique</p>
+                <p className="mt-2 text-gray-300">
+                  Nous avons préchargé la comparaison avec&nbsp;
+                  {defaultProducts
+                    .map((product) => product.name)
+                    .filter(Boolean)
+                    .join(" et ")}
+                  . Choisissez d’autres références dans le catalogue pour affiner votre analyse.
+                </p>
+              </div>
+            )}
+
             <section className="space-y-4">
               <h2 className="text-2xl font-semibold">Synthèse prix</h2>
               <OfferTable offers={data.summary} caption="Offres les plus compétitives" />

@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💪 Whey Comparator — Frontend
 
-## Getting Started
+Application Next.js 14 (App Router) qui aide les sportifs à comparer les compléments alimentaires (whey, créatine, etc.) et à suivre les meilleures offres détectées sur les plateformes e-commerce (Amazon, MyProtein, Prozis…).
 
-First, run the development server:
+## ✨ Fonctionnalités clés
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Landing marketing** : sections Hero, statistiques et logos partenaires pour présenter la proposition de valeur.
+- **Catalogue filtrable** : navigation par recherche, tri et filtres (prix, disponibilité, marques, catégories) alimentée par l’API `/products`.
+- **Comparateur automatique** : page `/comparison` qui précharge deux références populaires si aucun identifiant n’est fourni et affiche un tableau synthétique + le détail des offres.
+- **Fiche produit détaillée** : informations nutritionnelles, sources de données et produits similaires avec graphiques d’historique de prix.
+- **Alertes prix** : formulaire dynamique avec validation côté client, messages de statut et possibilité de personnaliser le style via une prop `className`.
+- **Comparateur express** : page `/comparateur` connectée aux scrapers SerpAPI/MyProtein pour explorer rapidement les meilleures offres du moment.
+
+## 🧱 Structure du répertoire
+
+```
+frontend/
+├── public/                     # Assets statiques (icônes, manifest…)
+├── src/
+│   ├── app/                    # Pages et layouts App Router
+│   │   ├── page.tsx            # Landing page
+│   │   ├── comparison/         # Comparateur multi-produits (SSR)
+│   │   ├── comparateur/        # Comparateur « flash » SerpAPI (client)
+│   │   ├── products/           # Catalogue + fiche produit détaillée
+│   │   └── catalogue/          # Visualisation Google Sheets
+│   ├── components/             # UI réutilisable (cartes, tableaux, formulaires…)
+│   ├── lib/                    # Client HTTP et hooks React Query
+│   ├── pages/api/              # Routes API Next (proxy scrapers historiques)
+│   └── types/                  # Typage des réponses API
+├── vendor/                     # Build embarqué de @tanstack/query (zero-install)
+├── package.json
+└── next.config.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Démarrage rapide
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Par défaut l’application attend un backend disponible sur `http://localhost:8000`. Pour cibler une autre URL (ou utiliser un proxy edge), définissez l’une des variables d’environnement suivantes :
 
-## Learn More
+- `NEXT_PUBLIC_API_BASE_URL` pour le navigateur et le serveur
+- `API_BASE_URL` uniquement pour le rendu serveur
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+NEXT_PUBLIC_API_BASE_URL=https://api.whey-comparator.dev npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📦 Scripts utiles
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Commande            | Description                                                     |
+| ------------------- | --------------------------------------------------------------- |
+| `npm run dev`       | Lance le serveur Next.js en mode développement.                 |
+| `npm run build`     | Compile l’application pour la production.                       |
+| `npm run start`     | Démarre le serveur Next.js en mode production.                  |
+| `npm run lint`      | Analyse statique avec ESLint et les règles Next.js/TypeScript.  |
 
-## Deploy on Vercel
+## 🧠 Points techniques
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **App Router** combinant composants serveur (SSR) et client pour garder les pages critiques rapides tout en offrant des interactions riches.
+- **TanStack Query** (vendored) pour le cache réseau (`useProductList`, `usePriceHistory`).
+- **Gestion d’état locale** : formulaires contrôlés + hooks `useState`/`useEffect` pour les filtres et la comparaison flash.
+- **Accessibilité** : boutons navigables au clavier, aria-labels sur les CTA principaux et messages dynamiques annoncés via `aria-live`.
+- **Fallback intelligent** : la page `/comparison` interroge l’API catalogue afin de proposer automatiquement une comparaison pertinente lorsqu’aucun produit n’est sélectionné.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔭 Pistes d’évolution
+
+- Connecter le formulaire d’alertes à une API d’envoi d’e-mails (Sendinblue, Resend…).
+- Persister la sélection de produits (localStorage / cookies) pour retrouver ses comparatifs.
+- Ajouter un mode « abonnements » permettant de sauvegarder des combinaisons de produits et d’exporter les historiques.
+
+---
+
+💡 Ce dossier représente l’interface utilisateur officielle du projet : il est prêt à être branché sur les services backend existants (`/services` dans le repo) ou sur de nouvelles sources de données temps réel.
