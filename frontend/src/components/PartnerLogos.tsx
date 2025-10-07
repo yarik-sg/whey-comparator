@@ -45,7 +45,7 @@ const partnerLogos: Array<{
 
 export function PartnerLogos() {
   return (
-    <section className="bg-orange-50/40 py-16">
+    <section className="bg-[#f9fafb] py-16">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
