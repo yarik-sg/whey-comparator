@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 
 import type { ProductSummary } from "@/types/api";
@@ -66,18 +69,21 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
     footer && <div className="mt-6 border-t border-white/10 pt-4 text-sm text-gray-300">{footer}</div>;
 
   const productImage = getProductImage(product);
+  const [imageFailed, setImageFailed] = useState(false);
+  const showImage = productImage && !imageFailed;
 
   const body = (
     <div className="flex flex-1 flex-col justify-between">
       <div>
         <div className="relative mb-4 overflow-hidden rounded-xl border border-white/10 bg-white/5">
-          {productImage ? (
+          {showImage ? (
             // eslint-disable-next-line @next/next/no-img-element -- remote catalogue assets
             <img
               src={productImage.src}
               alt={productImage.alt}
               className="h-40 w-full object-cover object-center"
               loading="lazy"
+              onError={() => setImageFailed(true)}
             />
           ) : (
             <div className="flex h-40 w-full items-center justify-center bg-gradient-to-br from-slate-800/60 to-slate-900/80 text-sm text-gray-400">
