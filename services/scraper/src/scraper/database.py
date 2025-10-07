@@ -27,6 +27,8 @@ class Product(Base):
     flavour: Mapped[str | None] = mapped_column(String(length=255))
     protein_per_serving_g: Mapped[float | None] = mapped_column(Float)
     serving_size_g: Mapped[float | None] = mapped_column(Float)
+    image: Mapped[str | None] = mapped_column(String(length=1024))
+    image_url: Mapped[str | None] = mapped_column(String(length=1024))
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -53,6 +55,7 @@ class Offer(Base):
     in_stock: Mapped[bool | None] = mapped_column(Boolean, default=None)
     shipping_cost: Mapped[float | None] = mapped_column(Float)
     shipping_text: Mapped[str | None] = mapped_column(String(length=255))
+    image: Mapped[str | None] = mapped_column(String(length=1024))
     last_checked: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

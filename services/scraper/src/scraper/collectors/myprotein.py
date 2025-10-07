@@ -20,16 +20,24 @@ class MyProteinCollector(Collector):
             products = await page.evaluate(
                 """
                 () => {
-                    return Array.from(document.querySelectorAll('[data-component="product-card"]')).map(card => ({
-                        name: card.querySelector('[data-testid="product-card-name"]').innerText.trim(),
-                        brand: 'MyProtein',
-                        offers: [{
-                            source: 'myprotein',
-                            url: card.querySelector('a').href,
-                            price: parseFloat(card.querySelector('[data-testid="product-card-price"]').innerText.replace(/[^0-9,.]/g, '').replace(',', '.')),
-                            currency: 'EUR'
-                        }]
-                    }));
+                    return Array.from(document.querySelectorAll('[data-component="product-card"]')).map(card => {
+                        const imageEl = card.querySelector('img');
+                        const image = imageEl ? imageEl.src : null;
+
+                        return {
+                            name: card.querySelector('[data-testid="product-card-name"]').innerText.trim(),
+                            brand: 'MyProtein',
+                            image,
+                            image_url: image,
+                            offers: [{
+                                source: 'myprotein',
+                                url: card.querySelector('a').href,
+                                price: parseFloat(card.querySelector('[data-testid="product-card-price"]').innerText.replace(/[^0-9,.]/g, '').replace(',', '.')),
+                                currency: 'EUR',
+                                image,
+                            }]
+                        };
+                    });
                 }
                 """
             )

@@ -15,6 +15,7 @@ class NormalizedOffer:
     shipping_text: str | None = None
     protein_content_g: float | None = None
     price_per_100g_protein: float | None = None
+    image: str | None = None
 
     def compute_metrics(self, protein_per_serving: float | None) -> None:
         if self.protein_content_g:
@@ -35,6 +36,8 @@ class NormalizedProduct:
     flavour: str | None = None
     protein_per_serving_g: float | None = None
     serving_size_g: float | None = None
+    image: str | None = None
+    image_url: str | None = None
     offers: list[NormalizedOffer] = field(default_factory=list)
 
     def compute_metrics(self) -> None:
@@ -49,6 +52,8 @@ def normalize_product(raw: dict) -> NormalizedProduct:
         flavour=raw.get("flavour"),
         protein_per_serving_g=raw.get("protein_per_serving_g"),
         serving_size_g=raw.get("serving_size_g"),
+        image=raw.get("image"),
+        image_url=raw.get("image_url"),
         offers=[NormalizedOffer(**offer) for offer in raw.get("offers", [])],
     )
 
