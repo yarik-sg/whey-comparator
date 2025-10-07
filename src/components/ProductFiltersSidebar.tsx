@@ -95,20 +95,20 @@ export const ProductFiltersSidebar = ({
 
   if (isLoading && allProducts.length === 0) {
     return (
-      <aside className="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
+      <aside className="surface-card glass-effect space-y-6 p-6">
         <div className="space-y-4">
-          <div className="h-5 w-32 animate-pulse rounded bg-slate-200" />
+          <div className="h-5 w-32 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-slate-700/40" />
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="h-4 w-full animate-pulse rounded bg-slate-200" />
+              <div key={index} className="h-4 w-full animate-pulse rounded-2xl bg-slate-200/60 dark:bg-slate-700/40" />
             ))}
           </div>
         </div>
         <div className="space-y-4">
-          <div className="h-5 w-40 animate-pulse rounded bg-slate-200" />
+          <div className="h-5 w-40 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-slate-700/40" />
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="h-4 w-3/4 animate-pulse rounded bg-slate-200" />
+              <div key={index} className="h-4 w-3/4 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-slate-700/40" />
             ))}
           </div>
         </div>
@@ -117,40 +117,42 @@ export const ProductFiltersSidebar = ({
   }
 
   return (
-    <aside className="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
+    <aside className="surface-card glass-effect space-y-6 p-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Filtres</h2>
-        <p className="text-sm text-slate-500">Affinez la liste pour trouver les produits à comparer.</p>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Filtres</h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400">Affinez la liste pour trouver les produits à comparer.</p>
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Marques</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">Marques</h3>
         <div className="space-y-2">
           {brandOptions.map((brand) => (
-            <label key={brand} className="flex items-center gap-2 text-sm text-slate-700">
+            <label key={brand} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
               <input
                 type="checkbox"
                 checked={selectedBrands.includes(brand)}
                 onChange={() => handleBrandToggle(brand)}
-                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900/40"
               />
               {brand}
             </label>
           ))}
-          {brandOptions.length === 0 && <p className="text-sm text-slate-500">Aucune marque disponible.</p>}
+          {brandOptions.length === 0 && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">Aucune marque disponible.</p>
+          )}
         </div>
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Type</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">Type</h3>
         <div className="space-y-2">
           {(['whey', 'creatine'] as ProductType[]).map((type) => (
-            <label key={type} className="flex items-center gap-2 text-sm text-slate-700">
+            <label key={type} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
               <input
                 type="checkbox"
                 checked={selectedTypes.includes(type)}
                 onChange={() => handleTypeToggle(type)}
-                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-900/40"
               />
               {typeLabels[type]}
             </label>
@@ -159,13 +161,13 @@ export const ProductFiltersSidebar = ({
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Prix (€)</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">Prix (€)</h3>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs uppercase text-slate-400">Min</label>
+            <label className="text-xs uppercase text-slate-400 dark:text-slate-500">Min</label>
             <input
               type="number"
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/70 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-900/40"
               value={priceRange[0]}
               min={priceBounds[0]}
               max={priceRange[1]}
@@ -173,10 +175,10 @@ export const ProductFiltersSidebar = ({
             />
           </div>
           <div>
-            <label className="text-xs uppercase text-slate-400">Max</label>
+            <label className="text-xs uppercase text-slate-400 dark:text-slate-500">Max</label>
             <input
               type="number"
-              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200"
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/70 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-slate-600 dark:bg-slate-900/40"
               value={priceRange[1]}
               min={priceRange[0]}
               max={priceBounds[1]}
@@ -188,16 +190,20 @@ export const ProductFiltersSidebar = ({
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Sélection ({selectedProductIds.length}/4)</h3>
-          <span className="text-xs text-slate-400">Comparer 2 à 4 produits</span>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+            Sélection ({selectedProductIds.length}/4)
+          </h3>
+          <span className="text-xs text-slate-400 dark:text-slate-500">Comparer 2 à 4 produits</span>
         </div>
         <div className="space-y-2">
           {filteredSelection.map(({ product, disabled }) => {
             const isSelected = selectedProductIds.includes(product.id);
             const labelClasses = [
-              'flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm text-slate-700 transition',
-              isSelected ? 'border-primary-300 bg-primary-50/70' : 'border-slate-200 bg-white',
-              disabled ? 'opacity-60' : 'hover:border-primary-200 hover:shadow-sm',
+              'flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-sm text-slate-700 transition dark:text-slate-200',
+              isSelected
+                ? 'border-primary-300 bg-primary-50/80 shadow-sm shadow-primary-500/10 dark:border-primary-400/50 dark:bg-primary-500/10'
+                : 'border-slate-200 bg-white/80 dark:border-slate-700/60 dark:bg-slate-900/40',
+              disabled ? 'opacity-60' : 'hover:-translate-y-[1px] hover:border-primary-200 hover:shadow-lg hover:shadow-primary-500/20',
             ]
               .filter(Boolean)
               .join(' ');
@@ -208,12 +214,12 @@ export const ProductFiltersSidebar = ({
                   <ProductImage
                     imageUrl={product.imageUrl}
                     alt={product.imageAlt ?? product.name}
-                    className="h-12 w-12 flex-shrink-0 rounded-lg"
+                    className="h-12 w-12 flex-shrink-0 rounded-xl"
                     fallbackLabel={`${product.brand} ${product.name}`}
                   />
                   <div className="flex flex-col">
-                    <span className="font-medium text-slate-900">{product.name}</span>
-                    <span className="text-xs text-slate-500">
+                    <span className="font-medium text-slate-900 dark:text-slate-100">{product.name}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
                       {product.brand} • {typeLabels[product.type]}
                     </span>
                   </div>
@@ -223,13 +229,15 @@ export const ProductFiltersSidebar = ({
                   checked={isSelected}
                   disabled={disabled}
                   onChange={() => toggleProductSelection(product.id)}
-                  className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 disabled:opacity-40"
+                  className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 disabled:opacity-40 dark:border-slate-500 dark:bg-slate-900/50"
                 />
               </label>
             );
           })}
           {!isLoading && filteredSelection.length === 0 && (
-            <p className="text-sm text-slate-500">Aucun produit ne correspond aux filtres.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Aucun produit ne correspond aux filtres.
+            </p>
           )}
         </div>
       </div>
