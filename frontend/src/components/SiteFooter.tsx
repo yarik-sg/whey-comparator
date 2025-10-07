@@ -58,7 +58,7 @@ export function SiteFooter() {
   return (
     <footer className="bg-[#0d1b2a] text-gray-300">
       <div className="border-b border-white/10">
-        <div className="container mx-auto px-6 py-12">
+        <div className="mx-auto w-full max-w-6xl px-6 py-12">
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-white">Sport Comparator</h2>
@@ -216,7 +216,7 @@ export function SiteFooter() {
       </div>
 
       <div className="bg-[#0b1320]">
-        <div className="container mx-auto flex flex-col gap-4 px-6 py-4 text-sm text-gray-400 md:flex-row md:items-center md:justify-between">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-4 text-sm text-gray-400 md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} Sport Comparator. Tous droits réservés.</p>
           <div className="flex items-center gap-4">
             {socialLinks.map(({ href, label, icon }) => (

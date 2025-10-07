@@ -66,7 +66,7 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
   return (
     <div className="min-h-screen bg-[#0b1320] text-white">
       <header className="border-b border-white/10 bg-[#0d1b2a]">
-        <div className="container mx-auto flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="text-2xl font-extrabold text-orange-500">
             💪 Sport Comparator
           </Link>
@@ -81,7 +81,7 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-12">
+      <main className="mx-auto w-full max-w-6xl px-6 py-12">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold sm:text-4xl">Comparateur multi-produits</h1>
