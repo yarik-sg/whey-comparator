@@ -20,7 +20,7 @@ const socialLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-slate-200 bg-slate-50/90">
+    <footer className="border-t border-slate-200 bg-white">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-12 sm:px-6">
         <div className="grid gap-8 md:grid-cols-[1.5fr,1fr,1fr]">
           <div className="space-y-4">
@@ -65,7 +65,7 @@ export function SiteFooter() {
         </div>
 
         <div className="flex flex-col items-start justify-between gap-4 border-t border-slate-200 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center">
-          <p>© {new Date().getFullYear()} Sport Comparator. Tous droits réservés.</p>
+          <p>© 2025 Sport Comparator — Tous droits réservés.</p>
           <div className="flex items-center gap-4">
             {socialLinks.map((link) => (
               <a

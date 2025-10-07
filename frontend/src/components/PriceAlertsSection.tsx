@@ -13,7 +13,7 @@ interface PriceAlertsSectionProps {
 
 export function PriceAlertsSection({ onExploreCatalogue, catalogueHref = "/products" }: PriceAlertsSectionProps) {
   return (
-    <section className="bg-orange-50/70 py-20">
+    <section className="bg-[#f9fafb] py-20">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <div className="grid gap-12 lg:grid-cols-[1.1fr,1fr] lg:items-start">
           <motion.div
