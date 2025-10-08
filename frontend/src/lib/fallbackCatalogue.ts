@@ -670,13 +670,19 @@ const FALLBACK_DEAL_ENTRIES: FallbackDealEntry[] = RAW_FALLBACK_PRODUCTS.map((pr
   return { product, deals } satisfies FallbackDealEntry;
 });
 
+function normalizeForSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}+/gu, "")
+    .toLowerCase();
+}
+
 function matchesFallbackQuery(product: RawFallbackProduct, deal: DealItem, query: string): boolean {
   if (!query) {
     return true;
   }
 
-  const normalized = query
-    .toLowerCase()
+  const normalized = normalizeForSearch(query)
     .split(/\s+/)
     .filter(Boolean);
 
@@ -692,8 +698,8 @@ function matchesFallbackQuery(product: RawFallbackProduct, deal: DealItem, query
     deal.vendor,
   ]
     .filter((value): value is string => typeof value === "string" && value.length > 0)
-    .join(" ")
-    .toLowerCase();
+    .map((value) => normalizeForSearch(value))
+    .join(" ");
 
   return normalized.every((token) => haystack.includes(token));
 }
