@@ -7,6 +7,10 @@ import { PriceHistoryChart } from "@/components/PriceHistoryChart";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import apiClient from "@/lib/apiClient";
+import {
+  getFallbackProductOffers,
+  getFallbackRelatedProducts,
+} from "@/lib/fallbackCatalogue";
 import type { ProductOffersResponse, RelatedProductsResponse } from "@/types/api";
 
 interface ProductDetailPageProps {
@@ -36,6 +40,10 @@ async function fetchProductOffers(productId: number) {
     return data;
   } catch (error) {
     console.error("Erreur chargement offre produit", error);
+    const fallback = getFallbackProductOffers(productId);
+    if (fallback) {
+      return fallback;
+    }
     return null;
   }
 }
@@ -53,6 +61,10 @@ async function fetchRelatedProducts(productId: number, limit = 4) {
     return related;
   } catch (error) {
     console.error("Erreur chargement produits similaires", error);
+    const fallback = getFallbackRelatedProducts(productId, limit);
+    if (fallback) {
+      return fallback;
+    }
     return null;
   }
 }
