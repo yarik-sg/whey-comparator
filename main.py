@@ -9,12 +9,6 @@ from urllib.parse import urlparse, parse_qs, quote
 from functools import lru_cache
 from typing import Dict, Any, List, Optional
 
-from fallback_catalogue import (
-    get_fallback_price_history,
-    get_fallback_product,
-    get_fallback_products,
-)
-
 app = FastAPI()
 
 # --- CORS (ok pour dev; en prod restreins à ton domaine) ---
@@ -308,41 +302,42 @@ def tokenize_keywords(value: Optional[str]) -> set[str]:
 
 
 def fetch_scraper_products(limit: Optional[int] = None) -> List[Dict[str, Any]]:
-    def _with_limit(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        if limit:
-            return items[:limit]
-        return items
+    if not SCRAPER_BASE_URL:
+        return []
 
-    if SCRAPER_BASE_URL:
-        try:
-            response = requests.get(
-                f"{SCRAPER_BASE_URL.rstrip('/')}/products", timeout=10
-            )
-            response.raise_for_status()
-            data = response.json()
-            if isinstance(data, list) and data:
-                return _with_limit(data)
-        except Exception:
-            pass
+    try:
+        response = requests.get(
+            f"{SCRAPER_BASE_URL.rstrip('/')}/products", timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, list):
+            if limit:
+                return data[:limit]
+            return data
+    except Exception:
+        return []
 
-    return _with_limit(get_fallback_products())
+    return []
 
 
 def fetch_scraper_product_with_offers(product_id: int) -> Optional[Dict[str, Any]]:
-    if SCRAPER_BASE_URL:
-        try:
-            response = requests.get(
-                f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/offers",
-                timeout=10,
-            )
-            response.raise_for_status()
-            data = response.json()
-            if isinstance(data, dict) and data:
-                return data
-        except Exception:
-            pass
+    if not SCRAPER_BASE_URL:
+        return None
 
-    return get_fallback_product(product_id)
+    try:
+        response = requests.get(
+            f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/offers",
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, dict) and data:
+            return data
+    except Exception:
+        return None
+
+    return None
 
 
 def fetch_scraper_price_history(
@@ -357,35 +352,23 @@ def fetch_scraper_price_history(
     if end_date:
         params["end_date"] = end_date
 
-    if SCRAPER_BASE_URL:
-        try:
-            response = requests.get(
-                f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/history",
-                params=params,
-                timeout=10,
-            )
-            response.raise_for_status()
-            data = response.json()
-            if isinstance(data, list) and data:
-                return data
-        except Exception:
-            pass
-
-    fallback_history = get_fallback_price_history(product_id)
-    if not fallback_history:
+    if not SCRAPER_BASE_URL:
         return []
 
-    def in_bounds(entry: Dict[str, Any]) -> bool:
-        timestamp = entry.get("recorded_at")
-        if not isinstance(timestamp, str):
-            return False
-        if start_date and timestamp < start_date:
-            return False
-        if end_date and timestamp > end_date:
-            return False
-        return True
+    try:
+        response = requests.get(
+            f"{SCRAPER_BASE_URL.rstrip('/')}/products/{product_id}/history",
+            params=params,
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, list):
+            return data
+    except Exception:
+        return []
 
-    return [entry for entry in fallback_history if in_bounds(entry)]
+    return []
 
 
 def build_deal_payload(
@@ -527,6 +510,96 @@ def extract_total_price_amount(deal: Dict[str, Any]) -> Optional[float]:
         total += shipping_amount
 
     return total
+
+
+def build_serp_product_summary(
+    deal: Dict[str, Any], *, fallback_index: int
+) -> Dict[str, Any]:
+    cloned = clone_deal_payload(deal)
+    identifier = (
+        cloned.get("productId")
+        or cloned.get("id")
+        or f"serp-{fallback_index}"
+    )
+
+    title = (cloned.get("title") or "Produit").strip() or "Produit"
+    vendor = (cloned.get("vendor") or cloned.get("source") or "Marchand").strip() or "Marchand"
+
+    image_candidates: List[Optional[str]] = [
+        cloned.get("image"),
+        cloned.get("image_url"),
+        cloned.get("imageUrl"),
+        cloned.get("thumbnail"),
+        cloned.get("img"),
+    ]
+
+    resolved_image = resolve_image_with_placeholder(
+        image_candidates, name=title, brand=vendor
+    )
+    primary_image = pick_best_image_candidate(image_candidates) or resolved_image
+
+    price_payload = cloned.get("price")
+    if not isinstance(price_payload, dict):
+        price_payload = {
+            "amount": parse_float(cloned.get("price")),
+            "currency": None,
+            "formatted": None,
+        }
+
+    total_price_payload = cloned.get("totalPrice")
+    if not isinstance(total_price_payload, dict):
+        total_price_payload = {
+            "amount": parse_float(cloned.get("totalPrice")),
+            "currency": price_payload.get("currency"),
+            "formatted": None,
+        }
+
+    return {
+        "id": identifier,
+        "name": title,
+        "brand": vendor,
+        "flavour": None,
+        "image": resolved_image,
+        "image_url": primary_image,
+        "protein_per_serving_g": None,
+        "serving_size_g": None,
+        "category": cloned.get("source"),
+        "bestPrice": price_payload,
+        "totalPrice": total_price_payload,
+        "bestDeal": cloned,
+        "offersCount": 1,
+        "inStock": cloned.get("inStock"),
+        "stockStatus": cloned.get("stockStatus"),
+        "rating": parse_float(cloned.get("rating")),
+        "reviewsCount": parse_int(cloned.get("reviewsCount")),
+        "proteinPerEuro": None,
+        "pricePerKg": parse_float(cloned.get("pricePerKg")),
+        "bestVendor": vendor,
+        "link": cloned.get("link"),
+        "promotionEndsAt": cloned.get("expiresAt"),
+    }
+
+
+def build_serp_catalogue(
+    q: str,
+    *,
+    limit: int,
+    marque: Optional[str] = None,
+    categorie: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    deals = collect_serp_deals(q, marque=marque, categorie=categorie, limit=limit)
+    catalogue: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for index, deal in enumerate(deals):
+        summary = build_serp_product_summary(deal, fallback_index=index)
+        identifier = str(summary.get("id"))
+        if identifier in seen:
+            continue
+        seen.add(identifier)
+        catalogue.append(summary)
+
+    return catalogue
 
 
 def collect_serp_deals(
@@ -1149,14 +1222,28 @@ def list_products(
     sort: Optional[str] = Query("price_asc"),
 ):
     products = fetch_scraper_products()
+    serp_catalogue: List[Dict[str, Any]] = []
+    using_serp_catalogue = False
 
-    if search:
-        products = [
-            product
-            for product in products
-            if matches_query(product.get("name") or "", search)
-            or matches_query(product.get("brand") or "", search)
-        ]
+    if not products:
+        using_serp_catalogue = True
+        normalized_query = (search or "whey protein").strip() or "whey protein"
+        serp_brand = brands[0] if brands and len(brands) == 1 else None
+        serp_limit = min(60, max(per_page * max(page, 1), per_page * 2))
+        serp_catalogue = build_serp_catalogue(
+            normalized_query,
+            limit=serp_limit,
+            marque=serp_brand,
+            categorie=category,
+        )
+    else:
+        if search:
+            products = [
+                product
+                for product in products
+                if matches_query(product.get("name") or "", search)
+                or matches_query(product.get("brand") or "", search)
+            ]
 
     brand_filter: Optional[set[str]] = None
     if brands:
@@ -1164,9 +1251,13 @@ def list_products(
 
     category_filter = category.lower() if category else None
 
-    enriched_products: List[Dict[str, Any]] = [
-        build_product_summary(product) for product in products
-    ]
+    enriched_products: List[Dict[str, Any]]
+    if using_serp_catalogue:
+        enriched_products = serp_catalogue
+    else:
+        enriched_products = [
+            build_product_summary(product) for product in products
+        ]
 
     def price_in_range(item: Dict[str, Any]) -> bool:
         best_price = item.get("bestPrice") or {}

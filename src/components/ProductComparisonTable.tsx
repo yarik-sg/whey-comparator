@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 
-import type { Product } from '../data/products';
+import type { Price, Product } from '../data/products';
 import { useProductSelectionStore } from '../store/productSelectionStore';
 import { ProductImage } from './ProductImage';
 
@@ -15,28 +15,57 @@ interface ComparisonRow {
   render: (product: Product) => ReactNode;
 }
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('fr-FR', {
+const typeLabels: Record<Product['type'], string> = {
+  whey: 'Whey',
+  creatine: 'Créatine',
+  other: 'Autre',
+};
+
+const formatCurrency = (value: number | null | undefined) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return 'N/A';
+  }
+
+  return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 2,
   }).format(value);
+};
 
-const formatNumber = (value: number, options?: Intl.NumberFormatOptions) =>
-  new Intl.NumberFormat('fr-FR', {
+const formatPrice = (price: Price | null | undefined) => {
+  if (!price) {
+    return 'N/A';
+  }
+
+  if (price.formatted) {
+    return price.formatted;
+  }
+
+  return formatCurrency(price.amount);
+};
+
+const formatNumber = (value: number | null | undefined, options?: Intl.NumberFormatOptions) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return 'N/A';
+  }
+
+  return new Intl.NumberFormat('fr-FR', {
     maximumFractionDigits: 1,
     ...options,
   }).format(value);
+};
 
-const formatDate = (value: string | null) => {
-  if (!value) {
-    return null;
+const formatStock = (product: Product) => {
+  if (typeof product.inStock === 'boolean') {
+    return product.inStock ? 'En stock' : 'Rupture';
   }
 
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-  }).format(new Date(value));
+  if (product.stockStatus) {
+    return product.stockStatus;
+  }
+
+  return 'Indisponible';
 };
 
 export const ProductComparisonTable = ({ products, isLoading }: ProductComparisonTableProps) => {
@@ -51,32 +80,19 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
         },
         {
           label: 'Type',
-          render: (product: Product) => (product.type === 'whey' ? 'Whey' : 'Créatine'),
+          render: (product: Product) => typeLabels[product.type] ?? typeLabels.other,
         },
         {
-          label: 'Prix actuel',
-          render: (product: Product) => (
-            <div className="flex flex-col">
-              <span className="text-base font-semibold text-slate-900">{formatCurrency(product.price)}</span>
-              {product.discountRate > 0 ? (
-                <span className="text-xs text-slate-500">
-                  <span className="mr-2 line-through">{formatCurrency(product.originalPrice)}</span>
-                  <span className="font-semibold text-emerald-600">
-                    -{Math.round(product.discountRate * 100)}%
-                  </span>
-                </span>
-              ) : (
-                <span className="text-xs text-slate-400">Aucune remise</span>
-              )}
-            </div>
-          ),
+          label: 'Meilleur prix',
+          render: (product: Product) => formatPrice(product.bestPrice ?? product.totalPrice),
         },
         {
-          label: 'Fin de promo',
-          render: (product: Product) => {
-            const formattedDate = formatDate(product.promotionEndsAt);
-            return formattedDate ? `Jusqu’au ${formattedDate}` : 'Offre permanente';
-          },
+          label: 'Prix total (livraison)',
+          render: (product: Product) => formatPrice(product.totalPrice ?? product.bestPrice),
+        },
+        {
+          label: 'Vendeur mis en avant',
+          render: (product: Product) => product.bestVendor ?? '—',
         },
         {
           label: 'Badges',
@@ -97,34 +113,50 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
             ),
         },
         {
-          label: 'Portions',
-          render: (product: Product) => formatNumber(product.servings, { maximumFractionDigits: 0 }),
+          label: 'Protéines / €',
+          render: (product: Product) =>
+            typeof product.proteinPerEuro === 'number'
+              ? `${formatNumber(product.proteinPerEuro)} g`
+              : 'N/A',
         },
         {
           label: 'Protéines / portion',
           render: (product: Product) =>
-            product.proteinPerServing > 0 ? `${formatNumber(product.proteinPerServing)} g` : 'N/A',
+            typeof product.proteinPerServing === 'number'
+              ? `${formatNumber(product.proteinPerServing)} g`
+              : 'N/A',
         },
         {
-          label: 'Créatine / portion',
+          label: 'Taille portion',
           render: (product: Product) =>
-            product.creatinePerServing ? `${formatNumber(product.creatinePerServing)} g` : 'N/A',
+            typeof product.servingSize === 'number'
+              ? `${formatNumber(product.servingSize)} g`
+              : 'N/A',
         },
         {
-          label: 'Prix / portion',
-          render: (product: Product) => formatCurrency(product.price / product.servings),
+          label: 'Prix / kg',
+          render: (product: Product) =>
+            typeof product.pricePerKg === 'number'
+              ? `${product.pricePerKg.toFixed(2)} €`
+              : 'N/A',
         },
         {
-          label: 'Taille du pot',
-          render: (product: Product) => `${formatNumber(product.sizeGrams, { maximumFractionDigits: 0 })} g`,
+          label: 'Disponibilité',
+          render: (product: Product) => formatStock(product),
         },
         {
-          label: 'Arôme',
-          render: (product: Product) => product.flavor,
+          label: 'Offres suivies',
+          render: (product: Product) =>
+            product.offersCount > 0 ? `${product.offersCount}` : 'Aucune donnée',
         },
         {
           label: 'Note moyenne',
-          render: (product: Product) => `${formatNumber(product.rating)} / 5`,
+          render: (product: Product) =>
+            typeof product.rating === 'number' ? `${product.rating.toFixed(1)} / 5` : 'N/A',
+        },
+        {
+          label: 'Saveur',
+          render: (product: Product) => product.flavor ?? '—',
         },
       ],
     [],
@@ -173,21 +205,27 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
             <div className="flex items-start gap-3">
               <ProductImage
                 imageUrl={product.imageUrl}
-                alt={product.imageAlt ?? product.name}
+                alt={product.imageAlt}
                 className="h-16 w-16 flex-shrink-0 rounded-xl border border-white shadow"
-                fallbackLabel={`${product.brand} ${product.name}`}
+                fallbackLabel={product.imageAlt}
               />
               <div className="flex flex-1 flex-col">
-                <span className="text-xs font-semibold uppercase tracking-wide text-primary-600">{product.brand}</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-primary-600">
+                  {typeLabels[product.type] ?? typeLabels.other}
+                </span>
                 <h3 className="text-base font-semibold text-slate-900">{product.name}</h3>
-                <span className="text-xs text-slate-500">{product.servings} portions • {product.flavor}</span>
+                <span className="text-xs text-slate-500">{product.bestVendor ?? product.brand}</span>
               </div>
             </div>
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-lg font-bold text-slate-900">{formatCurrency(product.price)}</p>
+                <p className="text-lg font-bold text-slate-900">
+                  {formatPrice(product.bestPrice ?? product.totalPrice)}
+                </p>
                 <p className="text-xs text-slate-500">
-                  {formatCurrency(product.price / product.servings)} / portion
+                  {typeof product.pricePerKg === 'number'
+                    ? `${product.pricePerKg.toFixed(2)} € / kg`
+                    : formatStock(product)}
                 </p>
               </div>
               <button

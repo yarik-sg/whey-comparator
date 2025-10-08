@@ -1,53 +1,48 @@
-import { useMemo } from 'react';
-
-import type { HighlightedDeal, Product } from '../data/products';
+import type { Deal } from '../data/products';
 import { ProductImage } from './ProductImage';
 
 type HighlightedDealsSectionProps = {
-  deals: HighlightedDeal[];
-  products: Product[];
+  deals: Deal[];
   isLoading: boolean;
 };
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 2,
-  }).format(value);
-
-const formatDate = (isoDate: string | null) => {
-  if (!isoDate) {
-    return null;
+const formatCurrency = (value: number | null | undefined, currency = 'EUR') => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return '—';
   }
 
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-  }).format(new Date(isoDate));
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 2,
+  }).format(value);
 };
 
-export const HighlightedDealsSection = ({ deals, products, isLoading }: HighlightedDealsSectionProps) => {
-  const cards = useMemo(() => {
-    if (products.length === 0) {
-      return [];
-    }
+const resolvePriceLabel = (deal: Deal) => {
+  if (deal.price?.formatted) {
+    return deal.price.formatted;
+  }
 
-    return deals
-      .map((deal) => {
-        const product = products.find((item) => item.id === deal.productId);
-        if (!product) {
-          return undefined;
-        }
+  if (typeof deal.price?.amount === 'number') {
+    return formatCurrency(deal.price.amount, deal.price.currency ?? 'EUR');
+  }
 
-        return {
-          deal,
-          product,
-        };
-      })
-      .filter(Boolean) as Array<{ deal: HighlightedDeal; product: Product }>;
-  }, [deals, products]);
+  return 'Prix indisponible';
+};
 
+const resolveTotalPriceLabel = (deal: Deal) => {
+  if (deal.totalPrice?.formatted) {
+    return deal.totalPrice.formatted;
+  }
+
+  if (typeof deal.totalPrice?.amount === 'number') {
+    return formatCurrency(deal.totalPrice.amount, deal.totalPrice.currency ?? 'EUR');
+  }
+
+  return null;
+};
+
+export const HighlightedDealsSection = ({ deals, isLoading }: HighlightedDealsSectionProps) => {
   if (isLoading) {
     return (
       <section className="grid gap-4 rounded-2xl bg-white/80 p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
@@ -58,7 +53,7 @@ export const HighlightedDealsSection = ({ deals, products, isLoading }: Highligh
     );
   }
 
-  if (cards.length === 0) {
+  if (deals.length === 0) {
     return null;
   }
 
@@ -67,13 +62,12 @@ export const HighlightedDealsSection = ({ deals, products, isLoading }: Highligh
       <div className="space-y-2">
         <h2 className="text-lg font-semibold text-slate-900">Offres à ne pas manquer</h2>
         <p className="text-sm text-slate-500">
-          Promotions vérifiées et remises limitées dans le temps pour optimiser votre panier.
+          Sélection des meilleures opportunités identifiées sur nos sources partenaires.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map(({ deal, product }) => {
-          const discountPercent = Math.round(product.discountRate * 100);
-          const endsAtLabel = formatDate(product.promotionEndsAt);
+        {deals.map((deal) => {
+          const totalPriceLabel = resolveTotalPriceLabel(deal);
 
           return (
             <article
@@ -82,49 +76,47 @@ export const HighlightedDealsSection = ({ deals, products, isLoading }: Highligh
             >
               <div className="space-y-3">
                 <ProductImage
-                  imageUrl={product.imageUrl}
-                  alt={product.imageAlt ?? product.name}
+                  imageUrl={deal.image}
+                  alt={deal.title}
                   className="h-40 w-full rounded-xl"
-                  fallbackLabel={`${product.brand} ${product.name}`}
+                  fallbackLabel={deal.title}
                 />
-                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary-600">
-                  {product.badges.map((badge) => (
-                    <span
-                      key={badge}
-                      className="rounded-full bg-primary-50 px-2 py-1 text-primary-700"
-                    >
-                      {badge}
-                    </span>
-                  ))}
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
+                    {deal.vendor}
+                  </p>
+                  <h3 className="text-lg font-semibold text-slate-900">{deal.title}</h3>
+                  <p className="text-xs text-slate-500">Source : {deal.source}</p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-500">{product.brand}</p>
-                  <h3 className="text-xl font-semibold text-slate-900">{product.name}</h3>
-                </div>
-                <p className="text-sm text-slate-600">{deal.description}</p>
               </div>
               <div className="mt-4 space-y-3">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-slate-900">{formatCurrency(product.price)}</span>
-                  {product.discountRate > 0 ? (
-                    <>
-                      <span className="text-sm text-slate-400 line-through">
-                        {formatCurrency(product.originalPrice)}
-                      </span>
-                      <span className="text-sm font-semibold text-emerald-600">-{discountPercent}%</span>
-                    </>
+                  <span className="text-2xl font-bold text-slate-900">{resolvePriceLabel(deal)}</span>
+                  {totalPriceLabel && totalPriceLabel !== resolvePriceLabel(deal) ? (
+                    <span className="text-xs text-slate-500">avec livraison : {totalPriceLabel}</span>
                   ) : null}
                 </div>
-                {endsAtLabel ? (
-                  <p className="text-xs text-slate-500">Offre valable jusqu’au {endsAtLabel}.</p>
-                ) : (
-                  <p className="text-xs text-slate-400">Offre permanente.</p>
-                )}
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  {typeof deal.shippingCost === 'number' ? (
+                    <span>Livraison : {formatCurrency(deal.shippingCost)}</span>
+                  ) : null}
+                  {deal.shippingText ? <span>{deal.shippingText}</span> : null}
+                  {typeof deal.pricePerKg === 'number' ? (
+                    <span>{deal.pricePerKg.toFixed(2)} € / kg</span>
+                  ) : null}
+                  {deal.inStock !== null && deal.inStock !== undefined ? (
+                    <span className={deal.inStock ? 'text-emerald-600' : 'text-red-500'}>
+                      {deal.inStock ? 'En stock' : 'Rupture'}
+                    </span>
+                  ) : null}
+                </div>
                 <a
-                  href={product.link ?? '#'}
+                  href={deal.link ?? '#'}
                   className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700"
+                  target="_blank"
+                  rel="noreferrer"
                 >
-                  {deal.ctaLabel}
+                  Voir l’offre
                 </a>
               </div>
             </article>

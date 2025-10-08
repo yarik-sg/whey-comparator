@@ -19,6 +19,7 @@ interface ProductFiltersSidebarProps {
 const typeLabels: Record<ProductType, string> = {
   whey: 'Whey',
   creatine: 'Créatine',
+  other: 'Autre',
 };
 
 export const ProductFiltersSidebar = ({
@@ -41,19 +42,41 @@ export const ProductFiltersSidebar = ({
     );
 
   const brandOptions = useMemo(
-    () => Array.from(new Set(allProducts.map((product) => product.brand))).sort(),
+    () =>
+      Array.from(
+        new Set(
+          allProducts
+            .map((product) => product.brand)
+            .filter((brand): brand is string => Boolean(brand?.trim())),
+        ),
+      ).sort((a, b) => a.localeCompare(b)),
     [allProducts],
   );
 
+  const typeOptions = useMemo(() => {
+    const detected = new Set<ProductType>();
+    for (const product of allProducts) {
+      detected.add(product.type);
+    }
+    return Array.from(detected);
+  }, [allProducts]);
+
   useEffect(() => {
     if (!isLoading && allProducts.length > 0) {
-      const min = Math.min(...allProducts.map((product) => product.price));
-      const max = Math.max(...allProducts.map((product) => product.price));
-      const nextBounds: [number, number] = [Math.floor(min), Math.ceil(max)];
+      const prices = allProducts
+        .map((product) => product.price)
+        .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+
+      const nextBounds: [number, number] =
+        prices.length > 0
+          ? [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))]
+          : [0, 0];
 
       if (nextBounds[0] !== priceBounds[0] || nextBounds[1] !== priceBounds[1]) {
         setPriceBounds(nextBounds);
       }
+    } else if (!isLoading && allProducts.length === 0 && (priceBounds[0] !== 0 || priceBounds[1] !== 0)) {
+      setPriceBounds([0, 0]);
     }
   }, [allProducts, isLoading, priceBounds, setPriceBounds]);
 
@@ -144,7 +167,7 @@ export const ProductFiltersSidebar = ({
       <div className="space-y-3">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Type</h3>
         <div className="space-y-2">
-          {(['whey', 'creatine'] as ProductType[]).map((type) => (
+          {(typeOptions.length > 0 ? typeOptions : (['whey', 'creatine'] as ProductType[])).map((type) => (
             <label key={type} className="flex items-center gap-2 text-sm text-slate-700">
               <input
                 type="checkbox"
@@ -207,14 +230,14 @@ export const ProductFiltersSidebar = ({
                 <div className="flex items-center gap-3">
                   <ProductImage
                     imageUrl={product.imageUrl}
-                    alt={product.imageAlt ?? product.name}
+                    alt={product.imageAlt}
                     className="h-12 w-12 flex-shrink-0 rounded-lg"
-                    fallbackLabel={`${product.brand} ${product.name}`}
+                    fallbackLabel={product.imageAlt}
                   />
                   <div className="flex flex-col">
                     <span className="font-medium text-slate-900">{product.name}</span>
                     <span className="text-xs text-slate-500">
-                      {product.brand} • {typeLabels[product.type]}
+                      {product.brand} • {typeLabels[product.type] ?? typeLabels.other}
                     </span>
                   </div>
                 </div>

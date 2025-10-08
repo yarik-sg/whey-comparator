@@ -21,12 +21,17 @@ const KpiCard = ({ label, value, helper }: KpiCardProps) => (
   </div>
 );
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('fr-FR', {
+const formatCurrency = (value: number | null | undefined) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return 'N/A';
+  }
+
+  return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 2,
   }).format(value);
+};
 
 export const KpiSummaryBar = ({ selectedProducts, isLoading }: KpiSummaryBarProps) => {
   const metrics = useMemo(() => {
@@ -34,41 +39,44 @@ export const KpiSummaryBar = ({ selectedProducts, isLoading }: KpiSummaryBarProp
       return null;
     }
 
-    const totalPrice = selectedProducts.reduce((sum, product) => sum + product.price, 0);
-    const averagePrice = totalPrice / selectedProducts.length;
+    const priceValues = selectedProducts
+      .map((product) => product.totalPrice?.amount ?? product.bestPrice?.amount ?? product.price)
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
 
-    const proteinBasedProducts = selectedProducts.filter((product) => product.proteinPerServing > 0);
-    const pricePer100g = proteinBasedProducts.map((product) => {
-      const totalProtein = product.proteinPerServing * product.servings;
-      return totalProtein > 0 ? (product.price / totalProtein) * 100 : Number.POSITIVE_INFINITY;
-    });
+    const averagePrice =
+      priceValues.length > 0
+        ? priceValues.reduce((sum, value) => sum + value, 0) / priceValues.length
+        : null;
 
-    const averagePricePer100g =
-      pricePer100g.length > 0
-        ? pricePer100g.reduce((sum, value) => sum + value, 0) / pricePer100g.length
-        : undefined;
+    const pricePerKgValues = selectedProducts
+      .map((product) => product.pricePerKg)
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
 
-    const bestValueProduct = proteinBasedProducts.reduce<
-      | { product: Product; value: number }
-      | undefined
-    >((best, product) => {
-      const totalProtein = product.proteinPerServing * product.servings;
-      if (totalProtein === 0) {
-        return best;
-      }
-      const value = (product.price / totalProtein) * 100;
-      if (!best || value < best.value) {
-        return { product, value };
-      }
-      return best;
-    }, undefined);
+    const averagePricePerKg =
+      pricePerKgValues.length > 0
+        ? pricePerKgValues.reduce((sum, value) => sum + value, 0) / pricePerKgValues.length
+        : null;
+
+    const bestValueProduct = selectedProducts
+      .map((product) => ({ product, value: product.proteinPerEuro }))
+      .filter(
+        (entry): entry is { product: Product; value: number } =>
+          typeof entry.value === 'number' && Number.isFinite(entry.value),
+      )
+      .sort((a, b) => b.value - a.value)[0] ?? null;
+
+    const ratingValues = selectedProducts
+      .map((product) => product.rating)
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
 
     const averageRating =
-      selectedProducts.reduce((sum, product) => sum + product.rating, 0) / selectedProducts.length;
+      ratingValues.length > 0
+        ? ratingValues.reduce((sum, value) => sum + value, 0) / ratingValues.length
+        : null;
 
     return {
       averagePrice,
-      averagePricePer100g,
+      averagePricePerKg,
       bestValueProduct,
       averageRating,
     };
@@ -98,16 +106,16 @@ export const KpiSummaryBar = ({ selectedProducts, isLoading }: KpiSummaryBarProp
     <section className="grid gap-4 rounded-2xl bg-white/80 p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
       <KpiCard label="Prix moyen" value={formatCurrency(metrics.averagePrice)} />
       <KpiCard
-        label="Prix moyen / 100 g de protéine"
+        label="Prix moyen / kg"
         value={
-          metrics.averagePricePer100g
-            ? `${metrics.averagePricePer100g.toFixed(2)} €`
+          typeof metrics.averagePricePerKg === 'number'
+            ? `${metrics.averagePricePerKg.toFixed(2)} €`
             : 'N/A'
         }
         helper={
-          metrics.averagePricePer100g
-            ? 'Basé sur les produits riches en protéines sélectionnés.'
-            : 'Aucun produit protéiné sélectionné.'
+          typeof metrics.averagePricePerKg === 'number'
+            ? 'Calculé sur les offres avec information prix/kg.'
+            : 'Informations prix/kg indisponibles.'
         }
       />
       <KpiCard
@@ -115,11 +123,18 @@ export const KpiSummaryBar = ({ selectedProducts, isLoading }: KpiSummaryBarProp
         value={metrics.bestValueProduct ? metrics.bestValueProduct.product.name : 'N/A'}
         helper={
           metrics.bestValueProduct
-            ? `${metrics.bestValueProduct.value.toFixed(2)} € / 100 g de protéine`
-            : 'Sélectionnez au moins une whey.'
+            ? `${metrics.bestValueProduct.value.toFixed(2)} g de protéine / €`
+            : 'Sélectionnez un produit riche en protéines.'
         }
       />
-      <KpiCard label="Note moyenne" value={`${metrics.averageRating.toFixed(1)} / 5`} />
+      <KpiCard
+        label="Note moyenne"
+        value={
+          typeof metrics.averageRating === 'number'
+            ? `${metrics.averageRating.toFixed(1)} / 5`
+            : 'N/A'
+        }
+      />
     </section>
   );
 };
