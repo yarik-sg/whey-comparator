@@ -1145,20 +1145,30 @@ def collect_scraper_deals(q: str, limit: int = 12) -> List[Dict[str, Any]]:
 @lru_cache(maxsize=64)
 def serpapi_shopping(q: str, hl: str = "fr", gl: str = "fr") -> Dict[str, Any]:
     params = {"engine": "google_shopping", "q": q, "hl": hl, "gl": gl, "api_key": SERPAPI_KEY}
-    r = requests.get(SERPAPI_BASE, params=params, timeout=30)
     try:
-        return r.json()
-    except Exception:
-        return {"error": "Réponse non JSON de SerpAPI", "text": r.text, "status": r.status_code}
+        r = requests.get(SERPAPI_BASE, params=params, timeout=30)
+        try:
+            return r.json()
+        except Exception:
+            return {"error": "Réponse non JSON de SerpAPI", "text": r.text, "status": r.status_code}
+    except requests.exceptions.Timeout:
+        return {"error": "Timeout SerpAPI (google_shopping)"}
+    except requests.exceptions.RequestException as exc:
+        return {"error": f"Erreur SerpAPI (google_shopping): {exc}"}
 
 @lru_cache(maxsize=128)
 def serpapi_product_offers(product_id: str, hl: str = "fr", gl: str = "fr") -> Dict[str, Any]:
     params = {"engine": "google_product", "product_id": product_id, "offers": "1", "hl": hl, "gl": gl, "api_key": SERPAPI_KEY}
-    r = requests.get(SERPAPI_BASE, params=params, timeout=30)
     try:
-        return r.json()
-    except Exception:
-        return {"error": "Réponse non JSON (google_product)", "text": r.text, "status": r.status_code}
+        r = requests.get(SERPAPI_BASE, params=params, timeout=30)
+        try:
+            return r.json()
+        except Exception:
+            return {"error": "Réponse non JSON (google_product)", "text": r.text, "status": r.status_code}
+    except requests.exceptions.Timeout:
+        return {"error": "Timeout SerpAPI (google_product)"}
+    except requests.exceptions.RequestException as exc:
+        return {"error": f"Erreur SerpAPI (google_product): {exc}"}
 
 def pick_best_offer(offers: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     if not offers:
