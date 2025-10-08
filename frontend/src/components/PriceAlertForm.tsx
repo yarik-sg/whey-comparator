@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useCallback, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,11 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
   const [formState, setFormState] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<SubmissionStatus>({ state: "idle" });
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const isSubmitting = status.state === "loading";
 
@@ -129,6 +134,23 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
     "space-y-6 rounded-3xl border border-orange-100 bg-white p-8 shadow-lg",
     className,
   );
+
+  if (!hasMounted) {
+    return (
+      <div className={containerClassName} aria-hidden="true">
+        <div className="space-y-6">
+          {[0, 1, 2].map((index) => (
+            <div key={index} className="space-y-2">
+              <div className="h-4 w-40 rounded-full bg-slate-200" />
+              <div className="h-10 w-full rounded-xl bg-slate-100" />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 h-11 w-full rounded-full bg-slate-200" />
+      </div>
+    );
+  }
 
   return (
     <form
