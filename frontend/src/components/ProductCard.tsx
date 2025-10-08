@@ -71,14 +71,17 @@ function formatBestPrice(price: ProductSummary["bestPrice"]) {
 }
 
 export function ProductCard({ product, href, footer }: ProductCardProps) {
-  const footerNode = footer && <CardFooter className="border-t border-slate-200 pt-4 text-sm text-slate-500">{footer}</CardFooter>;
+  const footerNode =
+    footer && (
+      <CardFooter className="border-t border-slate-200 pt-4 text-sm text-slate-500">{footer}</CardFooter>
+    );
 
   const productImage = getProductImage(product);
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = productImage && !imageFailed;
 
-  const content = (
-    <Card className="flex h-full flex-col justify-between border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+  const bodyContent = (
+    <>
       <CardHeader className="space-y-4">
         <div className="relative overflow-hidden rounded-3xl bg-slate-50">
           <div className="flex aspect-[4/3] w-full items-center justify-center p-6">
@@ -164,22 +167,26 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
           </div>
         </dl>
       </CardContent>
-      {footerNode}
-    </Card>
+    </>
   );
 
-  if (href) {
-    return (
-      <article className="h-full">
-        <Link
-          href={href}
-          className="block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2"
-        >
-          {content}
-        </Link>
-      </article>
-    );
-  }
+  const cardBody = href ? (
+    <Link
+      href={href}
+      className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2"
+    >
+      {bodyContent}
+    </Link>
+  ) : (
+    <div className="flex flex-1 flex-col">{bodyContent}</div>
+  );
 
-  return <article className="h-full">{content}</article>;
+  return (
+    <article className="h-full">
+      <Card className="flex h-full flex-col justify-between border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+        {cardBody}
+        {footerNode}
+      </Card>
+    </article>
+  );
 }

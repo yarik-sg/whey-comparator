@@ -131,7 +131,14 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
   );
 
   return (
-    <form onSubmit={handleSubmit} className={containerClassName} autoComplete="off" noValidate>
+    <form
+      onSubmit={handleSubmit}
+      className={containerClassName}
+      autoComplete="off"
+      noValidate
+      data-lpignore="true"
+      data-lastpass-icon="false"
+    >
       <div className="space-y-6">
         <div className="space-y-2">
           <label htmlFor="alert-email" className="block text-sm font-semibold text-slate-700">
@@ -159,6 +166,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
           <Input
             id="alert-product"
             type="text"
+            data-lpignore="true"
             data-lastpass-icon="false"
             value={formState.product}
             onChange={handleChange("product")}
@@ -178,6 +186,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
             inputMode="decimal"
             min="0"
             step="0.01"
+            data-lpignore="true"
             data-lastpass-icon="false"
             value={formState.priceThreshold}
             onChange={handleChange("priceThreshold")}

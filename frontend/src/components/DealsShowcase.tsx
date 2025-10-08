@@ -234,8 +234,9 @@ export function DealsShowcase() {
     const fetchDeals = async () => {
       setState("loading");
       try {
-        const data = await apiClient.get<DealItem[]>("/deals", {
+        const data = await apiClient.get<DealItem[]>("/compare", {
           cache: "no-store",
+          query: { limit: 9 },
         });
 
         if (!mounted) {
