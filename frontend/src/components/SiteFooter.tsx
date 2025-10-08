@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const productLinks = [
-  { label: "Promos du moment", href: "/#promotions" },
+  { label: "Promos du moment", href: "/catalogue" },
   { label: "Comparer des produits", href: "/comparison" },
   { label: "Catalogue complet", href: "/products" },
 ];
