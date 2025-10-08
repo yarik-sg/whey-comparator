@@ -10,6 +10,7 @@ import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { popularCategories, type PopularCategory } from "@/data/popularCategories";
 import apiClient from "@/lib/apiClient";
+import { getFallbackDeals } from "@/lib/fallbackCatalogue";
 import { buildDisplayImageUrl } from "@/lib/images";
 import type { DealItem } from "@/types/api";
 
@@ -215,8 +216,13 @@ function selectTopPromotions(deals: DealItem[], limit = PROMOS_PER_CATEGORY): De
 }
 
 async function fetchSerpFallbackDeals(query: string, limit: number): Promise<CategoryResult["deals"]> {
+  const useCatalogueFallback = () => {
+    const fallbackDeals = getFallbackDeals({ limit, query });
+    return fallbackDeals.length > 0 ? selectTopPromotions(fallbackDeals, limit) : [];
+  };
+
   if (!query) {
-    return [];
+    return useCatalogueFallback();
   }
 
   try {
@@ -232,7 +238,7 @@ async function fetchSerpFallbackDeals(query: string, limit: number): Promise<Cat
     if (!response.ok) {
       const text = await response.text();
       console.error("Fallback SerpAPI request failed", query, response.status, text);
-      return [];
+      return useCatalogueFallback();
     }
 
     const data = await response.json();
@@ -242,10 +248,14 @@ async function fetchSerpFallbackDeals(query: string, limit: number): Promise<Cat
         ? data.deals
         : [];
 
+    if (deals.length === 0) {
+      return useCatalogueFallback();
+    }
+
     return selectTopPromotions(deals, limit);
   } catch (error) {
     console.error("Fallback SerpAPI request error", query, error);
-    return [];
+    return useCatalogueFallback();
   }
 }
 
