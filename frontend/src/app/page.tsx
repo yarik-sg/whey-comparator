@@ -8,8 +8,6 @@ import { HeroSection } from "@/components/HeroSection";
 import { PartnerLogos } from "@/components/PartnerLogos";
 import { PopularCategories } from "@/components/PopularCategories";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
-import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { StatsSection } from "@/components/StatsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 
@@ -43,19 +41,14 @@ export default function Home() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <SiteHeader />
-      <main className="bg-white">
-        <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
-        <PopularCategories onSelectCategory={handleSelectCategory} />
-        <DealsShowcase />
-        <StatsSection />
-        <PartnerLogos />
-        <WhyChooseUsSection />
-        <PriceAlertsSection onExploreCatalogue={handleExploreCatalogue} />
-      </main>
-
-      <SiteFooter />
+    <div className="bg-white text-slate-900">
+      <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
+      <PopularCategories onSelectCategory={handleSelectCategory} />
+      <DealsShowcase />
+      <StatsSection />
+      <PartnerLogos />
+      <WhyChooseUsSection />
+      <PriceAlertsSection onExploreCatalogue={handleExploreCatalogue} />
     </div>
   );
 }
