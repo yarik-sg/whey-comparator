@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { Slot } from "@radix-ui/react-slot";
+
 import { cn, type ClassValue } from "@/lib/utils";
 
 const baseStyles =
@@ -60,15 +62,18 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "primary",
       size = "default",
       type = "button",
+      asChild = false,
       ...props
     },
     ref,
   ) => {
+    const Component = asChild ? Slot : "button";
+
     return (
-      <button
+      <Component
         ref={ref}
-        type={type}
         className={buttonClassName({ variant, size, className })}
+        {...(!asChild && { type })}
         {...props}
       />
     );
