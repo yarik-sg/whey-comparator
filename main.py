@@ -7,7 +7,7 @@ import os, re
 import requests
 from urllib.parse import urlparse, parse_qs, quote
 from functools import lru_cache
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
 
 app = FastAPI()
 
@@ -1355,28 +1355,252 @@ def list_products(
     }
 
 
-@app.get("/products/{product_id}/offers")
-def product_offers_endpoint(
-    product_id: int,
-    limit: int = Query(10, ge=1, le=24),
-):
-    detail = fetch_scraper_product_with_offers(product_id)
-    if not detail:
-        raise HTTPException(status_code=404, detail="Produit introuvable")
+def build_serp_product_detail(
+    product_identifier: str, *, limit: int = 10
+) -> Optional[Dict[str, Any]]:
+    serp_product = serpapi_product_offers(product_identifier)
+    if not isinstance(serp_product, dict) or not serp_product:
+        return None
 
-    product_payload = serialize_product(detail)
-    aggregated = aggregate_offers_for_product(detail, limit=limit)
-    scraper_offers = detail.get("offers")
-    if not isinstance(scraper_offers, list):
-        scraper_offers = []
+    if serp_product.get("error"):
+        return None
+
+    product_results = serp_product.get("product_results")
+    if not isinstance(product_results, dict):
+        return None
+
+    raw_title = product_results.get("title") or product_results.get("name") or "Produit"
+    title = (raw_title or "Produit").strip() or "Produit"
+    brand = (
+        product_results.get("brand")
+        or product_results.get("manufacturer")
+        or product_results.get("seller")
+    )
+    category = product_results.get("category") or product_results.get("type")
+
+    image_candidates: List[Optional[str]] = [
+        product_results.get("thumbnail"),
+        product_results.get("image"),
+    ]
+
+    media = product_results.get("media")
+    if isinstance(media, list):
+        for media_item in media:
+            if isinstance(media_item, dict) and media_item.get("type") == "image":
+                image_candidates.extend(
+                    media_item.get(key)
+                    for key in ("link", "image", "thumbnail", "source")
+                )
+
+    inline_images = product_results.get("inline_images")
+    if isinstance(inline_images, list):
+        for image_item in inline_images:
+            if isinstance(image_item, dict):
+                image_candidates.extend(
+                    image_item.get(key)
+                    for key in ("image", "link", "thumbnail", "source")
+                )
+
+    product_images = product_results.get("images")
+    if isinstance(product_images, list):
+        for image_item in product_images:
+            if isinstance(image_item, dict):
+                image_candidates.extend(
+                    image_item.get(key)
+                    for key in ("link", "image", "thumbnail", "source")
+                )
+
+    resolved_image = resolve_image_with_placeholder(
+        image_candidates,
+        name=title,
+        brand=brand,
+    )
+    primary_image = pick_best_image_candidate(image_candidates) or resolved_image
+
+    sellers_results = serp_product.get("sellers_results")
+    online_sellers = (
+        sellers_results.get("online_sellers")
+        if isinstance(sellers_results, dict)
+        else None
+    )
+
+    offers: List[Dict[str, Any]] = []
+    if isinstance(online_sellers, list):
+        for index, seller in enumerate(online_sellers):
+            if not isinstance(seller, dict):
+                continue
+
+            raw_price = sanitize_price_str(
+                seller.get("total_price")
+                or seller.get("base_price")
+                or seller.get("price")
+            )
+            price_amount = price_to_float(raw_price)
+            shipping_cost = parse_float(seller.get("shipping_cost"))
+            shipping_text = seller.get("shipping") or None
+
+            availability = seller.get("availability")
+            in_stock: Optional[bool] = None
+            if availability:
+                normalized = str(availability).lower()
+                in_stock = any(
+                    keyword in normalized for keyword in ("stock", "available", "disponible")
+                )
+
+            link = decode_google_redirect(
+                seller.get("product_link") or seller.get("link")
+            )
+            if not is_http_url(link):
+                link = None
+
+            rating_value = parse_float(seller.get("rating"))
+            reviews_value = parse_int(seller.get("reviews"))
+
+            offer_images = [
+                seller.get("thumbnail"),
+                seller.get("image"),
+                seller.get("image_link"),
+            ]
+
+            weight_guess = (
+                extract_weight_kg(title)
+                or extract_weight_kg(seller.get("title"))
+                or None
+            )
+            price_per_kg = (
+                round(price_amount / weight_guess, 2)
+                if price_amount is not None and weight_guess
+                else None
+            )
+
+            offers.append(
+                build_deal_payload(
+                    identifier=f"google-product-{product_identifier}-{index}",
+                    title=title,
+                    vendor=seller.get("name") or seller.get("source") or "Marchand",
+                    price_amount=price_amount,
+                    price_currency="EUR" if price_amount is not None else None,
+                    price_formatted=raw_price,
+                    shipping_cost=shipping_cost,
+                    shipping_text=shipping_text,
+                    in_stock=in_stock,
+                    stock_status=availability,
+                    link=link,
+                    image=pick_best_image_candidate(offer_images),
+                    rating=rating_value,
+                    reviews_count=reviews_value,
+                    source="Google Shopping",
+                    product_id=int(product_identifier)
+                    if str(product_identifier).isdigit()
+                    else None,
+                    weight_kg=weight_guess,
+                    price_per_kg=price_per_kg,
+                )
+            )
+
+    extra_deals = collect_serp_deals(title, marque=brand, limit=limit)
+    if extra_deals:
+        offers.extend(extra_deals)
+
+    if not offers:
+        return None
+
+    offers.sort(
+        key=lambda deal: (
+            extract_total_price_amount(deal)
+            if extract_total_price_amount(deal) is not None
+            else float("inf")
+        )
+    )
+
+    limited_offers = offers[:limit]
+    mark_best_price(limited_offers)
+
+    best_offer: Optional[Dict[str, Any]] = None
+    for offer in limited_offers:
+        if offer.get("isBestPrice"):
+            best_offer = offer
+            break
+    if best_offer is None:
+        best_offer = limited_offers[0]
+
+    best_price_summary = best_offer.get("totalPrice")
+    if not isinstance(best_price_summary, dict) or best_price_summary.get("amount") is None:
+        price_payload = best_offer.get("price")
+        if isinstance(price_payload, dict):
+            best_price_summary = price_payload
+        else:
+            best_price_summary = build_price_summary(None, None)
+
+    payload_id: Union[int, str]
+    if str(product_identifier).isdigit():
+        payload_id = int(product_identifier)
+    else:
+        payload_id = product_identifier
+
+    product_payload = {
+        "id": payload_id,
+        "name": title,
+        "brand": brand,
+        "flavour": None,
+        "image": resolved_image,
+        "image_url": primary_image,
+        "protein_per_serving_g": None,
+        "serving_size_g": None,
+        "category": category or "Google Shopping",
+        "bestPrice": best_price_summary,
+        "totalPrice": best_offer.get("totalPrice"),
+        "bestDeal": best_offer,
+        "offersCount": len(limited_offers),
+        "inStock": best_offer.get("inStock"),
+        "stockStatus": best_offer.get("stockStatus"),
+        "rating": best_offer.get("rating"),
+        "reviewsCount": best_offer.get("reviewsCount"),
+        "proteinPerEuro": None,
+        "pricePerKg": best_offer.get("pricePerKg"),
+        "bestVendor": best_offer.get("vendor"),
+    }
 
     return {
         "product": product_payload,
-        "offers": aggregated,
-        "sources": {
-            "scraper": scraper_offers,
-        },
+        "offers": limited_offers,
+        "sources": {"scraper": []},
     }
+
+
+@app.get("/products/{product_id}/offers")
+def product_offers_endpoint(
+    product_id: str,
+    limit: int = Query(10, ge=1, le=24),
+):
+    numeric_id: Optional[int] = None
+    try:
+        numeric_id = int(product_id)
+    except (TypeError, ValueError):
+        numeric_id = None
+
+    detail = fetch_scraper_product_with_offers(numeric_id) if numeric_id is not None else None
+
+    if detail:
+        product_payload = serialize_product(detail)
+        aggregated = aggregate_offers_for_product(detail, limit=limit)
+        scraper_offers = detail.get("offers")
+        if not isinstance(scraper_offers, list):
+            scraper_offers = []
+
+        return {
+            "product": product_payload,
+            "offers": aggregated,
+            "sources": {
+                "scraper": scraper_offers,
+            },
+        }
+
+    serp_detail = build_serp_product_detail(str(product_id), limit=limit)
+    if serp_detail:
+        return serp_detail
+
+    raise HTTPException(status_code=404, detail="Produit introuvable")
 
 
 @app.get("/products/{product_id}/related")
