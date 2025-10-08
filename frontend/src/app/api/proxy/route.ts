@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
         "X-Forwarded-For": request.headers.get("x-forwarded-for") ?? undefined,
       },
       cache: "no-store",
+      allowProxyFallback: false,
     });
 
     return NextResponse.json(data);
