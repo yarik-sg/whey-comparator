@@ -12,7 +12,7 @@ const navItems = [
   { label: "Accueil", href: "/" },
   { label: "Produits", href: "/products" },
   { label: "Comparateur", href: "/comparison" },
-  { label: "Catalogue", href: "/catalogue" },
+  { label: "Promos du moment", href: "/catalogue" },
 ];
 
 export function SiteHeader() {

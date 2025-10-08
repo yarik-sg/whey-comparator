@@ -19,14 +19,7 @@ export default function Home() {
   }, [router]);
 
   const handleViewDeals = useCallback(() => {
-    const section = document.getElementById("promotions");
-
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-
-    router.push("/comparateur");
+    router.push("/catalogue");
   }, [router]);
 
   const handleSelectCategory = useCallback(
