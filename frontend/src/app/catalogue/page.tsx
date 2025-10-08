@@ -215,10 +215,47 @@ function selectTopPromotions(deals: DealItem[], limit = PROMOS_PER_CATEGORY): De
   return selected.slice(0, limit);
 }
 
-async function fetchSerpFallbackDeals(query: string, limit: number): Promise<CategoryResult["deals"]> {
-  const useCatalogueFallback = () => {
-    const fallbackDeals = getFallbackDeals({ limit, query });
-    return fallbackDeals.length > 0 ? selectTopPromotions(fallbackDeals, limit) : [];
+type SerpIntegrationResult = {
+  deals: DealItem[];
+  source: "serp" | "fallback" | "none";
+  error?: string;
+};
+
+function mergeDeals(base: DealItem[], incoming: DealItem[], limit: number): DealItem[] {
+  if (incoming.length === 0) {
+    return base;
+  }
+
+  return selectTopPromotions([...base, ...incoming], limit);
+}
+
+async function fetchSerpDealsWithFallback({
+  query,
+  limit,
+  existingDeals = [],
+}: {
+  query: string;
+  limit: number;
+  existingDeals?: DealItem[];
+}): Promise<SerpIntegrationResult> {
+  const baseDeals = existingDeals.length > 0 ? selectTopPromotions(existingDeals, limit) : [];
+
+  const useCatalogueFallback = (error?: string): SerpIntegrationResult => {
+    const fallbackDeals = getFallbackDeals({ limit: limit * 3, query });
+    if (fallbackDeals.length === 0) {
+      return { deals: baseDeals, source: "none", error };
+    }
+
+    const combined = mergeDeals(baseDeals, fallbackDeals, limit);
+    if (combined.length === 0) {
+      return { deals: baseDeals, source: "none", error };
+    }
+
+    return {
+      deals: combined,
+      source: "fallback",
+      error,
+    };
   };
 
   if (!query) {
@@ -226,7 +263,7 @@ async function fetchSerpFallbackDeals(query: string, limit: number): Promise<Cat
   }
 
   try {
-    const params = new URLSearchParams({ q: query, limit: String(limit) });
+    const params = new URLSearchParams({ q: query, limit: String(limit * 3) });
     const response = await fetch(`/api/catalogue/serp?${params.toString()}`, {
       method: "GET",
       headers: {
@@ -238,7 +275,7 @@ async function fetchSerpFallbackDeals(query: string, limit: number): Promise<Cat
     if (!response.ok) {
       const text = await response.text();
       console.error("Fallback SerpAPI request failed", query, response.status, text);
-      return useCatalogueFallback();
+      return useCatalogueFallback(`SerpAPI request failed with status ${response.status}`);
     }
 
     const data = await response.json();
@@ -249,13 +286,17 @@ async function fetchSerpFallbackDeals(query: string, limit: number): Promise<Cat
         : [];
 
     if (deals.length === 0) {
-      return useCatalogueFallback();
+      return useCatalogueFallback("SerpAPI returned no deals");
     }
 
-    return selectTopPromotions(deals, limit);
+    const combined = mergeDeals(baseDeals, deals, limit);
+    return {
+      deals: combined.length > 0 ? combined : baseDeals,
+      source: "serp",
+    };
   } catch (error) {
     console.error("Fallback SerpAPI request error", query, error);
-    return useCatalogueFallback();
+    return useCatalogueFallback("SerpAPI request error");
   }
 }
 
@@ -419,31 +460,52 @@ export default function PromosPage() {
   const fetchPromosData = useCallback(async (): Promise<CategoryResult[]> => {
     return Promise.all(
       promoCategories.map(async (category) => {
+        let usingFallback = false;
+        let selected: DealItem[] = [];
+
         try {
           const deals = await apiClient.get<DealItem[]>("/compare", {
             cache: "no-store",
             query: { q: category.query, limit: 24 },
           });
 
-          const selected = selectTopPromotions(Array.isArray(deals) ? deals : [], PROMOS_PER_CATEGORY);
-          if (selected.length > 0) {
-            return { id: category.id, deals: selected, usingFallback: false } satisfies CategoryResult;
-          }
+          selected = selectTopPromotions(Array.isArray(deals) ? deals : [], PROMOS_PER_CATEGORY);
         } catch (error) {
           console.error("Erreur chargement promos", category.query, error);
         }
 
-        const fallbackDeals = await fetchSerpFallbackDeals(category.query, PROMOS_PER_CATEGORY);
-        if (fallbackDeals.length > 0) {
-          return { id: category.id, deals: fallbackDeals, usingFallback: true } satisfies CategoryResult;
+        const hadPrimaryDeals = selected.length > 0;
+
+        if (selected.length < PROMOS_PER_CATEGORY) {
+          const serpResult = await fetchSerpDealsWithFallback({
+            query: category.query,
+            limit: PROMOS_PER_CATEGORY,
+            existingDeals: selected,
+          });
+
+          if (serpResult.deals.length > 0) {
+            selected = serpResult.deals;
+            usingFallback = serpResult.source === "fallback";
+          } else if (!hadPrimaryDeals) {
+            return {
+              id: category.id,
+              deals: [],
+              usingFallback: false,
+              error: serpResult.error ?? "Impossible de charger les promotions pour cette catégorie.",
+            } satisfies CategoryResult;
+          }
         }
 
-        return {
-          id: category.id,
-          deals: [],
-          usingFallback: false,
-          error: "Impossible de charger les promotions pour cette catégorie.",
-        } satisfies CategoryResult;
+        if (selected.length === 0) {
+          return {
+            id: category.id,
+            deals: [],
+            usingFallback: false,
+            error: "Impossible de charger les promotions pour cette catégorie.",
+          } satisfies CategoryResult;
+        }
+
+        return { id: category.id, deals: selected, usingFallback } satisfies CategoryResult;
       }),
     );
   }, []);
