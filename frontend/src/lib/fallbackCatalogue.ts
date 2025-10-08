@@ -3,7 +3,10 @@ import type {
   ComparisonEntry,
   ComparisonResponse,
   DealItem,
+  ProductOffersResponse,
   ProductSummary,
+  RelatedProductsResponse,
+  ScraperOffer,
 } from "@/types/api";
 
 const DEFAULT_CURRENCY = "EUR";
@@ -364,6 +367,26 @@ function buildEntry(product: RawFallbackProduct): ComparisonEntry {
   };
 }
 
+function buildScraperOffers(product: RawFallbackProduct): ScraperOffer[] {
+  const timestamp = new Date().toISOString();
+
+  return product.offers.map((rawOffer, index) => {
+    return {
+      id: index + 1,
+      source: rawOffer.source ?? rawOffer.vendor,
+      url: rawOffer.link ?? "",
+      price: rawOffer.price,
+      currency: rawOffer.currency ?? DEFAULT_CURRENCY,
+      price_per_100g_protein: null,
+      stock_status: rawOffer.stockStatus ?? null,
+      in_stock: rawOffer.inStock ?? null,
+      shipping_cost: rawOffer.shippingCost ?? null,
+      shipping_text: rawOffer.shippingText ?? null,
+      last_checked: timestamp,
+    } satisfies ScraperOffer;
+  });
+}
+
 function buildSummary(offers: DealItem[]): DealItem[] {
   const sorted = offers
     .slice()
@@ -398,6 +421,78 @@ export function getFallbackProductSummaries(limit?: number): ProductSummary[] {
     const entry = buildEntry(product);
     return cloneProduct(entry.product);
   });
+}
+
+export function getFallbackProductOffers(productId: number): ProductOffersResponse | null {
+  const product = RAW_FALLBACK_PRODUCTS.find((item) => item.id === productId);
+  if (!product) {
+    return null;
+  }
+
+  const entry = buildEntry(product);
+  const offers = entry.offers.map((offer) => cloneDeal(offer));
+
+  return {
+    product: cloneProduct(entry.product),
+    offers,
+    sources: {
+      scraper: buildScraperOffers(product),
+    },
+  } satisfies ProductOffersResponse;
+}
+
+function scoreRelatedProduct(
+  base: RawFallbackProduct,
+  candidate: RawFallbackProduct,
+): number {
+  let score = 0;
+
+  if (base.brand && candidate.brand && base.brand === candidate.brand) {
+    score += 2;
+  }
+
+  if (base.category && candidate.category && base.category === candidate.category) {
+    score += 1;
+  }
+
+  if (typeof candidate.rating === "number") {
+    score += Math.min(candidate.rating / 5, 1);
+  }
+
+  return score;
+}
+
+export function getFallbackRelatedProducts(
+  productId: number,
+  limit = 4,
+): RelatedProductsResponse | null {
+  const baseProduct = RAW_FALLBACK_PRODUCTS.find((item) => item.id === productId);
+
+  if (!baseProduct) {
+    return null;
+  }
+
+  const candidates = RAW_FALLBACK_PRODUCTS.filter((item) => item.id !== productId).map((item) => ({
+    product: item,
+    score: scoreRelatedProduct(baseProduct, item),
+  }));
+
+  candidates.sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    return a.product.name.localeCompare(b.product.name, "fr", { sensitivity: "base" });
+  });
+
+  const selected = candidates.slice(0, Math.max(limit, 0)).map(({ product }) => {
+    const entry = buildEntry(product);
+    return cloneProduct(entry.product);
+  });
+
+  return {
+    productId,
+    related: selected,
+  } satisfies RelatedProductsResponse;
 }
 
 export function getFallbackComparison(ids: readonly string[]): ComparisonResponse | null {
