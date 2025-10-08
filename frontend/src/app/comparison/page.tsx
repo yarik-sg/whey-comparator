@@ -6,15 +6,136 @@ import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import apiClient from "@/lib/apiClient";
-import type { ComparisonResponse, ProductListResponse, ProductSummary } from "@/types/api";
+import { getFallbackComparison, getFallbackProductSummaries } from "@/lib/fallbackCatalogue";
+import type { ComparisonEntry, ComparisonResponse, DealItem, ProductListResponse, ProductSummary } from "@/types/api";
 
 interface ComparisonPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
+function parseIds(ids: string): string[] {
+  return ids
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+}
+
+function toNumericIds(ids: readonly string[]): number[] {
+  return ids
+    .map((value) => Number.parseInt(value, 10))
+    .filter((value): value is number => Number.isFinite(value));
+}
+
+function sanitizeComparisonEntry(entry: ComparisonEntry | null | undefined): ComparisonEntry | null {
+  if (!entry || !entry.product) {
+    return null;
+  }
+
+  const offers = Array.isArray(entry.offers)
+    ? entry.offers.filter((offer): offer is DealItem => Boolean(offer && offer.id))
+    : [];
+
+  return {
+    product: entry.product,
+    offers,
+  };
+}
+
+function sanitizeComparisonResponse(data: ComparisonResponse | null | undefined): ComparisonResponse | null {
+  if (!data) {
+    return null;
+  }
+
+  const products = Array.isArray(data.products)
+    ? data.products
+        .map((entry) => sanitizeComparisonEntry(entry))
+        .filter((entry): entry is ComparisonEntry => Boolean(entry))
+    : [];
+
+  if (products.length === 0) {
+    return null;
+  }
+
+  const summary = Array.isArray(data.summary)
+    ? data.summary.filter((offer): offer is DealItem => Boolean(offer && offer.id))
+    : [];
+
+  return {
+    products,
+    summary,
+  };
+}
+
+function mergeWithFallback(
+  primary: ComparisonResponse,
+  fallback: ComparisonResponse | null,
+  requestedIds: number[],
+): ComparisonResponse {
+  if (!fallback) {
+    return primary;
+  }
+
+  const presentIds = new Set<number>();
+  primary.products.forEach((entry) => {
+    if (typeof entry.product?.id === "number") {
+      presentIds.add(entry.product.id);
+    }
+  });
+
+  const missingIds = requestedIds.filter((id) => !presentIds.has(id));
+  if (missingIds.length === 0) {
+    return primary;
+  }
+
+  const missingSet = new Set(missingIds);
+  const supplementalProducts = fallback.products.filter((entry) =>
+    typeof entry.product?.id === "number" && missingSet.has(entry.product.id),
+  );
+
+  if (supplementalProducts.length === 0) {
+    return primary;
+  }
+
+  const combinedProducts = [...primary.products, ...supplementalProducts];
+  const order = new Map<number, number>();
+  requestedIds.forEach((id, index) => {
+    order.set(id, index);
+  });
+
+  combinedProducts.sort((a, b) => {
+    const aId = typeof a.product?.id === "number" ? a.product.id : Number.MAX_SAFE_INTEGER;
+    const bId = typeof b.product?.id === "number" ? b.product.id : Number.MAX_SAFE_INTEGER;
+    const aOrder = order.get(aId) ?? Number.MAX_SAFE_INTEGER;
+    const bOrder = order.get(bId) ?? Number.MAX_SAFE_INTEGER;
+    return aOrder - bOrder;
+  });
+
+  const seenSummary = new Map<string, DealItem>();
+  const pushOffer = (offer: DealItem) => {
+    if (offer && offer.id && !seenSummary.has(offer.id)) {
+      seenSummary.set(offer.id, offer);
+    }
+  };
+
+  (primary.summary ?? []).forEach(pushOffer);
+
+  fallback.summary
+    .filter((offer) => typeof offer.productId === "number" && missingSet.has(offer.productId))
+    .forEach(pushOffer);
+
+  return {
+    products: combinedProducts,
+    summary: Array.from(seenSummary.values()),
+  };
+}
+
 async function fetchComparison(ids: string) {
+  const parsedIds = parseIds(ids);
+  const requestedIds = toNumericIds(parsedIds);
+  const fallback = parsedIds.length > 0 ? getFallbackComparison(parsedIds) : null;
+
   try {
-    const data = await apiClient.get<ComparisonResponse>("/comparison", {
+    const raw = await apiClient.get<ComparisonResponse>("/comparison", {
       query: {
         ids,
         limit: 12,
@@ -22,10 +143,19 @@ async function fetchComparison(ids: string) {
       cache: "no-store",
     });
 
-    return data;
+    const sanitized = sanitizeComparisonResponse(raw);
+    if (!sanitized) {
+      return fallback;
+    }
+
+    if (requestedIds.length === 0) {
+      return sanitized;
+    }
+
+    return mergeWithFallback(sanitized, fallback, requestedIds);
   } catch (error) {
     console.error("Erreur chargement comparaison", error);
-    return null;
+    return fallback;
   }
 }
 
@@ -34,6 +164,8 @@ const DEFAULT_PRESELECT_COUNT = 2;
 async function fetchDefaultComparisonProducts(
   limit = DEFAULT_PRESELECT_COUNT,
 ): Promise<ProductSummary[]> {
+  const fallbackProducts = getFallbackProductSummaries(limit);
+
   try {
     const data = await apiClient.get<ProductListResponse>("/products", {
       query: {
@@ -43,10 +175,29 @@ async function fetchDefaultComparisonProducts(
       cache: "no-store",
     });
 
-    return data.products.slice(0, limit);
+    const products = Array.isArray(data?.products) ? data.products.slice(0, limit) : [];
+
+    if (products.length >= limit || fallbackProducts.length === 0) {
+      return products.length > 0 ? products : fallbackProducts;
+    }
+
+    const existingIds = new Set(products.map((product) => product.id));
+    const supplemented = [...products];
+
+    for (const fallbackProduct of fallbackProducts) {
+      if (supplemented.length >= limit) {
+        break;
+      }
+
+      if (!existingIds.has(fallbackProduct.id)) {
+        supplemented.push(fallbackProduct);
+      }
+    }
+
+    return supplemented;
   } catch (error) {
     console.error("Erreur chargement sélection par défaut", error);
-    return [];
+    return fallbackProducts;
   }
 }
 
