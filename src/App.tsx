@@ -7,7 +7,6 @@ import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
 import { ProductComparisonTable } from './components/ProductComparisonTable';
 
 import { HighlightedDealsSection } from './components/HighlightedDealsSection';
-import { PriceAlertsSection } from './components/PriceAlertsSection';
 import { highlightedDeals } from './data/products';
 import { useProducts } from './hooks/useProducts';
 import {
@@ -16,7 +15,6 @@ import {
   useProductSelectionStore,
 } from './store/productSelectionStore';
 import { usePriceAlertStore } from './store/priceAlertStore';
-import { ThemeToggle } from './components/theme/ThemeToggle';
 
 
 export default function App() {
@@ -50,43 +48,33 @@ export default function App() {
   );
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-athletic-radial opacity-80 dark:opacity-60" aria-hidden />
-      <div className="pointer-events-none absolute inset-0 bg-athletic-grid opacity-40 dark:opacity-10" aria-hidden />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
 
-      <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 pb-16 pt-12 sm:px-6 lg:px-10">
-        <header className="surface-card glass-effect overflow-hidden p-8 shadow-athletic sm:p-10">
-          <div className="absolute inset-y-0 right-0 w-1/2 bg-athletic-linear opacity-40 blur-3xl" aria-hidden />
-          <div className="relative flex flex-col gap-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <span className="badge-best-price">Meilleur prix en temps réel</span>
-              <ThemeToggle />
-            </div>
-            <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-                Comparateur intelligent
-              </p>
-              <h1 className="text-balance text-3xl font-bold text-slate-900 sm:text-4xl lg:text-5xl">
-                <span className="text-gradient">Comparez vos compléments favoris</span>
-              </h1>
-              <p className="max-w-2xl text-base text-slate-600 dark:text-slate-300">
-                Filtrez par marque, type et budget pour construire un comparatif entre deux et quatre produits.
-                Analysez les KPIs clés comme le prix par 100 g de protéine pour trouver le meilleur rapport
-                qualité/prix.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-              <a href="#price-alerts" className="btn-primary">
-                Activer une alerte prix
-              </a>
-              <span className="text-sm text-slate-500 dark:text-slate-400">
-                {activeAlertCount > 0
-                  ? `${activeAlertCount} alerte${activeAlertCount > 1 ? 's' : ''} active${
-                      activeAlertCount > 1 ? 's' : ''
-                    }`
-                  : 'Recevez un e-mail dès qu’un prix baisse.'}
-              </span>
-            </div>
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 pb-12 pt-10 lg:px-8">
+        <header className="space-y-3">
+          <span className="inline-flex items-center rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-700">
+            Comparateur intelligent
+          </span>
+          <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">Comparez vos compléments favoris</h1>
+          <p className="max-w-2xl text-base text-slate-600">
+            Filtrez par marque, type et budget pour construire un comparatif entre deux et quatre produits.
+            Analysez les KPIs clés comme le prix par 100 g de protéine pour trouver le meilleur rapport
+            qualité/prix.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <a
+              href="#price-alerts"
+              className="inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-500"
+            >
+              Activer une alerte prix
+            </a>
+            <span className="text-sm text-slate-500">
+              {activeAlertCount > 0
+                ? `${activeAlertCount} alerte${activeAlertCount > 1 ? 's' : ''} active${
+                    activeAlertCount > 1 ? 's' : ''
+                  }`
+                : 'Recevez un e-mail dès qu’un prix baisse.'}
+            </span>
           </div>
         </header>
 
@@ -94,7 +82,7 @@ export default function App() {
 
         <KpiSummaryBar selectedProducts={selectedProducts} isLoading={isLoading} />
 
-        <div className="grid gap-8 lg:grid-cols-[320px,1fr] lg:items-start">
+        <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
           <ProductFiltersSidebar
             allProducts={products}
             filteredProducts={filteredProducts}
