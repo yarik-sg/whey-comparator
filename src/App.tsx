@@ -7,7 +7,8 @@ import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
 import { ProductComparisonTable } from './components/ProductComparisonTable';
 
 import { HighlightedDealsSection } from './components/HighlightedDealsSection';
-import { highlightedDeals } from './data/products';
+import { PriceAlertsSection } from './components/PriceAlertsSection';
+import { useHighlightedDeals } from './hooks/useHighlightedDeals';
 import { useProducts } from './hooks/useProducts';
 import {
   selectFilters,
@@ -19,6 +20,10 @@ import { usePriceAlertStore } from './store/priceAlertStore';
 
 export default function App() {
   const { data: products = [], isLoading } = useProducts();
+  const {
+    data: deals = [],
+    isLoading: isLoadingDeals,
+  } = useHighlightedDeals();
   const filters = useProductSelectionStore(useShallow(selectFilters));
   const selectedProductIds = useProductSelectionStore(selectSelectedProductIds);
   const setSelectedProductIds = useProductSelectionStore((state) => state.setSelectedProductIds);
@@ -35,9 +40,15 @@ export default function App() {
     return products.filter((product) => {
       const matchesBrand =
         filters.selectedBrands.length === 0 || filters.selectedBrands.includes(product.brand);
-      const matchesType = filters.selectedTypes.length === 0 || filters.selectedTypes.includes(product.type);
+
+      const matchesType =
+        filters.selectedTypes.length === 0 || filters.selectedTypes.includes(product.type);
+
       const [minPrice, maxPrice] = filters.priceRange;
-      const matchesPrice = product.price >= minPrice && product.price <= maxPrice;
+      const hasPrice = typeof product.price === 'number' && Number.isFinite(product.price);
+      const matchesPrice = hasPrice
+        ? product.price! >= minPrice && product.price! <= maxPrice
+        : filters.priceBounds[0] === 0 && filters.priceBounds[1] === 0;
       return matchesBrand && matchesType && matchesPrice;
     });
   }, [filters.selectedBrands, filters.selectedTypes, filters.priceRange, products]);
@@ -78,7 +89,7 @@ export default function App() {
           </div>
         </header>
 
-        <HighlightedDealsSection deals={highlightedDeals} products={products} isLoading={isLoading} />
+        <HighlightedDealsSection deals={deals} isLoading={isLoadingDeals} />
 
         <KpiSummaryBar selectedProducts={selectedProducts} isLoading={isLoading} />
 
