@@ -88,7 +88,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
 
     return (
-      <Component
+      <button
         ref={ref}
         type={type}
         className={mergedClassName}
