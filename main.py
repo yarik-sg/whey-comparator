@@ -23,7 +23,7 @@ app.add_middleware(
 # --- SerpAPI ---
 SERPAPI_KEY = os.getenv(
     "SERPAPI_KEY",
-    "e1518f7c9ca45f0dac6b04f7ef634d9d35e71956620dcd36587d7df8446c3495"
+    "45bb07858a3d17b414287b52c9d1952797dbbd2434738b92af3e47410f443698"
 )
 SERPAPI_BASE = "https://serpapi.com/search.json"
 SCRAPER_BASE_URL = os.getenv("SCRAPER_BASE_URL", "http://localhost:8001")
