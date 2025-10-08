@@ -10,7 +10,6 @@ import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { popularCategories, type PopularCategory } from "@/data/popularCategories";
 import apiClient from "@/lib/apiClient";
-import { getFallbackDeals } from "@/lib/fallbackCatalogue";
 import { buildDisplayImageUrl } from "@/lib/images";
 import type { DealItem } from "@/types/api";
 
@@ -32,7 +31,9 @@ type CategoryPromoState = PopularCategory & {
 };
 
 type CategoryResult = {
-  deals?: DealItem[];
+  id: string;
+  deals: DealItem[];
+  usingFallback: boolean;
   error?: string;
 };
 
@@ -213,6 +214,41 @@ function selectTopPromotions(deals: DealItem[], limit = PROMOS_PER_CATEGORY): De
   return selected.slice(0, limit);
 }
 
+async function fetchSerpFallbackDeals(query: string, limit: number): Promise<CategoryResult["deals"]> {
+  if (!query) {
+    return [];
+  }
+
+  try {
+    const params = new URLSearchParams({ q: query, limit: String(limit) });
+    const response = await fetch(`/api/catalogue/serp?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("Fallback SerpAPI request failed", query, response.status, text);
+      return [];
+    }
+
+    const data = await response.json();
+    const deals: DealItem[] = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.deals)
+        ? data.deals
+        : [];
+
+    return selectTopPromotions(deals, limit);
+  } catch (error) {
+    console.error("Fallback SerpAPI request error", query, error);
+    return [];
+  }
+}
+
 function PromoDealCard({ deal }: { deal: DealItem }) {
   const discount = computeDiscountPercentage(deal);
   const highlights = buildHighlights(deal);
@@ -325,59 +361,41 @@ export default function PromosPage() {
     };
   }, []);
 
-  const applyResults = useCallback((map: Map<string, CategoryResult>, successCount: number) => {
+  const applyResults = useCallback((results: CategoryResult[]) => {
     if (!isMountedRef.current) {
       return;
     }
 
+    const resultMap = new Map<string, CategoryResult>();
+    results.forEach((result) => {
+      resultMap.set(result.id, result);
+    });
+
+    let successCount = 0;
+
     setCategories((prev) =>
       prev.map((category) => {
-        const result = map.get(category.id);
+        const result = resultMap.get(category.id);
         if (!result) {
           return category;
         }
 
-        if (result.error) {
-          const fallback = getFallbackDeals({ query: category.query, limit: PROMOS_PER_CATEGORY });
-          if (fallback.length > 0) {
-            return {
-              ...category,
-              status: "success" as FetchState,
-              error: null,
-              deals: fallback,
-              usingFallback: true,
-            };
-          }
-
+        if (result.deals.length > 0) {
+          successCount += 1;
           return {
             ...category,
-            status: "error" as FetchState,
-            error: result.error,
-            deals: [],
-            usingFallback: false,
+            status: "success" as FetchState,
+            error: null,
+            deals: result.deals,
+            usingFallback: result.usingFallback,
           };
-        }
-
-        const selectedDeals = selectTopPromotions(result.deals ?? []);
-
-        if (selectedDeals.length === 0) {
-          const fallback = getFallbackDeals({ query: category.query, limit: PROMOS_PER_CATEGORY });
-          if (fallback.length > 0) {
-            return {
-              ...category,
-              status: "success" as FetchState,
-              error: null,
-              deals: fallback,
-              usingFallback: true,
-            };
-          }
         }
 
         return {
           ...category,
-          status: "success" as FetchState,
-          error: null,
-          deals: selectedDeals,
+          status: "error" as FetchState,
+          error: result.error ?? "Impossible de charger les promotions pour le moment.",
+          deals: [],
           usingFallback: false,
         };
       }),
@@ -388,8 +406,8 @@ export default function PromosPage() {
     }
   }, []);
 
-  const fetchPromosData = useCallback(async () => {
-    const results = await Promise.all(
+  const fetchPromosData = useCallback(async (): Promise<CategoryResult[]> => {
+    return Promise.all(
       promoCategories.map(async (category) => {
         try {
           const deals = await apiClient.get<DealItem[]>("/compare", {
@@ -397,30 +415,27 @@ export default function PromosPage() {
             query: { q: category.query, limit: 24 },
           });
 
-          return { id: category.id, deals };
+          const selected = selectTopPromotions(Array.isArray(deals) ? deals : [], PROMOS_PER_CATEGORY);
+          if (selected.length > 0) {
+            return { id: category.id, deals: selected, usingFallback: false } satisfies CategoryResult;
+          }
         } catch (error) {
           console.error("Erreur chargement promos", category.query, error);
-          return {
-            id: category.id,
-            error: "Impossible de charger les promotions pour cette catégorie.",
-          };
         }
+
+        const fallbackDeals = await fetchSerpFallbackDeals(category.query, PROMOS_PER_CATEGORY);
+        if (fallbackDeals.length > 0) {
+          return { id: category.id, deals: fallbackDeals, usingFallback: true } satisfies CategoryResult;
+        }
+
+        return {
+          id: category.id,
+          deals: [],
+          usingFallback: false,
+          error: "Impossible de charger les promotions pour cette catégorie.",
+        } satisfies CategoryResult;
       }),
     );
-
-    const map = new Map<string, CategoryResult>();
-    let successCount = 0;
-
-    results.forEach((result) => {
-      if (result.deals) {
-        map.set(result.id, { deals: result.deals });
-        successCount += 1;
-      } else {
-        map.set(result.id, { error: result.error ?? "Impossible de charger les promotions." });
-      }
-    });
-
-    return { map, successCount };
   }, []);
 
   const loadPromos = useCallback(async () => {
@@ -433,8 +448,8 @@ export default function PromosPage() {
       })),
     );
 
-    const { map, successCount } = await fetchPromosData();
-    applyResults(map, successCount);
+    const results = await fetchPromosData();
+    applyResults(results);
   }, [applyResults, fetchPromosData]);
 
   useEffect(() => {
@@ -450,11 +465,11 @@ export default function PromosPage() {
         })),
       );
 
-      const { map, successCount } = await fetchPromosData();
+      const results = await fetchPromosData();
       if (cancelled) {
         return;
       }
-      applyResults(map, successCount);
+      applyResults(results);
     };
 
     initialize();
