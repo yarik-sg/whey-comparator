@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { Slot } from "@radix-ui/react-slot";
+
 import { cn, type ClassValue } from "@/lib/utils";
 
 const baseStyles =
@@ -86,7 +88,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
 
     return (
-      <button
+      <Component
         ref={ref}
         type={type}
         className={mergedClassName}
