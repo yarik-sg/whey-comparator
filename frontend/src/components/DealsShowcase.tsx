@@ -7,6 +7,7 @@ import { Award, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";
+import { getFallbackDeals } from "@/lib/fallbackCatalogue";
 import { buildDisplayImageUrl } from "@/lib/images";
 import type { DealItem } from "@/types/api";
 
@@ -223,6 +224,8 @@ export function DealsShowcase() {
   const [deals, setDeals] = useState<DealItem[]>([]);
   const [state, setState] = useState<FetchState>("idle");
   const [hydrated, setHydrated] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
+  const fallbackDeals = useMemo(() => getFallbackDeals({ limit: 9 }), []);
 
   useEffect(() => {
     setHydrated(true);
@@ -243,12 +246,29 @@ export function DealsShowcase() {
           return;
         }
 
-        setDeals(data);
-        setState("success");
+        if (Array.isArray(data) && data.length > 0) {
+          setDeals(data);
+          setUsingFallback(false);
+          setState("success");
+        } else if (fallbackDeals.length > 0) {
+          setDeals(fallbackDeals);
+          setUsingFallback(true);
+          setState("success");
+        } else {
+          setDeals([]);
+          setUsingFallback(false);
+          setState("success");
+        }
       } catch (error) {
         console.error("Erreur chargement deals", error);
         if (mounted) {
-          setState("error");
+          if (fallbackDeals.length > 0) {
+            setDeals(fallbackDeals);
+            setUsingFallback(true);
+            setState("success");
+          } else {
+            setState("error");
+          }
         }
       }
     };
@@ -275,6 +295,12 @@ export function DealsShowcase() {
             </p>
           </div>
         </div>
+
+        {usingFallback && (
+          <p className="mt-2 text-sm text-orange-500">
+            Offres de démonstration affichées lorsque les promotions temps réel sont indisponibles.
+          </p>
+        )}
 
         {state === "error" && (
           <p className="mt-8 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">

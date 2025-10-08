@@ -10,6 +10,7 @@ import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { popularCategories, type PopularCategory } from "@/data/popularCategories";
 import apiClient from "@/lib/apiClient";
+import { getFallbackDeals } from "@/lib/fallbackCatalogue";
 import { buildDisplayImageUrl } from "@/lib/images";
 import type { DealItem } from "@/types/api";
 
@@ -27,6 +28,7 @@ type CategoryPromoState = PopularCategory & {
   status: FetchState;
   error: string | null;
   deals: DealItem[];
+  usingFallback: boolean;
 };
 
 type CategoryResult = {
@@ -311,6 +313,7 @@ export default function PromosPage() {
       status: "idle" as FetchState,
       error: null,
       deals: [],
+      usingFallback: false,
     })),
   );
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -335,21 +338,47 @@ export default function PromosPage() {
         }
 
         if (result.error) {
+          const fallback = getFallbackDeals({ query: category.query, limit: PROMOS_PER_CATEGORY });
+          if (fallback.length > 0) {
+            return {
+              ...category,
+              status: "success" as FetchState,
+              error: null,
+              deals: fallback,
+              usingFallback: true,
+            };
+          }
+
           return {
             ...category,
             status: "error" as FetchState,
             error: result.error,
             deals: [],
+            usingFallback: false,
           };
         }
 
         const selectedDeals = selectTopPromotions(result.deals ?? []);
+
+        if (selectedDeals.length === 0) {
+          const fallback = getFallbackDeals({ query: category.query, limit: PROMOS_PER_CATEGORY });
+          if (fallback.length > 0) {
+            return {
+              ...category,
+              status: "success" as FetchState,
+              error: null,
+              deals: fallback,
+              usingFallback: true,
+            };
+          }
+        }
 
         return {
           ...category,
           status: "success" as FetchState,
           error: null,
           deals: selectedDeals,
+          usingFallback: false,
         };
       }),
     );
@@ -400,6 +429,7 @@ export default function PromosPage() {
         ...category,
         status: "loading" as FetchState,
         error: null,
+        usingFallback: false,
       })),
     );
 
@@ -416,6 +446,7 @@ export default function PromosPage() {
           ...category,
           status: "loading" as FetchState,
           error: null,
+          usingFallback: false,
         })),
       );
 
@@ -504,6 +535,11 @@ export default function PromosPage() {
               <div className="space-y-1">
                 <h2 className="text-2xl font-semibold text-slate-900">{category.label}</h2>
                 <p className="text-sm text-slate-500">{category.description}</p>
+                {category.usingFallback && (
+                  <p className="text-xs font-medium text-orange-500">
+                    Offres de démonstration affichées lorsque les données temps réel sont indisponibles.
+                  </p>
+                )}
               </div>
               <Link
                 href={`/comparateur?q=${encodeURIComponent(category.query)}`}
