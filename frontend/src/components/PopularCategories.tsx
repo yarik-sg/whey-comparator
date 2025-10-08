@@ -63,7 +63,7 @@ export function PopularCategories({ onSelectCategory }: PopularCategoriesProps) 
             Explorez les univers les plus recherchés par notre communauté et lancez un comparatif en un clic.
           </p>
         </div>
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-6">
           {cards.map(({ id, label, description, icon, iconColor, query, count, animationDelay }) => (
             <motion.button
               key={id}
