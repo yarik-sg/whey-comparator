@@ -110,8 +110,19 @@ export interface RawProduct {
   link?: string | null;
 }
 
+export interface ProductListPagination {
+  page?: number;
+  perPage?: number;
+  total?: number;
+  totalPages?: number;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
+}
+
 export interface ProductListResponse {
   products?: RawProduct[];
+  items?: RawProduct[];
+  pagination?: ProductListPagination | null;
 }
 
 const parseNullableNumber = (value: unknown): number | null => {
