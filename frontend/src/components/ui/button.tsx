@@ -63,19 +63,39 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size = "default",
       type = "button",
       asChild = false,
+      children,
       ...props
     },
     ref,
   ) => {
-    const Component = asChild ? Slot : "button";
+    const mergedClassName = buttonClassName({ variant, size, className });
+
+    if (asChild) {
+      if (!React.isValidElement(children)) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("Button with `asChild` requires a single React element as a child.");
+        }
+        return null;
+      }
+
+      const child = React.Children.only(children) as React.ReactElement;
+
+      return React.cloneElement(child, {
+        ref,
+        className: cn(mergedClassName, child.props.className),
+        ...props,
+      });
+    }
 
     return (
       <Component
         ref={ref}
-        className={buttonClassName({ variant, size, className })}
-        {...(!asChild && { type })}
+        type={type}
+        className={mergedClassName}
         {...props}
-      />
+      >
+        {children}
+      </button>
     );
   },
 );
