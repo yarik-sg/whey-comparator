@@ -460,8 +460,14 @@ export default function PromosPage() {
   const fetchPromosData = useCallback(async (): Promise<CategoryResult[]> => {
     return Promise.all(
       promoCategories.map(async (category) => {
-        let usingFallback = false;
-        let selected: DealItem[] = [];
+        const fallbackDeals = selectTopPromotions(
+          getFallbackDeals({ limit: PROMOS_PER_CATEGORY * 2, query: category.query }),
+          PROMOS_PER_CATEGORY,
+        );
+
+        let selected: DealItem[] = fallbackDeals;
+        let usingFallback = fallbackDeals.length > 0;
+        let hasRealApiData = false;
 
         try {
           const deals = await apiClient.get<DealItem[]>("/compare", {
@@ -469,12 +475,15 @@ export default function PromosPage() {
             query: { q: category.query, limit: 24 },
           });
 
-          selected = selectTopPromotions(Array.isArray(deals) ? deals : [], PROMOS_PER_CATEGORY);
+          const normalizedDeals = selectTopPromotions(Array.isArray(deals) ? deals : [], PROMOS_PER_CATEGORY);
+          if (normalizedDeals.length > 0) {
+            selected = selectTopPromotions([...normalizedDeals, ...selected], PROMOS_PER_CATEGORY);
+            hasRealApiData = true;
+            usingFallback = false;
+          }
         } catch (error) {
           console.error("Erreur chargement promos", category.query, error);
         }
-
-        const hadPrimaryDeals = selected.length > 0;
 
         if (selected.length < PROMOS_PER_CATEGORY) {
           const serpResult = await fetchSerpDealsWithFallback({
@@ -485,8 +494,8 @@ export default function PromosPage() {
 
           if (serpResult.deals.length > 0) {
             selected = serpResult.deals;
-            usingFallback = serpResult.source === "fallback";
-          } else if (!hadPrimaryDeals) {
+            usingFallback = !hasRealApiData && serpResult.source === "fallback";
+          } else if (!hasRealApiData && fallbackDeals.length === 0) {
             return {
               id: category.id,
               deals: [],
