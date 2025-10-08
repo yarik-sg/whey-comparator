@@ -405,6 +405,7 @@ export default function PromosPage() {
   );
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const isMountedRef = useRef(true);
+  const hasInitializedRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -534,6 +535,11 @@ export default function PromosPage() {
   }, [applyResults, fetchPromosData]);
 
   useEffect(() => {
+    if (hasInitializedRef.current) {
+      return;
+    }
+    hasInitializedRef.current = true;
+
     let cancelled = false;
 
     const initialize = async () => {
