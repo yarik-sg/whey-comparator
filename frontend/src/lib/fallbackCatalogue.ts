@@ -58,6 +58,11 @@ type RawFallbackProduct = {
   offers: RawFallbackOffer[];
 };
 
+type FallbackDealEntry = {
+  product: RawFallbackProduct;
+  deals: DealItem[];
+};
+
 const RAW_FALLBACK_PRODUCTS: RawFallbackProduct[] = [
   {
     id: 101,
@@ -205,6 +210,80 @@ function cloneDeal(deal: DealItem): DealItem {
     weightKg: deal.weightKg ?? null,
     pricePerKg: deal.pricePerKg ?? null,
   };
+}
+
+const FALLBACK_DEAL_ENTRIES: FallbackDealEntry[] = RAW_FALLBACK_PRODUCTS.map((product) => {
+  const offers = product.offers.map((offer) => buildOffer(offer, product));
+  const bestOffer = markBestOffer(offers);
+
+  const deals = offers.map((offer) => {
+    const cloned = cloneDeal(offer);
+    if (bestOffer && offer.id === bestOffer.id) {
+      cloned.bestPrice = true;
+      cloned.isBestPrice = true;
+    }
+    return cloned;
+  });
+
+  return { product, deals } satisfies FallbackDealEntry;
+});
+
+function matchesFallbackQuery(product: RawFallbackProduct, deal: DealItem, query: string): boolean {
+  if (!query) {
+    return true;
+  }
+
+  const normalized = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (normalized.length === 0) {
+    return true;
+  }
+
+  const haystack = [
+    product.name,
+    product.brand,
+    product.category,
+    deal.title,
+    deal.vendor,
+  ]
+    .filter((value): value is string => typeof value === "string" && value.length > 0)
+    .join(" ")
+    .toLowerCase();
+
+  return normalized.every((token) => haystack.includes(token));
+}
+
+export function getFallbackDeals({
+  limit,
+  query,
+}: { limit?: number; query?: string } = {}): DealItem[] {
+  const resolvedLimit = typeof limit === "number" && limit > 0 ? limit : Infinity;
+  const filtered: DealItem[] = [];
+
+  for (const entry of FALLBACK_DEAL_ENTRIES) {
+    for (const deal of entry.deals) {
+      if (query && !matchesFallbackQuery(entry.product, deal, query)) {
+        continue;
+      }
+
+      filtered.push(cloneDeal(deal));
+
+      if (filtered.length >= resolvedLimit) {
+        return filtered;
+      }
+    }
+  }
+
+  if (filtered.length > 0) {
+    return filtered;
+  }
+
+  const fallbackPool = FALLBACK_DEAL_ENTRIES.flatMap((entry) => entry.deals);
+  const limited = fallbackPool.slice(0, resolvedLimit === Infinity ? undefined : resolvedLimit);
+  return limited.map((deal) => cloneDeal(deal));
 }
 
 function cloneProduct(product: ProductSummary): ProductSummary {
