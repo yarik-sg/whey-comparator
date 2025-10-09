@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from .celery_app import celery_app
 from .database import SessionLocal
 from .models import Offer, PriceAlert, PriceHistory, Product, ScrapeJob, Supplier
+from .email import send_price_alert_notification
 
 
 @celery_app.task(name="app.tasks.run_scrape_job")
@@ -127,6 +128,8 @@ def check_price_alerts() -> None:
         )
 
         now = datetime.now(timezone.utc)
+        triggered = 0
+
         for alert in alerts:
             product = alert.product
             if not product or not product.offers:
@@ -136,13 +139,20 @@ def check_price_alerts() -> None:
             if best_offer.price <= alert.target_price:
                 alert.active = False
                 alert.updated_at = now
-                # In a production setup, this is where an e-mail or push notification would be sent.
-                alert_message = (
-                    f"Price alert triggered for product #{product.id} ({product.name}) at "
-                    f"{_format_price(float(best_offer.price), best_offer.currency)}"
+                triggered += 1
+
+                target_display = _format_price(float(alert.target_price), best_offer.currency)
+                current_display = _format_price(float(best_offer.price), best_offer.currency)
+                send_price_alert_notification(
+                    recipient=alert.user_email,
+                    product_name=product.name,
+                    target_price=target_display,
+                    current_price=current_display,
+                    offer_url=best_offer.url,
                 )
-                print(alert_message)
 
         session.commit()
+        if triggered:
+            print(f"{triggered} price alert(s) triggered")
     finally:
         session.close()

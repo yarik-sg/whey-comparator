@@ -53,6 +53,7 @@ export interface ProductSummary {
   flavour?: string | null;
   image?: string | null;
   image_url?: string | null;
+  gallery?: string[] | null;
   protein_per_serving_g?: number | null;
   serving_size_g?: number | null;
   category?: string | null;
@@ -103,9 +104,9 @@ export interface ProductOffersResponse {
   };
 }
 
-export interface RelatedProductsResponse {
+export interface SimilarProductsResponse {
   productId: number;
-  related: ProductSummary[];
+  similar: ProductSummary[];
 }
 
 export interface ComparisonEntry {
@@ -116,4 +117,40 @@ export interface ComparisonEntry {
 export interface ComparisonResponse {
   products: ComparisonEntry[];
   summary: DealItem[];
+}
+
+export interface ReviewBreakdownEntry {
+  stars: number;
+  count: number;
+  percentage: number;
+}
+
+export interface ReviewHighlight {
+  id: string;
+  title: string;
+  rating: number;
+  summary: string;
+  source: string;
+  url?: string | null;
+}
+
+export interface ProductReviewsResponse {
+  productId: number;
+  averageRating?: number | null;
+  reviewsCount: number;
+  sources: number;
+  distribution: ReviewBreakdownEntry[];
+  highlights: ReviewHighlight[];
+}
+
+export interface PriceAlertRecord {
+  id: number;
+  user_email: string;
+  product_id: number;
+  target_price: number | string;
+  platform?: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  product?: ProductSummary | null;
 }

@@ -102,3 +102,64 @@ def test_price_history_endpoint(client, db_session):
     assert len(data["points"]) == 2
     assert data["statistics"]["lowest"]["amount"] == 28.9
     assert data["statistics"]["highest"]["amount"] == 31.9
+
+
+def test_similar_products_endpoint(client, db_session):
+    base = Product(
+        name="Gold Whey",
+        brand="Optimum Nutrition",
+        category="whey",
+        price=Decimal("34.90"),
+        rating=Decimal("4.6"),
+    )
+    competitor_same_brand = Product(
+        name="Gold Whey 2kg",
+        brand="Optimum Nutrition",
+        category="whey",
+        price=Decimal("59.90"),
+        rating=Decimal("4.7"),
+    )
+    competitor_same_category = Product(
+        name="Native Whey Premium",
+        brand="Nutrimuscle",
+        category="whey",
+        price=Decimal("39.90"),
+        rating=Decimal("4.5"),
+    )
+    other = Product(
+        name="Créatine 500g",
+        brand="MyProtein",
+        category="creatine",
+        price=Decimal("24.90"),
+        rating=Decimal("4.8"),
+    )
+
+    db_session.add_all([base, competitor_same_brand, competitor_same_category, other])
+    db_session.commit()
+
+    response = client.get(f"/products/{base.id}/similar?limit=2")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["productId"] == base.id
+    assert len(payload["similar"]) == 2
+    assert payload["similar"][0]["brand"] == "Optimum Nutrition"
+
+
+def test_product_reviews_endpoint(client, db_session):
+    product = Product(
+        name="Isolate Reviews",
+        price=Decimal("29.90"),
+        currency="EUR",
+        rating=Decimal("4.4"),
+        reviews_count=230,
+    )
+    db_session.add(product)
+    db_session.commit()
+
+    response = client.get(f"/products/{product.id}/reviews")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["productId"] == product.id
+    assert data["averageRating"] == 4.4
+    assert data["reviewsCount"] == 230
+    assert len(data["distribution"]) == 5

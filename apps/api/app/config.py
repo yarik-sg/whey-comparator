@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://redis:6379/0"
     celery_result_backend: Optional[str] = "redis://redis:6379/0"
 
+    resend_api_key: Optional[str] = None
+    alerts_from_email: Optional[str] = None
+    alerts_dashboard_url: Optional[str] = None
+
 
 @lru_cache
 def get_settings() -> Settings:
