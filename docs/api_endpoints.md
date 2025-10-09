@@ -2,6 +2,8 @@
 
 Cette référence regroupe les routes exposées par l'API Whey Comparator (`apps/api/app`). Toutes les réponses sont au format JSON et documentées via OpenAPI (Swagger UI sur `/docs`).
 
+> ℹ️ Avec l'environnement Docker (`docker compose up --build`), l'API est disponible sur [http://localhost:8000](http://localhost:8000). Les exemples ci-dessous supposent cette base URL.
+
 ## Santé
 
 | Méthode | Route | Description |

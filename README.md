@@ -4,9 +4,9 @@ Comparateur multi-sources pour les compléments alimentaires (whey, créatine, e
 
 ## ✨ Fonctionnalités clés
 
-- **Catalogue unifié** : liste des produits enrichie (prix, disponibilité, notation, rapport protéines/€) avec sélection automatique de la meilleure offre.  
-- **Comparateur multi-produits** : page dédiée permettant de juxtaposer plusieurs références, d'afficher un résumé des meilleurs prix et d'accéder rapidement aux marchands.  
-- **Historique et fallback** : données de secours embarquées lorsque le scraper est indisponible, avec génération d'images réalistes et normalisation automatique des URLs distantes.  
+- **Catalogue unifié** : liste des produits enrichie (prix, disponibilité, notation, rapport protéines/€) avec sélection automatique de la meilleure offre.
+- **Comparateur multi-produits** : page dédiée permettant de juxtaposer plusieurs références, d'afficher un résumé des meilleurs prix et d'accéder rapidement aux marchands.
+- **Historique et fallback** : données de secours embarquées lorsque le scraper est indisponible, avec génération d'images réalistes et normalisation automatique des URLs distantes.
 - **Front moderne** : composants Tailwind réutilisables, mode sombre natif, navigation fluide entre catalogue, promotions et comparateur.
 
 ## 🏗️ Architecture du dépôt
@@ -17,22 +17,51 @@ whey-comparator/
 ├── fallback_catalogue.py    # Données de secours utilisées par l'API
 ├── services/                # Intégrations externes et utilitaires scraping
 ├── frontend/                # Application Next.js 14 (app router)
+│   ├── Dockerfile           # Image de développement Next.js
 │   ├── src/app/             # Pages (catalogue, comparaison, produits…)
 │   ├── src/components/      # UI (ProductCard, OfferTable, etc.)
 │   └── src/lib/             # Client HTTP, helpers
+├── apps/api/                # API complète avec Poetry, SQLAlchemy, Celery
 ├── docs/                    # Documentation annexe
-└── docker-compose.yml       # Orchestration locale API + frontend
+└── docker-compose.yml       # Orchestration locale API + frontend + services
 ```
 
 ## 🚀 Mise en route
 
-### Prérequis
+### Option 1 · Docker Compose (recommandé)
+
+1. Assurez-vous d'avoir Docker et Docker Compose installés.
+2. Lancez l'ensemble des services :
+
+   ```bash
+   docker compose up --build
+   ```
+
+   Cette commande démarre PostgreSQL, Redis, l'API FastAPI (avec rechargement), le worker Celery et le frontend Next.js (hot reload). Les volumes nommés conservent la base de données et les dépendances Node.
+
+3. Accédez aux services :
+   - API : [http://localhost:8000](http://localhost:8000) (`/docs` pour Swagger).
+   - Frontend : [http://localhost:3000](http://localhost:3000).
+
+4. Arrêt et nettoyage :
+
+   ```bash
+   docker compose down
+   # Pour réinitialiser complètement (DB + dépendances)
+   docker compose down -v
+   ```
+
+Les variables nécessaires (`API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`, etc.) sont injectées automatiquement par `docker-compose.yml` pour relier l'interface à l'API.
+
+### Option 2 · Lancer les services manuellement
+
+#### Prérequis
 
 - Python 3.11+
 - Node.js 18+
 - npm 9+ ou pnpm/yarn (adapter les commandes si besoin)
 
-### Lancer l'API FastAPI
+#### Lancer l'API FastAPI (mode standalone)
 
 ```bash
 python -m venv .venv
@@ -46,35 +75,49 @@ Variables utiles :
 - `SERPAPI_KEY` : clé API SerpAPI (une valeur de développement est fournie par défaut).
 - `SCRAPER_BASE_URL` : URL du service scraper (défaut `http://localhost:8001`).
 
-### Lancer le frontend Next.js
+#### Lancer le backend complet (apps/api)
+
+```bash
+cd apps/api
+poetry install
+poetry run uvicorn app.main:app --reload
+```
+
+Les variables `API_DATABASE_URL`, `API_CELERY_BROKER_URL` et `API_CELERY_RESULT_BACKEND` acceptent les mêmes valeurs que dans `docker-compose.yml`.
+
+#### Lancer le frontend Next.js
 
 ```bash
 cd frontend
 npm install
-npm run dev
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run dev
 ```
 
-L'application sera disponible sur [http://localhost:3000](http://localhost:3000). Pour relier le frontend à l'API locale, définissez `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000` (ou utilisez le proxy `/api/proxy`).
+L'application sera disponible sur [http://localhost:3000](http://localhost:3000). Pour lier le backend conteneurisé, définissez `API_BASE_URL=http://api:8000` (ou utilisez le proxy `/api/proxy`).
 
 ### Scripts utiles
 
-| Commande                 | Description                                                |
-|--------------------------|------------------------------------------------------------|
-| `npm run lint`           | Analyse TypeScript/ESLint.                                |
-| `npm run build`          | Génère la version production de l'interface.              |
-| `npm run preview`        | Sert l'app Next.js buildée.                               |
-| `uvicorn main:app --reload` | Démarre l'API avec rechargement à chaud.              |
+| Commande                       | Description                                                |
+|--------------------------------|------------------------------------------------------------|
+| `docker compose up --build`    | Démarre la stack complète (DB, Redis, API, worker, front). |
+| `docker compose logs -f api`   | Suit les logs de l'API FastAPI conteneurisée.              |
+| `npm run lint`                 | Analyse TypeScript/ESLint.                                |
+| `npm run build`                | Génère la version production de l'interface.              |
+| `npm run preview`              | Sert l'app Next.js buildée.                               |
+| `uvicorn main:app --reload`    | Démarre l'API standalone avec rechargement à chaud.       |
 
 ## 🔍 Historique des actions réalisées
 
-1. **Tâche 1 – Fondations backend** : création de l'API FastAPI, du catalogue de secours et des routines d'agrégation (normalisation des prix, calcul des indicateurs, sélection du meilleur deal).  
-2. **Tâche 2 – Interface Next.js** : mise en place de l'app Next 14, pages catalogue/produits/comparateur, composants principaux (ProductCard, OfferTable, SiteFooter) et intégration du client HTTP.  
+1. **Tâche 1 – Fondations backend** : création de l'API FastAPI, du catalogue de secours et des routines d'agrégation (normalisation des prix, calcul des indicateurs, sélection du meilleur deal).
+2. **Tâche 2 – Interface Next.js** : mise en place de l'app Next 14, pages catalogue/produits/comparateur, composants principaux (ProductCard, OfferTable, SiteFooter) et intégration du client HTTP.
 3. **Tâche 3 – Améliorations continues** : comparaison pré-remplie, meilleur rendu mobile/desktop, correction de l'affichage des images produits, mise à jour de la documentation.
+4. **Tâche 4 – Orchestration Docker** : ajout des images frontend/backend, configuration Compose (DB, Redis, API, worker) et documentation associée.
 
 ## 🧪 Tests & Qualité
 
 - ESLint et TypeScript garantissent la cohérence du frontend (`npm run lint`).
 - L'API s'accompagne de validations runtime et de données de fallback pour un comportement prévisible même sans services externes.
+- Docker Compose facilite le lancement d'un environnement complet pour tester l'intégration bout en bout.
 
 ---
 
