@@ -1,12 +1,13 @@
 # 🧬 Whey Comparator
 
-Comparateur multi-sources pour les compléments alimentaires (whey, créatine, etc.). Le projet regroupe une API **FastAPI** qui agrège des offres SerpAPI/scraper et une interface **Next.js 14** optimisée pour consulter, comparer et analyser les prix.
+Comparateur multi-sources pour les compléments alimentaires (whey, créatine, etc.). Le projet regroupe une API **FastAPI** qui agrège des offres SerpAPI/scraper et une interface **Next.js 15** (React 19) optimisée pour consulter, comparer et analyser les prix.
 
 ## ✨ Fonctionnalités clés
 
 - **Catalogue unifié** : liste des produits enrichie (prix, disponibilité, notation, rapport protéines/€) avec sélection automatique de la meilleure offre.
-- **Comparateur multi-produits** : page dédiée permettant de juxtaposer plusieurs références, d'afficher un résumé des meilleurs prix et d'accéder rapidement aux marchands.
-- **Historique et fallback** : données de secours embarquées lorsque le scraper est indisponible, avec génération d'images réalistes et normalisation automatique des URLs distantes.
+- **Comparateur multi-produits** : page dédiée permettant de juxtaposer plusieurs références, d'afficher un résumé des meilleurs prix et d'accéder rapidement aux marchands (avec pré-sélection automatique si aucun ID n'est fourni).
+- **Page produit enrichie** : fiches détaillées affichant carrousel média, tableau d'offres, historique de prix, avis, flux de collecte et recommandations similaires avec bascule automatique sur les données fallback si l'API principale échoue.
+- **Historique et fallback** : données de secours embarquées lorsque le scraper est indisponible, avec génération d'images réalistes, normalisation automatique des URLs distantes et fusion intelligente des réponses pour le comparateur et les pages produit.
 - **Front moderne** : composants Tailwind réutilisables, mode sombre natif, navigation fluide entre catalogue, promotions et comparateur.
 
 ## 🏗️ Architecture du dépôt
@@ -17,7 +18,7 @@ whey-comparator/
 ├── fallback_catalogue.py    # Données de secours utilisées par l'API
 ├── services/                # Intégrations externes et utilitaires scraping
 ├── frontend/                # Application Next.js 14 (app router)
-│   ├── Dockerfile           # Image de développement Next.js
+│   ├── Dockerfile           # Image de développement Next.js (Turbopack)
 │   ├── src/app/             # Pages (catalogue, comparaison, produits…)
 │   ├── src/components/      # UI (ProductCard, OfferTable, etc.)
 │   └── src/lib/             # Client HTTP, helpers
@@ -112,6 +113,7 @@ L'application sera disponible sur [http://localhost:3000](http://localhost:3000)
 2. **Tâche 2 – Interface Next.js** : mise en place de l'app Next 14, pages catalogue/produits/comparateur, composants principaux (ProductCard, OfferTable, SiteFooter) et intégration du client HTTP.
 3. **Tâche 3 – Améliorations continues** : comparaison pré-remplie, meilleur rendu mobile/desktop, correction de l'affichage des images produits, mise à jour de la documentation.
 4. **Tâche 4 – Orchestration Docker** : ajout des images frontend/backend, configuration Compose (DB, Redis, API, worker) et documentation associée.
+5. **Tâche 5 – Fiabilisation pages produit & comparateur** : refonte de la page produit (carrousel, offre vedette, historique, avis, recommandations, flux de données), appels API `/products/{id}/offers|similar|price-history` robustes et fusion des réponses fallback pour la comparaison multi-produits.
 
 ## 🧪 Tests & Qualité
 

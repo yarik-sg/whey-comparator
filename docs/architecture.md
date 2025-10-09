@@ -34,9 +34,10 @@ whey-comparator/
 
 ## Frontend (`frontend`)
 
-- **App Router** : pages dans `src/app/` (landing marketing, comparateur SSR, comparateur express client, catalogue).
+- **App Router** : pages dans `src/app/` (landing marketing, comparateur SSR, comparateur express client, catalogue) rendues côté serveur avec React 19 et progressive enhancement.
 - **Composants** : `src/components/` regroupe les sections marketing (HeroSection, DealsShowcase, StatsSection, PartnerLogos, WhyChooseUs, PriceAlertsSection) et primitives dans `components/ui`.
 - **Lib réseau** : `src/lib/apiClient.ts` résout la base API et centralise les appels (TanStack Query vendored dans `vendor/`).
+- **Fallback catalogue** : `src/lib/fallbackCatalogue.ts` fournit des fonctions de secours utilisées par la comparaison et la page produit pour combiner les données locales et distantes (pré-sélection, fusion d'offres, recommandations).
 - **Styles** : `src/app/globals.css` définit les tokens CSS (`--background`, `--accent`, `--font-*`) et Tailwind 4 est importé en tête de fichier.
 - **Dockerfile** : image basée sur Node 20-alpine, `npm ci`, hot reload via `next dev --turbopack` accessible en conteneur.
 - **Public** : assets logos/manifest, favicons.
@@ -59,7 +60,7 @@ whey-comparator/
 
 1. **Collecte** : Scrapers/Celery alimentent la base `offers`, `suppliers`, `products`.
 2. **API** : FastAPI expose les routes CRUD et listes paginées (filtrage, tri) consommées par le frontend.
-3. **Frontend** : Next.js 15 récupère les données via `apiClient` (TanStack Query), hydrate les sections marketing et comparateurs.
-4. **Fallback** : en cas de panne scraping, `fallback_catalogue.py` et les routes `/api/catalogue` du frontend assurent une UX cohérente.
+3. **Frontend** : Next.js 15 récupère les données via `apiClient` (TanStack Query), hydrate les sections marketing et comparateurs, et délègue les pages critiques (`/comparison`, `/products/[id]`) à des composants serveur capables de basculer automatiquement sur les données fallback.
+4. **Fallback** : en cas de panne scraping, `fallback_catalogue.py` côté API et `src/lib/fallbackCatalogue.ts` côté frontend combinent les jeux de données pour conserver les comparaisons et fiches produit opérationnelles.
 
 Cette architecture sépare clairement les responsabilités : FastAPI pour la donnée, Next.js pour l'UI, Celery/Redis pour l'asynchrone et Docker Compose pour l'environnement de développement.
