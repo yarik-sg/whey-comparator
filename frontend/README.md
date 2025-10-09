@@ -6,6 +6,7 @@ Interface officielle du projet Whey Comparator. Elle présente le catalogue, les
 
 ```
 frontend/
+├── Dockerfile                # Image de dev Node 20 + Next.js
 ├── src/
 │   ├── app/                    # App Router (pages, layouts, API routes)
 │   │   ├── page.tsx            # Landing avec sections Hero/Stats/WhyChooseUs
@@ -50,14 +51,14 @@ frontend/
 
 | Paquet | Rôle |
 | --- | --- |
-| `next`, `react`, `react-dom` | Framework & runtime UI.
-| `@tanstack/query-core`, `@tanstack/react-query` (vendored) | Cache des données API.
-| `tailwindcss` | Système de styles utilitaires + design tokens.
-| `framer-motion` | Animations d'entrée/sortie.
-| `recharts` | Graphiques (historique de prix, statistiques).
-| `lucide-react` | Icônes vectorielles.
-| `@eslint/eslintrc`, `eslint`, `eslint-config-next` | Qualité et linting.
-| `typescript`, `@types/*` | Typage statique.
+| `next`, `react`, `react-dom` | Framework & runtime UI. |
+| `@tanstack/query-core`, `@tanstack/react-query` (vendored) | Cache des données API. |
+| `tailwindcss` | Système de styles utilitaires + design tokens. |
+| `framer-motion` | Animations d'entrée/sortie. |
+| `recharts` | Graphiques (historique de prix, statistiques). |
+| `lucide-react` | Icônes vectorielles. |
+| `@eslint/eslintrc`, `eslint`, `eslint-config-next` | Qualité et linting. |
+| `typescript`, `@types/*` | Typage statique. |
 
 Installez les dépendances via `npm install` (ou `pnpm install` / `yarn install`).
 
@@ -70,9 +71,21 @@ Déclarez vos variables dans `.env.local` :
 | `NEXT_PUBLIC_API_BASE_URL` | URL de base côté navigateur (ex : `http://localhost:8000`). |
 | `API_BASE_URL` | URL côté serveur (SSG/SSR) si différente du public. |
 | `SERPAPI_KEY` | Clé pour les routes proxy côté serveur (`/api/catalogue/serp`). |
-| `NEXT_PUBLIC_SERPAPI_KEY` | Optionnel : clé exposée au client pour des tests via proxy.
+| `NEXT_PUBLIC_SERPAPI_KEY` | Optionnel : clé exposée au client pour des tests via proxy. |
 
 ## 🚀 Lancer le frontend
+
+### Via Docker Compose
+
+Le service `frontend` est intégré au `docker-compose.yml` racine :
+
+```bash
+docker compose up --build frontend
+```
+
+Les variables `API_BASE_URL` (côté serveur → `http://api:8000`) et `NEXT_PUBLIC_API_BASE_URL` (côté navigateur → `http://localhost:8000`) sont injectées automatiquement. Le conteneur exécute `next dev --turbopack` avec hot reload.
+
+### En local
 
 ```bash
 cd frontend
