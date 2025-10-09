@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Pagination } from "@/components/Pagination";
 import { ProductCard } from "@/components/ProductCard";
+import { ProductCardSkeleton } from "@/components/ProductCardSkeleton";
 import { FilterSidebar, type ProductFilters } from "@/components/FilterSidebar";
 import { SortDropdown } from "@/components/SortDropdown";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
+import { Breadcrumb } from "@/components/Breadcrumb";
 import { useProductList } from "@/lib/queries";
 import type { ProductSummary } from "@/types/api";
 import { Button } from "@/components/ui/button";
@@ -214,17 +215,13 @@ export default function ProductsPage() {
     <div className="space-y-16 pb-20">
       <section className="bg-orange-50/80 py-12">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-          <nav aria-label="Fil d'Ariane" className="text-sm text-slate-500">
-            <ol className="flex items-center gap-2">
-              <li>
-                <Link href="/" className="hover:text-orange-500">
-                  Accueil
-                </Link>
-              </li>
-              <li aria-hidden>•</li>
-              <li className="text-slate-700 font-medium">Catalogue</li>
-            </ol>
-          </nav>
+          <Breadcrumb
+            items={[
+              { label: "Accueil", href: "/" },
+              { label: "Catalogue", href: "/products" },
+            ]}
+            className="text-sm"
+          />
           <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">
               <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">Catalogue des produits</h1>
@@ -275,11 +272,7 @@ export default function ProductsPage() {
             >
               {isBusy &&
                 Array.from({ length: 6 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="h-64 animate-pulse rounded-3xl border border-slate-200 bg-slate-100"
-                    aria-hidden
-                  />
+                  <ProductCardSkeleton key={index} />
                 ))}
 
               {!isBusy && products.length === 0 && (

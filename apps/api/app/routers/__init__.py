@@ -1,3 +1,3 @@
-from . import offers, products, suppliers
+from . import offers, price_alerts, products, suppliers
 
-__all__ = ["offers", "products", "suppliers"]
+__all__ = ["offers", "price_alerts", "products", "suppliers"]

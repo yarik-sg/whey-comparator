@@ -16,8 +16,8 @@ def list_suppliers(
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
     search: str | None = None,
-    sort_by: str = Query("created_at", regex="^(name|created_at|updated_at)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("created_at", pattern="^(name|created_at|updated_at)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     db: Annotated[Session, Depends(get_db)] = None,
 ):
     base_query = select(Supplier)

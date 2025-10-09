@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from .config import get_settings
 
@@ -17,5 +18,16 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
 )
+
+celery_app.conf.beat_schedule = {
+    "record-daily-price-history": {
+        "task": "app.tasks.record_daily_price_snapshot",
+        "schedule": crontab(hour=9, minute=0),
+    },
+    "check-price-alerts": {
+        "task": "app.tasks.check_price_alerts",
+        "schedule": crontab(hour="*/4", minute=0),
+    },
+}
 
 celery_app.autodiscover_tasks(["app"])

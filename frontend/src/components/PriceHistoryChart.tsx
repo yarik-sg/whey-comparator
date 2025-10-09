@@ -16,9 +16,8 @@ import type { PriceHistoryResponse } from "@/types/api";
 
 const PERIOD_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "7d", label: "7 jours" },
-  { value: "1m", label: "1 mois" },
-  { value: "3m", label: "3 mois" },
-  { value: "6m", label: "6 mois" },
+  { value: "30d", label: "30 jours" },
+  { value: "90d", label: "90 jours" },
   { value: "1y", label: "1 an" },
   { value: "all", label: "Tout" },
 ];
@@ -54,12 +53,23 @@ interface PriceHistoryChartProps {
   defaultPeriod?: string;
 }
 
-export function PriceHistoryChart({ productId, defaultPeriod = "3m" }: PriceHistoryChartProps) {
+export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHistoryChartProps) {
   const [period, setPeriod] = useState(defaultPeriod);
   const { data, isLoading, isFetching, error } = usePriceHistory(productId, period);
 
   const chartData = useMemo(() => buildChartData(data), [data]);
   const isBusy = isLoading || isFetching;
+  const isHistoricLow = useMemo(() => {
+    if (!data) {
+      return false;
+    }
+    const current = data.statistics.current.amount;
+    const lowest = data.statistics.lowest.amount;
+    if (current === null || current === undefined || lowest === null || lowest === undefined) {
+      return false;
+    }
+    return current <= lowest;
+  }, [data]);
 
   return (
     <section className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -67,6 +77,12 @@ export function PriceHistoryChart({ productId, defaultPeriod = "3m" }: PriceHist
         <div>
           <h2 className="text-lg font-semibold text-white">Historique des prix</h2>
           <p className="text-sm text-gray-300">Suivi journalier du meilleur prix relevé par le scraper.</p>
+          {isHistoricLow && (
+            <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+              <span aria-hidden>📉</span>
+              Prix historiquement bas actuellement !
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2 text-xs text-gray-400">
           Période
