@@ -8,7 +8,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CreatePriceAlert } from "@/components/CreatePriceAlert";
-import apiClient from "@/lib/apiClient";
+import apiClient, { ApiError } from "@/lib/apiClient";
 import {
   getFallbackProductOffers,
   getFallbackRelatedProducts,
@@ -41,7 +41,9 @@ async function fetchProductOffers(productId: number) {
 
     return data;
   } catch (error) {
-    console.error("Erreur chargement offre produit", error);
+    const isNotFound = error instanceof ApiError && error.status === 404;
+    const logger = isNotFound ? console.warn : console.error;
+    logger("Erreur chargement offre produit", error);
     const fallback = getFallbackProductOffers(productId);
     if (fallback) {
       return fallback;
@@ -62,7 +64,9 @@ async function fetchRelatedProducts(productId: number, limit = 4) {
 
     return related;
   } catch (error) {
-    console.error("Erreur chargement produits similaires", error);
+    const isNotFound = error instanceof ApiError && error.status === 404;
+    const logger = isNotFound ? console.warn : console.error;
+    logger("Erreur chargement produits similaires", error);
     const fallback = getFallbackRelatedProducts(productId, limit);
     if (fallback) {
       return fallback;

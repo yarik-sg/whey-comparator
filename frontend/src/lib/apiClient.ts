@@ -35,13 +35,41 @@ export interface ApiRequestOptions
   next?: NextFetchOptions;
 }
 
+const FALLBACK_BASE_URL = "http://localhost:8000";
+const PROXY_PATH = "/api/proxy";
+
+export class ApiError extends Error {
+  readonly status: number | null;
+  readonly statusText: string;
+  readonly url: string;
+  readonly usingProxy: boolean;
+  readonly body?: string;
+
+  constructor(
+    message: string,
+    options: {
+      status: number | null;
+      statusText: string;
+      url: string;
+      usingProxy: boolean;
+      body?: string;
+      cause?: unknown;
+    },
+  ) {
+    super(message, { cause: options.cause });
+    this.name = "ApiError";
+    this.status = options.status;
+    this.statusText = options.statusText;
+    this.url = options.url;
+    this.usingProxy = options.usingProxy;
+    this.body = options.body;
+  }
+}
+
 export interface ApiResponse<T> {
   data: T;
   response: Response;
 }
-
-const FALLBACK_BASE_URL = "http://localhost:8000";
-const PROXY_PATH = "/api/proxy";
 
 function resolveProxyBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -243,7 +271,13 @@ async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Pro
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => response.statusText);
-        throw new Error(`API request failed (${response.status}): ${errorText}`);
+        throw new ApiError(`API request failed (${response.status}): ${errorText}`, {
+          status: Number.isFinite(response.status) ? response.status : null,
+          statusText: response.statusText,
+          url,
+          usingProxy,
+          body: errorText,
+        });
       }
 
       const contentType = response.headers.get("content-type") ?? "";
@@ -254,7 +288,12 @@ async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Pro
 
       return { data, response };
     } catch (error) {
-      lastError = error;
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      if (error instanceof ApiError && error.status && error.status >= 400 && error.status < 500) {
+        break;
+      }
+
       if (usingProxy || !allowProxyFallback) {
         break;
       }
