@@ -43,6 +43,31 @@ export interface ApiResponse<T> {
 const FALLBACK_BASE_URL = "http://localhost:8000";
 const PROXY_PATH = "/api/proxy";
 
+function resolveProxyBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return "";
+  }
+
+  const rawBase =
+    process.env.INTERNAL_PROXY_BASE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.APP_URL ??
+    process.env.VERCEL_URL ??
+    null;
+
+  if (rawBase) {
+    const normalized = rawBase.replace(/\/$/, "");
+    if (/^https?:\/\//i.test(normalized)) {
+      return normalized;
+    }
+
+    return `https://${normalized}`;
+  }
+
+  const port = process.env.PORT ?? "3000";
+  return `http://localhost:${port}`;
+}
+
 type ResolvedBaseUrl = {
   baseUrl: string | null;
   useProxy: boolean;
@@ -128,7 +153,18 @@ function buildProxyUrl(path: string, query?: QueryInput): string {
   });
 
   const queryString = proxyParams.toString();
-  return queryString ? `${PROXY_PATH}?${queryString}` : PROXY_PATH;
+  const proxyPath = queryString ? `${PROXY_PATH}?${queryString}` : PROXY_PATH;
+
+  if (typeof window !== "undefined") {
+    return proxyPath;
+  }
+
+  const baseUrl = resolveProxyBaseUrl();
+  if (!proxyPath.startsWith("/")) {
+    return `${baseUrl}/${proxyPath}`;
+  }
+
+  return `${baseUrl}${proxyPath}`;
 }
 
 function buildDirectUrl(baseUrl: string, path: string, query?: QueryInput): string {
