@@ -9,7 +9,7 @@ RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}"
 WORKDIR /app
 
 COPY pyproject.toml README.md ./
-RUN poetry install --no-interaction --no-ansi
+RUN poetry install --no-interaction --no-ansi --no-root
 
 COPY app ./app
 COPY alembic.ini ./
