@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/components/QueryProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,6 +36,7 @@ export default function RootLayout({
             <main className="flex-1 bg-white">{children}</main>
             <SiteFooter />
           </div>
+          <Toaster richColors position="top-right" />
         </QueryProvider>
       </body>
     </html>

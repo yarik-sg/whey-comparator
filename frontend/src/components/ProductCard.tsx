@@ -79,11 +79,18 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
   const productImage = getProductImage(product);
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = productImage && !imageFailed;
+  const hasBestPriceBadge = typeof product.bestPrice?.amount === "number";
 
   const bodyContent = (
     <>
       <CardHeader className="space-y-4">
         <div className="relative overflow-hidden rounded-3xl bg-slate-50">
+          {hasBestPriceBadge && (
+            <div className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
+              <span aria-hidden>🏆</span>
+              <span>Meilleur prix</span>
+            </div>
+          )}
           <div className="flex aspect-[4/3] w-full items-center justify-center p-6">
             {showImage ? (
               // eslint-disable-next-line @next/next/no-img-element -- remote catalogue assets

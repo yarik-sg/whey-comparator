@@ -30,6 +30,7 @@ export interface DealItem {
 export interface PriceHistoryPoint {
   recordedAt: string;
   source?: string | null;
+  platform?: string | null;
   price: ApiPrice;
 }
 

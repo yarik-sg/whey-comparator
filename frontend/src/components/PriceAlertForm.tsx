@@ -5,6 +5,7 @@ import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useState } fro
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface FormState {
   email: string;
@@ -119,12 +120,14 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
           state: "success",
           message: "Votre alerte a été enregistrée ! Nous vous préviendrons dès que le prix baisse.",
         });
+        toast.success("Alerte enregistrée avec succès !");
         setFormState(initialState);
         setErrors({});
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Une erreur inattendue est survenue.";
         setStatus({ state: "error", message });
+        toast.error(message);
       }
     },
     [formState, validate],

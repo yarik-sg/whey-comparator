@@ -20,8 +20,8 @@ def list_offers(
     min_price: float | None = Query(default=None, ge=0),
     max_price: float | None = Query(default=None, ge=0),
     available: bool | None = None,
-    sort_by: str = Query("created_at", regex="^(price|created_at|updated_at)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("created_at", pattern="^(price|created_at|updated_at)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     db: Annotated[Session, Depends(get_db)] = None,
 ):
     base_query = select(Offer)

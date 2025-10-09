@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from .celery_app import celery_app
 from .database import SessionLocal
-from .models import Offer, Product, ScrapeJob, Supplier
+from .models import Offer, PriceAlert, PriceHistory, Product, ScrapeJob, Supplier
 
 
 @celery_app.task(name="app.tasks.run_scrape_job")
@@ -57,5 +58,91 @@ def run_scrape_job(job_id: Optional[int] = None, *, product_id: Optional[int] = 
         session.add(job)
         session.commit()
         return job.id
+    finally:
+        session.close()
+
+
+def _format_price(amount: Optional[float], currency: str | None) -> str:
+    if amount is None:
+        return "N/A"
+    currency_code = currency or "EUR"
+    return f"{amount:.2f} {currency_code}"
+
+
+@celery_app.task(name="app.tasks.record_daily_price_snapshot")
+def record_daily_price_snapshot() -> None:
+    """Capture the best available offer for every product to feed the history chart."""
+
+    session = SessionLocal()
+    try:
+        now = datetime.now(timezone.utc)
+        products = (
+            session.execute(
+                select(Product).options(selectinload(Product.offers).selectinload(Offer.supplier))
+            )
+            .scalars()
+            .all()
+        )
+
+        for product in products:
+            if not product.offers:
+                continue
+
+            best_offer = min(product.offers, key=lambda offer: float(offer.price))
+            history_entry = PriceHistory(
+                product_id=product.id,
+                platform=best_offer.supplier.name if best_offer.supplier else None,
+                price=best_offer.price,
+                currency=best_offer.currency,
+                recorded_at=now,
+            )
+            session.add(history_entry)
+
+            product.price = best_offer.price
+            product.currency = best_offer.currency
+            product.in_stock = best_offer.available
+            product.updated_at = now
+
+        session.commit()
+    finally:
+        session.close()
+
+
+@celery_app.task(name="app.tasks.check_price_alerts")
+def check_price_alerts() -> None:
+    """Evaluate active price alerts and deactivate those that should trigger."""
+
+    session = SessionLocal()
+    try:
+        alerts = (
+            session.execute(
+                select(PriceAlert)
+                .options(
+                    selectinload(PriceAlert.product).selectinload(Product.offers).selectinload(Offer.supplier)
+                )
+                .where(PriceAlert.active.is_(True))
+            )
+            .scalars()
+            .all()
+        )
+
+        now = datetime.now(timezone.utc)
+        for alert in alerts:
+            product = alert.product
+            if not product or not product.offers:
+                continue
+
+            best_offer = min(product.offers, key=lambda offer: float(offer.price))
+            if best_offer.price <= alert.target_price:
+                alert.active = False
+                alert.updated_at = now
+                # In a production setup, this is where an e-mail or push notification would be sent.
+                alert_message = (
+                    f"Price alert triggered for product #{product.id} ({product.name}) at "
+                    f"{_format_price(float(best_offer.price), best_offer.currency)}"
+                )
+                print(alert_message)
+
+        session.commit()
     finally:
         session.close()

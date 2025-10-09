@@ -6,6 +6,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { PriceHistoryChart } from "@/components/PriceHistoryChart";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { CreatePriceAlert } from "@/components/CreatePriceAlert";
 import apiClient from "@/lib/apiClient";
 import {
   getFallbackProductOffers,
@@ -110,7 +112,18 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       </header>
 
       <main className="container mx-auto px-6 py-12">
-        <div className="mb-8 flex items-center justify-between gap-4">
+        <Breadcrumb
+          items={[
+            { label: "Accueil", href: "/" },
+            { label: "Catalogue", href: "/products" },
+            { label: product.name, href: `#product-${product.id}` },
+          ]}
+          className="mb-6 text-gray-300"
+        />
+        <div
+          id={`product-${product.id}`}
+          className="mb-8 flex items-center justify-between gap-4"
+        >
           <div>
             <Link href="/products" className="text-sm text-orange-300 transition hover:text-orange-200">
               ← Retour au catalogue
@@ -143,6 +156,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <div className="space-y-6">
             <OfferTable offers={offers} caption="Meilleures offres" />
             <PriceHistoryChart productId={product.id} />
+            <CreatePriceAlert product={product} />
             <section className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
               <h2 className="text-lg font-semibold text-white">Flux de données</h2>
               <p className="mt-2 text-gray-300">

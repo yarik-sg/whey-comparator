@@ -2,7 +2,18 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+
+
+class MoneyAmount(BaseModel):
+    amount: Optional[Decimal] = None
+    currency: Optional[str] = "EUR"
+    formatted: Optional[str] = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={Decimal: lambda value: float(value) if value is not None else None},
+    )
 
 
 class Pagination(BaseModel):
@@ -13,6 +24,17 @@ class Pagination(BaseModel):
 class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    image_url: Optional[str] = None
+    price: Optional[Decimal] = Field(default=None, ge=0)
+    currency: str = Field(default="EUR", min_length=3, max_length=3)
+    rating: Optional[Decimal] = Field(default=None, ge=0, le=5)
+    reviews_count: Optional[int] = Field(default=None, ge=0)
+    protein_per_serving_g: Optional[Decimal] = Field(default=None, ge=0)
+    serving_size_g: Optional[Decimal] = Field(default=None, ge=0)
+    in_stock: Optional[bool] = None
+    stock_status: Optional[str] = None
 
 
 class ProductCreate(ProductBase):
@@ -22,6 +44,17 @@ class ProductCreate(ProductBase):
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    image_url: Optional[str] = None
+    price: Optional[Decimal] = Field(default=None, ge=0)
+    currency: Optional[str] = Field(default=None, min_length=3, max_length=3)
+    rating: Optional[Decimal] = Field(default=None, ge=0, le=5)
+    reviews_count: Optional[int] = Field(default=None, ge=0)
+    protein_per_serving_g: Optional[Decimal] = Field(default=None, ge=0)
+    serving_size_g: Optional[Decimal] = Field(default=None, ge=0)
+    in_stock: Optional[bool] = None
+    stock_status: Optional[str] = None
 
 
 class ProductRead(ProductBase):
@@ -29,8 +62,94 @@ class ProductRead(ProductBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProductSummary(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: int
+    name: str
+    brand: Optional[str] = None
+    category: Optional[str] = None
+    flavour: Optional[str] = None
+    image_url: Optional[str] = Field(default=None, alias="image_url")
+    image: Optional[str] = None
+    best_price: MoneyAmount = Field(alias="bestPrice")
+    total_price: Optional[MoneyAmount] = Field(default=None, alias="totalPrice")
+    best_deal: Optional[dict] = Field(default=None, alias="bestDeal")
+    offers_count: int = Field(alias="offersCount")
+    in_stock: Optional[bool] = Field(default=None, alias="inStock")
+    stock_status: Optional[str] = Field(default=None, alias="stockStatus")
+    rating: Optional[Decimal] = None
+    reviews_count: Optional[int] = Field(default=None, alias="reviewsCount")
+    protein_per_serving_g: Optional[Decimal] = Field(
+        default=None, alias="proteinPerServingG"
+    )
+    serving_size_g: Optional[Decimal] = Field(default=None, alias="servingSizeG")
+    protein_per_euro: Optional[Decimal] = Field(default=None, alias="proteinPerEuro")
+    price_per_kg: Optional[Decimal] = Field(default=None, alias="pricePerKg")
+    best_vendor: Optional[str] = Field(default=None, alias="bestVendor")
+
+
+class PaginationInfo(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    page: int
+    per_page: int = Field(serialization_alias="perPage")
+    total: int
+    total_pages: int = Field(serialization_alias="totalPages")
+    has_previous: bool = Field(serialization_alias="hasPrevious")
+    has_next: bool = Field(serialization_alias="hasNext")
+
+
+class ProductListResponse(BaseModel):
+    products: list[ProductSummary]
+    pagination: PaginationInfo
+
+
+class PriceHistoryPoint(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    recorded_at: datetime = Field(alias="recordedAt")
+    price: MoneyAmount
+    platform: Optional[str] = None
+
+
+class PriceHistoryStatistics(BaseModel):
+    lowest: MoneyAmount
+    highest: MoneyAmount
+    average: MoneyAmount
+    current: MoneyAmount
+
+
+class PriceHistoryResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    product_id: int = Field(alias="productId")
+    period: str
+    points: list[PriceHistoryPoint]
+    statistics: PriceHistoryStatistics
+
+
+class PriceAlertBase(BaseModel):
+    user_email: str
+    product_id: int
+    target_price: Decimal = Field(ge=0)
+    platform: Optional[str] = None
+
+
+class PriceAlertCreate(PriceAlertBase):
+    pass
+
+
+class PriceAlertRead(PriceAlertBase):
+    id: int
+    active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SupplierBase(BaseModel):
@@ -54,8 +173,7 @@ class SupplierRead(SupplierBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class OfferBase(BaseModel):
@@ -83,8 +201,7 @@ class OfferRead(OfferBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScrapeJobCreate(BaseModel):
@@ -103,8 +220,7 @@ class ScrapeJobRead(BaseModel):
     status: str
     log: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PaginatedResponse(BaseModel):
