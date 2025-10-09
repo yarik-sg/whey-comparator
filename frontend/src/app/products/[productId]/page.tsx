@@ -1,23 +1,36 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { OfferTable } from "@/components/OfferTable";
-import { ProductCard } from "@/components/ProductCard";
-import { PriceHistoryChart } from "@/components/PriceHistoryChart";
-import { SiteFooter } from "@/components/SiteFooter";
-import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { Breadcrumb } from "@/components/Breadcrumb";
+import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { CreatePriceAlert } from "@/components/CreatePriceAlert";
+import { OfferTable } from "@/components/OfferTable";
+import { PriceHistoryChart } from "@/components/PriceHistoryChart";
+import { ProductCard } from "@/components/ProductCard";
+import { ProductMediaCarousel } from "@/components/ProductMediaCarousel";
+import { ReviewsSection } from "@/components/ReviewsSection";
+import { SiteFooter } from "@/components/SiteFooter";
 import apiClient, { ApiError } from "@/lib/apiClient";
 import {
   getFallbackProductOffers,
-  getFallbackRelatedProducts,
+  getFallbackSimilarProducts,
 } from "@/lib/fallbackCatalogue";
-import type { ProductOffersResponse, RelatedProductsResponse } from "@/types/api";
+import type {
+  DealItem,
+  ProductOffersResponse,
+  SimilarProductsResponse,
+} from "@/types/api";
 
 interface ProductDetailPageProps {
   params: Promise<{ productId: string }>;
 }
+
+const datetimeFormatter = new Intl.DateTimeFormat("fr-FR", {
+  day: "2-digit",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 function buildComparisonHref(...productIds: number[]): string {
   const uniqueIds = Array.from(
@@ -29,15 +42,37 @@ function buildComparisonHref(...productIds: number[]): string {
     : "/comparison";
 }
 
+function buildGalleryImages(product: ProductOffersResponse["product"], offers: DealItem[]) {
+  const candidates: Array<string | null | undefined> = [
+    ...(product.gallery ?? []),
+    product.image,
+    product.image_url,
+    ...offers.map((offer) => offer.image ?? null),
+  ];
+
+  const unique = new Map<string, string>();
+  candidates
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value))
+    .forEach((value) => {
+      if (!unique.has(value)) {
+        unique.set(value, value);
+      }
+    });
+
+  if (unique.size === 0) {
+    unique.set("/placeholder.png", "/placeholder.png");
+  }
+
+  return Array.from(unique.values());
+}
+
 async function fetchProductOffers(productId: number) {
   try {
-    const data = await apiClient.get<ProductOffersResponse>(
-      `/products/${productId}/offers`,
-      {
-        query: { limit: 12 },
-        cache: "no-store",
-      },
-    );
+    const data = await apiClient.get<ProductOffersResponse>(`/products/${productId}/offers`, {
+      query: { limit: 12 },
+      cache: "no-store",
+    });
 
     return data;
   } catch (error) {
@@ -52,10 +87,10 @@ async function fetchProductOffers(productId: number) {
   }
 }
 
-async function fetchRelatedProducts(productId: number, limit = 4) {
+async function fetchSimilarProducts(productId: number, limit = 4) {
   try {
-    const related = await apiClient.get<RelatedProductsResponse>(
-      `/products/${productId}/related`,
+    const related = await apiClient.get<SimilarProductsResponse>(
+      `/products/${productId}/similar`,
       {
         query: { limit },
         cache: "no-store",
@@ -67,7 +102,7 @@ async function fetchRelatedProducts(productId: number, limit = 4) {
     const isNotFound = error instanceof ApiError && error.status === 404;
     const logger = isNotFound ? console.warn : console.error;
     logger("Erreur chargement produits similaires", error);
-    const fallback = getFallbackRelatedProducts(productId, limit);
+    const fallback = getFallbackSimilarProducts(productId, limit);
     if (fallback) {
       return fallback;
     }
@@ -91,8 +126,13 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
   const { product, offers, sources } = data;
   const bestOffer = offers.find((offer) => offer.isBestPrice || offer.bestPrice) ?? offers[0];
-  const related = await fetchRelatedProducts(product.id, 4);
-  const relatedProducts = related?.related ?? [];
+  const similarResponse = await fetchSimilarProducts(product.id, 4);
+  const similarProducts = similarResponse?.similar ?? [];
+  const galleryImages = buildGalleryImages(product, offers);
+  const averageRating = product.rating ?? bestOffer?.rating ?? null;
+  const reviewsCount = product.reviewsCount ?? bestOffer?.reviewsCount ?? null;
+  const hasAverageRating = typeof averageRating === "number" && !Number.isNaN(averageRating);
+  const hasReviewsCount = typeof reviewsCount === "number" && !Number.isNaN(reviewsCount);
 
   return (
     <div className="min-h-screen bg-[#0b1320] text-white">
@@ -111,6 +151,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <Link href="/#promotions" className="transition hover:text-white">
               Promotions
             </Link>
+            <Link href="/alerts" className="transition hover:text-white">
+              Mes alertes
+            </Link>
           </nav>
         </div>
       </header>
@@ -124,113 +167,164 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           ]}
           className="mb-6 text-gray-300"
         />
-        <div
-          id={`product-${product.id}`}
-          className="mb-8 flex items-center justify-between gap-4"
-        >
-          <div>
-            <Link href="/products" className="text-sm text-orange-300 transition hover:text-orange-200">
-              ← Retour au catalogue
-            </Link>
-            <h1 className="mt-3 text-3xl font-bold sm:text-4xl">{product.name}</h1>
-            {product.brand && <p className="text-gray-300">{product.brand}</p>}
-          </div>
-          <CompareLinkButton
-            href={buildComparisonHref(product.id)}
-            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
-            aria-label={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
-            title={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
-          >
-            Ajouter à la comparaison
-          </CompareLinkButton>
-        </div>
 
-        <div className="grid gap-8 lg:grid-cols-[1fr,2fr]">
-          <ProductCard
-            product={product}
-            footer={
+        <div id={`product-${product.id}`} className="grid gap-10 lg:grid-cols-[360px,1fr]">
+          <div className="space-y-6">
+            <ProductMediaCarousel images={galleryImages} alt={product.name} />
+
+            <section className="space-y-5 rounded-3xl border border-white/10 bg-white/5 p-6">
+              <div className="flex flex-col gap-4">
+                <Link
+                  href="/products"
+                  className="text-xs font-semibold uppercase tracking-wide text-orange-300 transition hover:text-orange-200"
+                >
+                  ← Retour au catalogue
+                </Link>
+                <div className="flex flex-col gap-2">
+                  <h1 className="text-3xl font-bold sm:text-4xl">{product.name}</h1>
+                  {product.brand && <p className="text-sm text-gray-300">{product.brand}</p>}
+                  {hasAverageRating && (
+                    <p className="text-sm text-emerald-300">
+                      {averageRating.toFixed(1)} ★
+                      {hasReviewsCount
+                        ? ` · ${reviewsCount.toLocaleString("fr-FR")} avis`
+                        : ""}
+                    </p>
+                  )}
+                </div>
+                <CompareLinkButton
+                  href={buildComparisonHref(product.id)}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+                  aria-label={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
+                  title={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
+                >
+                  Ajouter à la comparaison
+                </CompareLinkButton>
+              </div>
+
+              <dl className="grid gap-4 rounded-2xl bg-white/5 p-4 text-sm text-gray-200">
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-gray-400">Prix constaté</dt>
+                  <dd className="text-lg font-semibold text-white">{product.bestPrice.formatted ?? "—"}</dd>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-xs text-gray-300">
+                  <div>
+                    <p className="uppercase tracking-wide text-gray-400">€/kg</p>
+                    <p className="text-base font-semibold text-white">
+                      {typeof product.pricePerKg === "number"
+                        ? `${product.pricePerKg.toFixed(2)} €`
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="uppercase tracking-wide text-gray-400">Protéines / €</p>
+                    <p className="text-base font-semibold text-white">
+                      {typeof product.proteinPerEuro === "number"
+                        ? product.proteinPerEuro.toFixed(2)
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-xs text-gray-300">
+                  <div>
+                    <p className="uppercase tracking-wide text-gray-400">Offres actives</p>
+                    <p className="text-base font-semibold text-white">{offers.length}</p>
+                  </div>
+                  <div>
+                    <p className="uppercase tracking-wide text-gray-400">Disponibilité</p>
+                    <p className="text-base font-semibold text-white">
+                      {product.inStock === true
+                        ? "En stock"
+                        : product.stockStatus ?? "À vérifier"}
+                    </p>
+                  </div>
+                </div>
+              </dl>
+
               <div className="space-y-1 text-xs text-gray-400">
                 <p>ID #{product.id}</p>
-                <p>Offres scraper : {sources.scraper.length}</p>
                 <p>Sources agrégées : {offers.length}</p>
+                <p>Entrées scraper : {sources.scraper.length}</p>
               </div>
-            }
-          />
+            </section>
+
+            {bestOffer && (
+              <section className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
+                <h2 className="text-lg font-semibold text-white">Offre mise en avant</h2>
+                <div className="space-y-2 rounded-2xl bg-white/5 p-4">
+                  <p className="text-sm text-gray-300">
+                    {bestOffer.vendor} · {bestOffer.price.formatted}
+                    {bestOffer.shippingText ? ` (${bestOffer.shippingText})` : ""}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Total TTC : {bestOffer.totalPrice?.formatted ?? bestOffer.price.formatted}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {bestOffer.stockStatus
+                      ? `Disponibilité : ${bestOffer.stockStatus}`
+                      : bestOffer.inStock
+                      ? "Produit disponible"
+                      : "Stock à confirmer"}
+                  </p>
+                </div>
+                <a
+                  href={bestOffer.link ?? undefined}
+                  target={bestOffer.link ? "_blank" : undefined}
+                  rel={bestOffer.link ? "noopener noreferrer" : undefined}
+                  className="inline-flex w-full items-center justify-center rounded-full border border-orange-200 px-4 py-2 text-xs font-semibold text-orange-300 transition hover:border-orange-300 hover:text-orange-200"
+                >
+                  Consulter l&apos;offre chez {bestOffer.vendor} →
+                </a>
+              </section>
+            )}
+          </div>
 
           <div className="space-y-6">
             <OfferTable offers={offers} caption="Meilleures offres" />
             <PriceHistoryChart productId={product.id} />
+            <ReviewsSection productId={product.id} />
             <CreatePriceAlert product={product} />
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
+
+            <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
               <h2 className="text-lg font-semibold text-white">Flux de données</h2>
               <p className="mt-2 text-gray-300">
-                Ces offres combinent les résultats SerpAPI/Google Shopping et les collecteurs dédiés (Amazon, MyProtein…). Les
-                données scraper sont rafraîchies plusieurs fois par jour et horodatées dans notre base PostgreSQL.
+                Ces offres combinent les résultats SerpAPI/Google Shopping et nos collecteurs internes (Amazon, MyProtein…). Les
+                données sont rafraîchies quotidiennement et stockées dans PostgreSQL.
               </p>
-              <p className="mt-4 text-xs text-gray-400">
-                Dernières sources collectées :
-              </p>
+              <p className="mt-4 text-xs text-gray-400">Dernières sources collectées :</p>
               <ul className="mt-2 space-y-1 text-xs text-gray-400">
                 {sources.scraper.slice(0, 5).map((offer) => (
                   <li key={offer.id}>
                     {offer.source} — {offer.price.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} {offer.currency}
-                    {offer.last_checked && ` · ${new Date(offer.last_checked).toLocaleString("fr-FR")}`}
+                    {offer.last_checked && ` · ${datetimeFormatter.format(new Date(offer.last_checked))}`}
                   </li>
                 ))}
                 {sources.scraper.length === 0 && <li>Aucune donnée scraper disponible.</li>}
               </ul>
             </section>
-            {bestOffer && (
-              <section className="rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
-                <h2 className="text-lg font-semibold text-white">Avis & réputation</h2>
-                <div className="mt-4 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="text-sm text-gray-300">Source sélectionnée : {bestOffer.vendor}</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">
-                      {typeof bestOffer.rating === "number" ? `${bestOffer.rating.toFixed(1)} ★` : "—"}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {typeof bestOffer.reviewsCount === "number"
-                        ? `${bestOffer.reviewsCount.toLocaleString("fr-FR")} avis`
-                        : "Nombre d'avis non communiqué"}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-white/5 p-4 text-xs text-gray-300">
-                    <p>
-                      {bestOffer.stockStatus
-                        ? `Disponibilité : ${bestOffer.stockStatus}`
-                        : bestOffer.inStock
-                        ? "Produit disponible"
-                        : "Stock à confirmer"}
-                    </p>
-                    {bestOffer.shippingText && <p className="mt-2">Livraison : {bestOffer.shippingText}</p>}
-                    <p className="mt-2">Total TTC : {bestOffer.totalPrice?.formatted ?? bestOffer.price.formatted}</p>
-                  </div>
-                </div>
-              </section>
-            )}
-            {relatedProducts.length > 0 && (
-              <section className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
+
+            {similarProducts.length > 0 && (
+              <section className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-lg font-semibold text-white">Produits similaires</h2>
                   <p className="text-xs text-gray-400">
-                    Basés sur la marque, la catégorie et la composition nutritionnelle.
+                    Basés sur la marque, la catégorie et la performance nutritionnelle.
                   </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
-                  {relatedProducts.map((relatedProduct) => (
+                  {similarProducts.map((similarProduct) => (
                     <ProductCard
-                      key={relatedProduct.id}
-                      product={relatedProduct}
-                      href={`/products/${relatedProduct.id}`}
+                      key={similarProduct.id}
+                      product={similarProduct}
+                      href={`/products/${similarProduct.id}`}
                       footer={
                         <div className="flex items-center justify-between text-xs text-gray-400">
-                          <span>ID #{relatedProduct.id}</span>
+                          <span>ID #{similarProduct.id}</span>
                           <CompareLinkButton
-                            href={buildComparisonHref(product.id, relatedProduct.id)}
+                            href={buildComparisonHref(product.id, similarProduct.id)}
                             className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
-                            aria-label={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name} avec ${relatedProduct.brand ? `${relatedProduct.brand} ` : ""}${relatedProduct.name}`}
-                            title={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name} avec ${relatedProduct.brand ? `${relatedProduct.brand} ` : ""}${relatedProduct.name}`}
+                            aria-label={`Comparer ${product.name} avec ${similarProduct.name}`}
+                            title={`Comparer ${product.name} avec ${similarProduct.name}`}
                           >
                             Comparer →
                           </CompareLinkButton>
@@ -249,3 +343,4 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     </div>
   );
 }
+

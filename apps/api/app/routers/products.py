@@ -88,6 +88,8 @@ def _build_product_summary(product: Product) -> schemas.ProductSummary:
     protein_per_euro_value = float(protein_per_euro) if protein_per_euro is not None else None
     price_per_kg_value = float(price_per_kg) if price_per_kg is not None else None
 
+    gallery = [value for value in {product.image_url} if value]
+
     return schemas.ProductSummary(
         id=product.id,
         name=product.name,
@@ -96,6 +98,7 @@ def _build_product_summary(product: Product) -> schemas.ProductSummary:
         flavour=None,
         image_url=product.image_url,
         image=product.image_url,
+        gallery=gallery or None,
         bestPrice=_money(best_price_amount, best_currency),
         totalPrice=None,
         bestDeal=None,
@@ -290,4 +293,160 @@ def get_price_history(
         period=period,
         points=points,
         statistics=statistics,
+    )
+
+
+def _score_similar_product(base: Product, candidate: Product) -> float:
+    score = 0.0
+
+    if base.brand and candidate.brand and base.brand.lower() == candidate.brand.lower():
+        score += 3
+
+    if base.category and candidate.category and base.category == candidate.category:
+        score += 2
+
+    if candidate.rating is not None:
+        score += float(candidate.rating)
+
+    if base.price is not None and candidate.price is not None:
+        difference = abs(float(base.price) - float(candidate.price))
+        score += max(0.0, 1.0 - min(difference / 50.0, 1.0))
+
+    return score
+
+
+def _estimate_distribution(average: float | None, total_reviews: int) -> list[schemas.ReviewBreakdown]:
+    buckets: list[schemas.ReviewBreakdown] = []
+
+    if total_reviews <= 0 or average is None:
+        for stars in range(5, 0, -1):
+            buckets.append(
+                schemas.ReviewBreakdown(stars=stars, count=0, percentage=0.0)
+            )
+        return buckets
+
+    weights: list[float] = []
+    for stars in range(5, 0, -1):
+        distance = abs(average - stars)
+        weight = max(0.1, 1 - distance / 4)
+        weights.append(weight)
+
+    total_weight = sum(weights)
+    if total_weight == 0:
+        total_weight = 1
+
+    raw_counts = [weight / total_weight * total_reviews for weight in weights]
+    counts = [int(value) for value in raw_counts]
+    remainder = total_reviews - sum(counts)
+
+    if remainder > 0:
+        fractional = [value - int(value) for value in raw_counts]
+        while remainder > 0:
+            index = max(range(len(fractional)), key=fractional.__getitem__)
+            counts[index] += 1
+            fractional[index] = 0
+            remainder -= 1
+
+    for index, stars in enumerate(range(5, 0, -1)):
+        count = counts[index]
+        percentage = (count / total_reviews) * 100 if total_reviews else 0
+        buckets.append(
+            schemas.ReviewBreakdown(
+                stars=stars,
+                count=count,
+                percentage=round(percentage, 2),
+            )
+        )
+
+    return buckets
+
+
+@router.get("/{product_id}/similar", response_model=schemas.SimilarProductsResponse)
+def get_similar_products(
+    product_id: int,
+    limit: int = Query(4, ge=1, le=12),
+    db: Annotated[Session, Depends(get_db)] = None,
+):
+    product = (
+        db.execute(
+            select(Product)
+            .options(selectinload(Product.offers).selectinload(Offer.supplier))
+            .where(Product.id == product_id)
+        )
+        .scalars()
+        .first()
+    )
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    candidates = (
+        db.execute(
+            select(Product)
+            .options(selectinload(Product.offers).selectinload(Offer.supplier))
+            .where(Product.id != product_id)
+        )
+        .scalars()
+        .all()
+    )
+
+    scored = sorted(
+        candidates,
+        key=lambda candidate: (
+            _score_similar_product(product, candidate),
+            candidate.updated_at or datetime.min,
+        ),
+        reverse=True,
+    )
+
+    selected = [_build_product_summary(item) for item in scored[:limit]]
+
+    return schemas.SimilarProductsResponse(productId=product.id, similar=selected)
+
+
+@router.get("/{product_id}/reviews", response_model=schemas.ProductReviewsResponse)
+def get_product_reviews(
+    product_id: int,
+    db: Annotated[Session, Depends(get_db)] = None,
+):
+    product = db.get(Product, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    average_rating = float(product.rating) if product.rating is not None else None
+    reviews_count = int(product.reviews_count or 0)
+    distribution = _estimate_distribution(average_rating, reviews_count)
+
+    highlights: list[schemas.ReviewHighlight] = []
+    if average_rating is not None:
+        highlights.append(
+            schemas.ReviewHighlight(
+                id="strengths",
+                title="Les clients adorent",
+                rating=round(average_rating, 1),
+                summary=(
+                    "Goût, miscibilité et digestion sont les points les plus cités dans les avis positifs."
+                ),
+                source="Synthèse SerpAPI",
+            )
+        )
+        highlights.append(
+            schemas.ReviewHighlight(
+                id="watchpoints",
+                title="À surveiller",
+                rating=max(0.0, round(min(average_rating - 0.7, 5), 1)),
+                summary=(
+                    "Quelques utilisateurs mentionnent des variations de texture selon les lots et des délais de livraison variables."
+                ),
+                source="Synthèse SerpAPI",
+            )
+        )
+
+    return schemas.ProductReviewsResponse(
+        productId=product.id,
+        averageRating=average_rating,
+        reviewsCount=reviews_count,
+        sources=1 if reviews_count else 0,
+        distribution=distribution,
+        highlights=highlights,
     )

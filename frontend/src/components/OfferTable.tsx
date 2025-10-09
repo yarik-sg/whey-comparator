@@ -57,6 +57,25 @@ function getAvailability(offer: DealItem) {
   return { icon: "⚪", label: offer.stockStatus ?? "Indisponible" };
 }
 
+function renderRating(offer: DealItem) {
+  if (typeof offer.rating === "number") {
+    const rating = offer.rating.toFixed(1);
+    const reviews =
+      typeof offer.reviewsCount === "number"
+        ? `${offer.reviewsCount.toLocaleString("fr-FR")} avis`
+        : "Avis externes";
+
+    return (
+      <div className="flex flex-col text-xs text-slate-500">
+        <span className="font-semibold text-slate-900">{rating} ★</span>
+        <span>{reviews}</span>
+      </div>
+    );
+  }
+
+  return <span className="text-xs text-slate-400">—</span>;
+}
+
 export function OfferTable({ offers, caption }: OfferTableProps) {
   if (offers.length === 0) {
     return (
@@ -94,6 +113,9 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
                 </th>
                 <th scope="col" className="px-4 py-3 font-semibold">
                   Stock
+                </th>
+                <th scope="col" className="px-4 py-3 font-semibold">
+                  Avis
                 </th>
                 <th scope="col" className="px-4 py-3 font-semibold">
                   Source
@@ -149,6 +171,7 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
                         );
                       })()}
                     </td>
+                    <td className="px-4 py-4">{renderRating(offer)}</td>
                     <td className="px-4 py-4 text-slate-500">{offer.source}</td>
                     <td className="px-4 py-4">
                       {offer.link ? (
@@ -225,6 +248,10 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
                     <span aria-hidden>{availability.icon}</span>
                     <span className="text-xs">{availability.label}</span>
                   </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Avis</dt>
+                  <dd>{renderRating(offer)}</dd>
                 </div>
               </dl>
 

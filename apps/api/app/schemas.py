@@ -75,6 +75,7 @@ class ProductSummary(BaseModel):
     flavour: Optional[str] = None
     image_url: Optional[str] = Field(default=None, alias="image_url")
     image: Optional[str] = None
+    gallery: Optional[list[str]] = Field(default=None, alias="gallery")
     best_price: MoneyAmount = Field(alias="bestPrice")
     total_price: Optional[MoneyAmount] = Field(default=None, alias="totalPrice")
     best_deal: Optional[dict] = Field(default=None, alias="bestDeal")
@@ -132,6 +133,39 @@ class PriceHistoryResponse(BaseModel):
     statistics: PriceHistoryStatistics
 
 
+class ReviewBreakdown(BaseModel):
+    stars: int
+    count: int
+    percentage: float
+
+
+class ReviewHighlight(BaseModel):
+    id: str
+    title: str
+    rating: float
+    summary: str
+    source: str
+    url: Optional[str] = None
+
+
+class ProductReviewsResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    product_id: int = Field(alias="productId")
+    average_rating: Optional[float] = Field(default=None, alias="averageRating")
+    reviews_count: int = Field(alias="reviewsCount")
+    sources: int
+    distribution: list[ReviewBreakdown]
+    highlights: list[ReviewHighlight]
+
+
+class SimilarProductsResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    product_id: int = Field(alias="productId")
+    similar: list[ProductSummary]
+
+
 class PriceAlertBase(BaseModel):
     user_email: str
     product_id: int
@@ -148,8 +182,13 @@ class PriceAlertRead(PriceAlertBase):
     active: bool
     created_at: datetime
     updated_at: datetime
+    product: Optional[ProductSummary] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PriceAlertUpdate(BaseModel):
+    active: Optional[bool] = None
 
 
 class SupplierBase(BaseModel):

@@ -5,7 +5,7 @@ import type {
   DealItem,
   ProductOffersResponse,
   ProductSummary,
-  RelatedProductsResponse,
+  SimilarProductsResponse,
   ScraperOffer,
 } from "@/types/api";
 
@@ -989,10 +989,10 @@ function scoreRelatedProduct(
   return score;
 }
 
-export function getFallbackRelatedProducts(
+export function getFallbackSimilarProducts(
   productId: number,
   limit = 4,
-): RelatedProductsResponse | null {
+): SimilarProductsResponse | null {
   const baseProduct = RAW_FALLBACK_PRODUCTS.find((item) => item.id === productId);
 
   if (!baseProduct) {
@@ -1018,8 +1018,8 @@ export function getFallbackRelatedProducts(
 
   return {
     productId,
-    related: selected,
-  } satisfies RelatedProductsResponse;
+    similar: selected,
+  } satisfies SimilarProductsResponse;
 }
 
 export function getFallbackComparison(ids: readonly string[]): ComparisonResponse | null {

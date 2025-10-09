@@ -13,6 +13,7 @@ const navItems = [
   { label: "Produits", href: "/products" },
   { label: "Comparateur", href: "/comparison" },
   { label: "Promos du moment", href: "/catalogue" },
+  { label: "Mes alertes", href: "/alerts" },
 ];
 
 export function SiteHeader() {
