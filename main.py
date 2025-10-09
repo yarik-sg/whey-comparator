@@ -54,6 +54,71 @@ PRICE_HISTORY_PERIODS = {
     "1y": timedelta(days=365),
 }
 
+# Cache used to reuse SERP API responses and fallback data when
+# additional requests fail (e.g. API quota exceeded or network error).
+SERP_PRODUCT_CACHE: Dict[str, Dict[str, Any]] = {}
+
+
+def _normalize_serp_cache_key(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    try:
+        if isinstance(value, str):
+            normalized = value.strip()
+            return normalized or None
+        return str(value)
+    except Exception:
+        return None
+
+
+def _clone_offers_for_cache(offers: Optional[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    cloned: List[Dict[str, Any]] = []
+    if not offers:
+        return cloned
+    for offer in offers:
+        if isinstance(offer, dict):
+            cloned.append(clone_deal_payload(offer))
+    return cloned
+
+
+def _update_serp_cache_entry(
+    identifier: Any,
+    *,
+    deal: Optional[Dict[str, Any]] = None,
+    summary: Optional[Dict[str, Any]] = None,
+    serp_product: Optional[Dict[str, Any]] = None,
+    query: Optional[str] = None,
+    filters: Optional[Dict[str, Any]] = None,
+    offers: Optional[List[Dict[str, Any]]] = None,
+) -> None:
+    cache_key = _normalize_serp_cache_key(identifier)
+    if not cache_key:
+        return
+
+    entry = SERP_PRODUCT_CACHE.setdefault(cache_key, {})
+
+    if deal and isinstance(deal, dict):
+        entry["deal"] = clone_deal_payload(deal)
+
+    if summary and isinstance(summary, dict):
+        entry["summary"] = dict(summary)
+
+    if serp_product and isinstance(serp_product, dict):
+        entry["serp_product"] = serp_product
+
+    if query:
+        entry["query"] = query
+
+    if filters:
+        entry["filters"] = dict(filters)
+
+    if offers:
+        cloned_offers = _clone_offers_for_cache(offers)
+        if cloned_offers:
+            entry["offers"] = cloned_offers
+
+    entry["updated_at"] = datetime.utcnow()
+
 # --- Utils ---
 
 def decode_google_redirect(u: Optional[str]) -> Optional[str]:
@@ -597,6 +662,17 @@ def build_serp_catalogue(
         if identifier in seen:
             continue
         seen.add(identifier)
+        filters_payload: Dict[str, Any] = {}
+        if marque:
+            filters_payload["marque"] = marque
+        if categorie:
+            filters_payload["categorie"] = categorie
+        _update_serp_cache_entry(
+            identifier,
+            summary=summary,
+            query=q,
+            filters=filters_payload or None,
+        )
         catalogue.append(summary)
 
     return catalogue
@@ -737,28 +813,54 @@ def collect_serp_deals(
             shipping_text = best.get("shipping") or shipping_text
             shipping_cost = parse_float(best.get("shipping_cost"))
 
-        deals.append(
-            build_deal_payload(
-                identifier=f"google-{product_id or 'item'}-{index}",
-                title=title or item.get("title") or "Produit",
-                vendor=source_name,
-                price_amount=price_num,
-                price_currency="EUR" if price_num is not None else None,
-                price_formatted=price_str,
-                shipping_cost=shipping_cost,
-                shipping_text=shipping_text,
-                in_stock=in_stock,
-                stock_status=stock_status,
-                link=display_link,
-                image=pick_best_image_candidate(image_candidates),
-                rating=rating_val,
-                reviews_count=reviews_count,
-                source="Google Shopping",
-                product_id=int(product_id) if product_id else None,
-                weight_kg=weight_kg,
-                price_per_kg=eur_per_kg,
-            )
+        deal_payload = build_deal_payload(
+            identifier=f"google-{product_id or 'item'}-{index}",
+            title=title or item.get("title") or "Produit",
+            vendor=source_name,
+            price_amount=price_num,
+            price_currency="EUR" if price_num is not None else None,
+            price_formatted=price_str,
+            shipping_cost=shipping_cost,
+            shipping_text=shipping_text,
+            in_stock=in_stock,
+            stock_status=stock_status,
+            link=display_link,
+            image=pick_best_image_candidate(image_candidates),
+            rating=rating_val,
+            reviews_count=reviews_count,
+            source="Google Shopping",
+            product_id=int(product_id) if product_id else None,
+            weight_kg=weight_kg,
+            price_per_kg=eur_per_kg,
         )
+
+        filters_payload: Dict[str, Any] = {}
+        if marque:
+            filters_payload["marque"] = marque
+        if categorie:
+            filters_payload["categorie"] = categorie
+
+        cached_serp_product = (
+            prod
+            if isinstance(prod, dict)
+            and prod
+            and not prod.get("error")
+            else None
+        )
+
+        cache_identifier: Optional[Any]
+        cache_identifier = product_id if product_id else deal_payload.get("id")
+
+        _update_serp_cache_entry(
+            cache_identifier,
+            deal=deal_payload,
+            serp_product=cached_serp_product,
+            query=q,
+            filters=filters_payload or None,
+            offers=[deal_payload],
+        )
+
+        deals.append(deal_payload)
 
         if len(deals) >= max(limit * 2, limit):
             break
@@ -1365,18 +1467,147 @@ def list_products(
     }
 
 
+def build_cached_serp_product_detail(
+    product_identifier: str, *, limit: int
+) -> Optional[Dict[str, Any]]:
+    cache_key = _normalize_serp_cache_key(product_identifier)
+    if not cache_key:
+        return None
+
+    cached = SERP_PRODUCT_CACHE.get(cache_key)
+    if not isinstance(cached, dict) or not cached:
+        return None
+
+    summary = cached.get("summary")
+    if not isinstance(summary, dict):
+        summary = None
+
+    offers: List[Dict[str, Any]] = []
+    primary_deal = cached.get("deal")
+    if isinstance(primary_deal, dict):
+        offers.append(clone_deal_payload(primary_deal))
+
+    cached_offers = cached.get("offers")
+    if isinstance(cached_offers, list):
+        for offer in cached_offers:
+            if isinstance(offer, dict):
+                offers.append(clone_deal_payload(offer))
+
+    if not offers:
+        return None
+
+    deduped_offers: List[Dict[str, Any]] = []
+    seen_offer_ids: set[str] = set()
+    for offer in offers:
+        normalized_offer_id = _normalize_serp_cache_key(offer.get("id"))
+        if normalized_offer_id and normalized_offer_id in seen_offer_ids:
+            continue
+        if normalized_offer_id:
+            seen_offer_ids.add(normalized_offer_id)
+        deduped_offers.append(offer)
+
+    if not deduped_offers:
+        return None
+
+    deduped_offers.sort(
+        key=lambda deal: (
+            extract_total_price_amount(deal)
+            if extract_total_price_amount(deal) is not None
+            else float("inf")
+        )
+    )
+
+    limited_offers = deduped_offers[:limit]
+    if not limited_offers:
+        return None
+
+    mark_best_price(limited_offers)
+    best_offer = next(
+        (offer for offer in limited_offers if offer.get("isBestPrice")),
+        limited_offers[0],
+    )
+
+    best_price_summary = best_offer.get("totalPrice")
+    if not isinstance(best_price_summary, dict) or best_price_summary.get("amount") is None:
+        price_payload = best_offer.get("price")
+        if isinstance(price_payload, dict):
+            best_price_summary = price_payload
+        else:
+            best_price_summary = build_price_summary(None, None)
+
+    if summary is None:
+        summary = build_serp_product_summary(best_offer, fallback_index=0)
+
+    product_payload = {
+        "id": summary.get("id") or product_identifier,
+        "name": summary.get("name") or best_offer.get("title") or "Produit",
+        "brand": summary.get("brand"),
+        "flavour": summary.get("flavour"),
+        "image": summary.get("image"),
+        "image_url": summary.get("image_url") or summary.get("image"),
+        "protein_per_serving_g": summary.get("protein_per_serving_g"),
+        "serving_size_g": summary.get("serving_size_g"),
+        "category": summary.get("category") or "Google Shopping",
+        "bestPrice": best_price_summary,
+        "totalPrice": best_offer.get("totalPrice"),
+        "bestDeal": best_offer,
+        "offersCount": len(limited_offers),
+        "inStock": best_offer.get("inStock"),
+        "stockStatus": best_offer.get("stockStatus"),
+        "rating": summary.get("rating") or best_offer.get("rating"),
+        "reviewsCount": summary.get("reviewsCount") or best_offer.get("reviewsCount"),
+        "proteinPerEuro": summary.get("proteinPerEuro"),
+        "pricePerKg": summary.get("pricePerKg") or best_offer.get("pricePerKg"),
+        "bestVendor": summary.get("bestVendor") or best_offer.get("vendor"),
+        "link": summary.get("link") or best_offer.get("link"),
+    }
+
+    _update_serp_cache_entry(
+        cache_key,
+        summary=product_payload,
+        deal=best_offer,
+        offers=limited_offers,
+    )
+
+    return {
+        "product": product_payload,
+        "offers": limited_offers,
+        "sources": {"scraper": []},
+    }
+
+
 def build_serp_product_detail(
     product_identifier: str, *, limit: int = 10
 ) -> Optional[Dict[str, Any]]:
-    serp_product = serpapi_product_offers(product_identifier)
-    if not isinstance(serp_product, dict) or not serp_product:
-        return None
+    cache_key = _normalize_serp_cache_key(product_identifier)
+    cached_entry = SERP_PRODUCT_CACHE.get(cache_key) if cache_key else None
+
+    serp_product: Optional[Dict[str, Any]] = None
+    if cached_entry:
+        cached_candidate = cached_entry.get("serp_product")
+        if isinstance(cached_candidate, dict) and cached_candidate:
+            serp_product = cached_candidate
+
+    if serp_product is None:
+        serp_product = serpapi_product_offers(product_identifier)
+        if not isinstance(serp_product, dict) or not serp_product or serp_product.get("error"):
+            fallback = build_cached_serp_product_detail(product_identifier, limit=limit)
+            if fallback:
+                return fallback
+            return None
+        _update_serp_cache_entry(cache_key or product_identifier, serp_product=serp_product)
 
     if serp_product.get("error"):
+        fallback = build_cached_serp_product_detail(product_identifier, limit=limit)
+        if fallback:
+            return fallback
         return None
 
     product_results = serp_product.get("product_results")
     if not isinstance(product_results, dict):
+        fallback = build_cached_serp_product_detail(product_identifier, limit=limit)
+        if fallback:
+            return fallback
         return None
 
     raw_title = product_results.get("title") or product_results.get("name") or "Produit"
@@ -1513,6 +1744,9 @@ def build_serp_product_detail(
         offers.extend(extra_deals)
 
     if not offers:
+        fallback = build_cached_serp_product_detail(product_identifier, limit=limit)
+        if fallback:
+            return fallback
         return None
 
     offers.sort(
@@ -1570,6 +1804,14 @@ def build_serp_product_detail(
         "pricePerKg": best_offer.get("pricePerKg"),
         "bestVendor": best_offer.get("vendor"),
     }
+
+    _update_serp_cache_entry(
+        payload_id,
+        serp_product=serp_product,
+        summary=product_payload,
+        deal=best_offer,
+        offers=limited_offers,
+    )
 
     return {
         "product": product_payload,
