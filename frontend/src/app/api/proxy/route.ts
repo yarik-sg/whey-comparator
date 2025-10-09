@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import apiClient from "@/lib/apiClient";
+import apiClient, { ApiError } from "@/lib/apiClient";
 
 function buildQuery(searchParams: URLSearchParams) {
   const forwarded = new URLSearchParams(searchParams);
@@ -28,6 +28,21 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof ApiError) {
+      const status = error.status ?? 502;
+
+      if (error.body) {
+        try {
+          const parsed = JSON.parse(error.body);
+          return NextResponse.json(parsed, { status });
+        } catch {
+          return NextResponse.json({ error: error.body }, { status });
+        }
+      }
+
+      return NextResponse.json({ error: error.message }, { status });
+    }
+
     const message =
       error instanceof Error ? error.message : "Unable to proxy request";
 
