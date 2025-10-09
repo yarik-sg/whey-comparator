@@ -64,6 +64,39 @@ def _best_offer(offers: Iterable[Offer]) -> Offer | None:
     return min(offers_list, key=lambda offer: float(offer.price))
 
 
+def _build_deal_item(
+    product: Product, offer: Offer, best_offer_id: int | None
+) -> schemas.DealItem:
+    supplier_name = offer.supplier.name if offer.supplier else "Catalogue interne"
+    rating = float(product.rating) if product.rating is not None else None
+    reviews_count = int(product.reviews_count) if product.reviews_count is not None else None
+    stock_status = product.stock_status
+    if not stock_status:
+        stock_status = "En stock" if offer.available else "Rupture de stock"
+
+    price = _money(offer.price, offer.currency)
+    price_per_kg = _price_per_kg(offer.price, product.serving_size_g)
+
+    return schemas.DealItem(
+        id=str(offer.id),
+        title=product.name,
+        vendor=supplier_name,
+        price=price,
+        total_price=price,
+        in_stock=offer.available,
+        stock_status=stock_status,
+        link=offer.url,
+        image=product.image_url,
+        rating=rating,
+        reviews_count=reviews_count,
+        best_price=offer.id == best_offer_id,
+        is_best_price=offer.id == best_offer_id,
+        source=supplier_name,
+        product_id=product.id,
+        price_per_kg=float(price_per_kg) if price_per_kg is not None else None,
+    )
+
+
 def _build_product_summary(product: Product) -> schemas.ProductSummary:
     offers = product.offers or []
     best_offer = _best_offer(offers)
@@ -227,6 +260,36 @@ def update_product(
     db.commit()
     db.refresh(product)
     return product
+
+
+@router.get("/{product_id}/offers", response_model=schemas.ProductOffersResponse)
+def get_product_offers(
+    product_id: int, db: Annotated[Session, Depends(get_db)] = None
+):
+    product = (
+        db.execute(
+            select(Product)
+            .options(selectinload(Product.offers).selectinload(Offer.supplier))
+            .where(Product.id == product_id)
+        )
+        .scalars()
+        .first()
+    )
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    offers = product.offers or []
+    best_offer = _best_offer(offers)
+    best_offer_id = best_offer.id if best_offer else None
+
+    deal_items = [_build_deal_item(product, offer, best_offer_id) for offer in offers]
+
+    return schemas.ProductOffersResponse(
+        product=_build_product_summary(product),
+        offers=deal_items,
+        sources=schemas.ProductOfferSources(scraper=[]),
+    )
 
 
 @router.delete("/{product_id}", status_code=204)

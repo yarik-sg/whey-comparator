@@ -109,6 +109,55 @@ class ProductListResponse(BaseModel):
     pagination: PaginationInfo
 
 
+class DealItem(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    title: str
+    vendor: str
+    price: MoneyAmount
+    total_price: Optional[MoneyAmount] = Field(default=None, alias="totalPrice")
+    shipping_cost: Optional[Decimal] = Field(default=None, alias="shippingCost")
+    shipping_text: Optional[str] = Field(default=None, alias="shippingText")
+    in_stock: Optional[bool] = Field(default=None, alias="inStock")
+    stock_status: Optional[str] = Field(default=None, alias="stockStatus")
+    link: Optional[str] = None
+    image: Optional[str] = None
+    rating: Optional[float] = None
+    reviews_count: Optional[int] = Field(default=None, alias="reviewsCount")
+    best_price: bool = Field(alias="bestPrice")
+    is_best_price: Optional[bool] = Field(default=None, alias="isBestPrice")
+    source: str
+    product_id: Optional[int] = Field(default=None, alias="productId")
+    expires_at: Optional[datetime] = Field(default=None, alias="expiresAt")
+    weight_kg: Optional[float] = Field(default=None, alias="weightKg")
+    price_per_kg: Optional[float] = Field(default=None, alias="pricePerKg")
+
+
+class ScraperOffer(BaseModel):
+    id: int
+    source: str
+    url: str
+    price: Decimal
+    currency: str
+    price_per_100g_protein: Optional[Decimal] = None
+    stock_status: Optional[str] = None
+    in_stock: Optional[bool] = None
+    shipping_cost: Optional[Decimal] = None
+    shipping_text: Optional[str] = None
+    last_checked: Optional[datetime] = None
+
+
+class ProductOfferSources(BaseModel):
+    scraper: list[ScraperOffer] = Field(default_factory=list)
+
+
+class ProductOffersResponse(BaseModel):
+    product: ProductSummary
+    offers: list[DealItem]
+    sources: ProductOfferSources
+
+
 class PriceHistoryPoint(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
