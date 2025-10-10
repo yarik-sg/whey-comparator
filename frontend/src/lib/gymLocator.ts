@@ -547,12 +547,14 @@ const applyFallbackFilters = (filters: GymQueryFilters): GymLocation[] => {
 
 export const fetchGymsFromApi = async (
   filters: GymQueryFilters = {},
+  options: { signal?: AbortSignal } = {},
 ): Promise<GymLocatorResponse> => {
   const params = buildGymSearchParams(filters);
   const data = await apiClient.get<ApiGymResponse>("/api/gyms", {
     query: params,
     cache: "no-store",
     allowProxyFallback: false,
+    signal: options.signal,
   });
 
   const gyms = Array.isArray(data.gyms) ? data.gyms.map(normalizeApiGym) : [];
@@ -586,23 +588,10 @@ export const getFallbackGyms = (filters: GymQueryFilters = {}): GymLocatorRespon
 
 export const fetchGyms = async (
   filters: GymQueryFilters = {},
+  options: { signal?: AbortSignal } = {},
 ): Promise<GymLocatorResponse> => {
-  try {
-    const response = await fetchGymsFromApi(filters);
-
-    if (!response.gyms.length) {
-      const fallback = getFallbackGyms(filters);
-      return { ...fallback, servedFrom: "fallback" };
-    }
-
-    return response;
-  } catch (error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("fetchGymsFromApi failed, falling back to mock dataset", error);
-    }
-
-    return getFallbackGyms(filters);
-  }
+  const response = await fetchGymsFromApi(filters, options);
+  return { ...response, servedFrom: response.servedFrom ?? "api" };
 };
 
 export default {
