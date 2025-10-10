@@ -13,6 +13,11 @@ import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useProductList } from "@/lib/queries";
+import {
+  getCanonicalProductId,
+  normalizeProductIdentifier,
+  type ProductIdentifierCandidate,
+} from "@/lib/productIdentifiers";
 import type { ProductSummary } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,15 +25,26 @@ import { Input } from "@/components/ui/input";
 const DEFAULT_PER_PAGE = 12;
 
 function buildComparisonHref(
-  productIds: Array<string | number | null | undefined>,
+  ...productIds: ProductIdentifierCandidate[]
 ): string {
-  const uniqueIds = Array.from(
-    new Set(
-      productIds
-        .map((id) => (id === null || id === undefined ? "" : String(id).trim()))
-        .filter((id) => id.length > 0),
-    ),
-  );
+  const queue: ProductIdentifierCandidate[] = [...productIds];
+  const uniqueIds: string[] = [];
+  const seen = new Set<string>();
+
+  while (queue.length > 0) {
+    const candidate = queue.shift();
+
+    if (Array.isArray(candidate)) {
+      queue.unshift(...candidate);
+      continue;
+    }
+
+    const normalized = normalizeProductIdentifier(candidate ?? null);
+    if (normalized && !seen.has(normalized)) {
+      seen.add(normalized);
+      uniqueIds.push(normalized);
+    }
+  }
 
   return uniqueIds.length > 0
     ? `/comparison?ids=${encodeURIComponent(uniqueIds.join(","))}`
@@ -291,8 +307,9 @@ export default function ProductsPage() {
               )}
 
               {!isBusy &&
-                products.map((product: ProductSummary) => {
-                  const canonicalId = product.product_id ?? String(product.id);
+                products.map((product: ProductSummary, index) => {
+                  const canonicalId =
+                    getCanonicalProductId(product) ?? String(product.id ?? index);
                   const productHref = `/products/${encodeURIComponent(canonicalId)}`;
 
                   return (
@@ -304,7 +321,7 @@ export default function ProductsPage() {
                         <div className="flex items-center justify-between text-xs text-slate-400">
                           <span>ID #{canonicalId}</span>
                           <CompareLinkButton
-                            href={buildComparisonHref([canonicalId])}
+                            href={buildComparisonHref(canonicalId)}
                             className="inline-flex items-center gap-1 font-semibold text-orange-500 transition hover:text-orange-400"
                             aria-label={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
                             title={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}

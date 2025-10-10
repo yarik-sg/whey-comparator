@@ -7,6 +7,11 @@ import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import apiClient from "@/lib/apiClient";
 import { getFallbackComparison, getFallbackProductSummaries } from "@/lib/fallbackCatalogue";
+import {
+  getCanonicalProductId,
+  normalizeProductIdentifier,
+  type ProductIdentifierCandidate,
+} from "@/lib/productIdentifiers";
 import type { ComparisonEntry, ComparisonResponse, DealItem, ProductListResponse, ProductSummary } from "@/types/api";
 
 interface ComparisonPageProps {
@@ -24,6 +29,36 @@ function toNumericIds(ids: readonly string[]): number[] {
   return ids
     .map((value) => Number.parseInt(value, 10))
     .filter((value): value is number => Number.isFinite(value));
+}
+
+function buildComparisonHref(
+  ...productIds: ProductIdentifierCandidate[]
+): string {
+  const queue: ProductIdentifierCandidate[] = [...productIds];
+  const uniqueIds: string[] = [];
+  const seen = new Set<string>();
+
+  while (queue.length > 0) {
+    const candidate = queue.shift();
+
+    if (Array.isArray(candidate)) {
+      queue.unshift(...candidate);
+      continue;
+    }
+
+    const normalized = normalizeProductIdentifier(candidate ?? null);
+    if (normalized && !seen.has(normalized)) {
+      seen.add(normalized);
+      uniqueIds.push(normalized);
+    }
+  }
+
+  if (uniqueIds.length === 0) {
+    return "/comparison";
+  }
+
+  const encodedIds = uniqueIds.map((id) => encodeURIComponent(id));
+  return `/comparison?ids=${encodedIds.join(",")}`;
 }
 
 function sanitizeComparisonEntry(entry: ComparisonEntry | null | undefined): ComparisonEntry | null {
@@ -307,8 +342,9 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
             <section className="space-y-8">
               <h2 className="text-2xl font-semibold text-slate-900">Détail par produit</h2>
               <div className="grid gap-8 lg:grid-cols-2">
-                {data.products.map(({ product, offers }) => {
-                  const canonicalId = product.product_id ?? String(product.id);
+                {data.products.map(({ product, offers }, index) => {
+                  const canonicalId =
+                    getCanonicalProductId(product, { offers }) ?? String(product.id ?? index);
                   const productHref = `/products/${encodeURIComponent(canonicalId)}`;
 
                   return (
@@ -320,7 +356,7 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
                           <div className="flex items-center justify-between text-xs text-slate-400">
                             <span>ID #{canonicalId}</span>
                             <CompareLinkButton
-                              href={`/comparison?ids=${encodeURIComponent(canonicalId)}`}
+                              href={buildComparisonHref(canonicalId)}
                               className="inline-flex items-center gap-1 font-semibold text-orange-500 transition hover:text-orange-400"
                             >
                               Comparer individuellement →
