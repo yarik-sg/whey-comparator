@@ -7,6 +7,7 @@ import { ProductFiltersSidebar } from './components/ProductFiltersSidebar';
 import { ProductComparisonTable } from './components/ProductComparisonTable';
 
 import { HighlightedDealsSection } from './components/HighlightedDealsSection';
+import { GymLocatorSection } from './components/GymLocatorSection';
 import { PriceAlertsSection } from './components/PriceAlertsSection';
 import { useHighlightedDeals } from './hooks/useHighlightedDeals';
 import { useProducts } from './hooks/useProducts';
@@ -90,6 +91,8 @@ export default function App() {
         </header>
 
         <HighlightedDealsSection deals={deals} isLoading={isLoadingDeals} />
+
+        <GymLocatorSection />
 
         <KpiSummaryBar selectedProducts={selectedProducts} isLoading={isLoading} />
 
