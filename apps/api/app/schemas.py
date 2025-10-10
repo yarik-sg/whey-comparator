@@ -158,28 +158,32 @@ class ProductOffersResponse(BaseModel):
     sources: ProductOfferSources
 
 
-class PriceHistoryPoint(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
+class PriceHistoryEntry(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
-    recorded_at: datetime = Field(alias="recordedAt")
-    price: MoneyAmount
+    date: datetime
+    price: float
+    currency: str
     platform: Optional[str] = None
+    in_stock: Optional[bool] = None
 
 
 class PriceHistoryStatistics(BaseModel):
-    lowest: MoneyAmount
-    highest: MoneyAmount
-    average: MoneyAmount
-    current: MoneyAmount
+    current_price: float
+    lowest_price: float
+    highest_price: float
+    average_price: float
+    price_change_percent: float
+    trend: str
+    data_points: int
+    is_historical_low: bool
 
 
 class PriceHistoryResponse(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    product_id: int = Field(alias="productId")
+    product_id: int
     period: str
-    points: list[PriceHistoryPoint]
-    statistics: PriceHistoryStatistics
+    history: list[PriceHistoryEntry]
+    statistics: Optional[PriceHistoryStatistics] = None
 
 
 class ReviewBreakdown(BaseModel):

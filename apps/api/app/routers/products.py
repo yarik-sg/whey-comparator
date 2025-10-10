@@ -324,37 +324,60 @@ def get_price_history(
 
     entries = db.execute(history_query).scalars().all()
 
-    points = [
-        schemas.PriceHistoryPoint(
-            recorded_at=entry.recorded_at,
-            price=_money(entry.price, entry.currency),
+    if not entries:
+        return schemas.PriceHistoryResponse(
+            product_id=product.id,
+            period=period,
+            history=[],
+            statistics=None,
+        )
+
+    history = [
+        schemas.PriceHistoryEntry(
+            date=entry.recorded_at,
+            price=float(entry.price),
+            currency=entry.currency or product.currency or "EUR",
             platform=entry.platform,
+            in_stock=entry.in_stock,
         )
         for entry in entries
+        if entry.price is not None
     ]
 
-    prices = [entry.price for entry in entries if entry.price is not None]
-    current_price = entries[-1].price if entries else product.price
-    currency = entries[-1].currency if entries else product.currency
+    prices = [float(entry.price) for entry in entries if entry.price is not None]
+    current_price = prices[-1] if prices else float(product.price or 0)
+    lowest = min(prices) if prices else current_price
+    highest = max(prices) if prices else current_price
+    average = (sum(prices) / len(prices)) if prices else current_price
 
-    if prices:
-        lowest = min(prices)
-        highest = max(prices)
-        average = sum(prices) / len(prices)
+    first_price = prices[0] if prices else current_price
+    if first_price > 0:
+        price_change = ((current_price - first_price) / first_price) * 100
     else:
-        lowest = highest = average = None
+        price_change = 0.0
+
+    if price_change < -5:
+        trend = "baisse"
+    elif price_change > 5:
+        trend = "hausse"
+    else:
+        trend = "stable"
 
     statistics = schemas.PriceHistoryStatistics(
-        lowest=_money(lowest, currency),
-        highest=_money(highest, currency),
-        average=_money(average, currency),
-        current=_money(current_price, currency),
+        current_price=round(current_price, 2),
+        lowest_price=round(lowest, 2),
+        highest_price=round(highest, 2),
+        average_price=round(average, 2),
+        price_change_percent=round(price_change, 2),
+        trend=trend,
+        data_points=len(history),
+        is_historical_low=abs(current_price - lowest) < 1e-6,
     )
 
     return schemas.PriceHistoryResponse(
         product_id=product.id,
         period=period,
-        points=points,
+        history=history,
         statistics=statistics,
     )
 

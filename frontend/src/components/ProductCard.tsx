@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Award } from "lucide-react";
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ProductSummary } from "@/types/api";
@@ -57,19 +58,6 @@ function formatQuantity(value?: number | null, unit?: string) {
   })}${unit ? ` ${unit}` : ""}`;
 }
 
-function formatBestPrice(price: ProductSummary["bestPrice"]) {
-  if (!price) {
-    return "—";
-  }
-  if (price.formatted) {
-    return price.formatted;
-  }
-  if (typeof price.amount === "number") {
-    return `${price.amount.toFixed(2)} ${price.currency ?? "€"}`;
-  }
-  return "—";
-}
-
 export function ProductCard({ product, href, footer }: ProductCardProps) {
   const footerNode =
     footer && (
@@ -79,16 +67,37 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
   const productImage = getProductImage(product);
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = productImage && !imageFailed;
-  const hasBestPriceBadge = typeof product.bestPrice?.amount === "number";
+  const bestPriceAmount =
+    typeof product.bestPrice?.amount === "number" ? product.bestPrice.amount : null;
+  const formattedBestPrice =
+    product.bestPrice?.formatted ??
+    (bestPriceAmount !== null && product.bestPrice?.currency
+      ? `${bestPriceAmount.toFixed(2)} ${product.bestPrice.currency}`
+      : bestPriceAmount !== null
+        ? `${bestPriceAmount.toFixed(2)} €`
+        : "—");
+  const originalPriceFormatted = product.originalPrice?.formatted ?? null;
+  const discountValue =
+    typeof product.discount === "number" && !Number.isNaN(product.discount)
+      ? Math.round(product.discount)
+      : null;
+  const isBestPrice = Boolean(
+    product.isBestPrice ?? product.bestDeal?.isBestPrice ?? false,
+  );
 
   const bodyContent = (
     <>
       <CardHeader className="space-y-4">
         <div className="relative overflow-hidden rounded-3xl bg-slate-50">
-          {hasBestPriceBadge && (
-            <div className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
-              <span aria-hidden>🏆</span>
+          {isBestPrice && (
+            <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
+              <Award className="h-3.5 w-3.5" aria-hidden />
               <span>Meilleur prix</span>
+            </div>
+          )}
+          {discountValue !== null && (
+            <div className="absolute right-3 top-3 rounded-full bg-rose-500 px-2 py-1 text-xs font-bold text-white">
+              -{discountValue}%
             </div>
           )}
           <div className="flex aspect-[4/3] w-full items-center justify-center p-6">
@@ -126,7 +135,12 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-orange-500/80">Meilleur prix</p>
-              <p className="text-2xl font-bold text-slate-900">{formatBestPrice(product.bestPrice)}</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-slate-900">{formattedBestPrice}</p>
+                {originalPriceFormatted && (
+                  <span className="text-sm text-slate-400 line-through">{originalPriceFormatted}</span>
+                )}
+              </div>
             </div>
             <div className="text-right text-xs text-slate-500">
               <p>{product.bestVendor ?? "Vendeur"}</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Calendar, CheckCircle, TrendingDown, TrendingUp } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -12,7 +13,6 @@ import {
 } from "recharts";
 
 import { usePriceHistory } from "@/lib/queries";
-import type { PriceHistoryResponse } from "@/types/api";
 
 const PERIOD_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "7d", label: "7 jours" },
@@ -22,31 +22,16 @@ const PERIOD_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "all", label: "Tout" },
 ];
 
-const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
+const SHORT_DATE = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
   month: "short",
 });
 
-const tooltipFormatter = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
+const FULL_DATE = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
   month: "long",
-  hour: "2-digit",
-  minute: "2-digit",
+  year: "numeric",
 });
-
-function buildChartData(history: PriceHistoryResponse | undefined) {
-  if (!history) {
-    return [];
-  }
-
-  return history.points
-    .map((point) => ({
-      date: new Date(point.recordedAt),
-      price: point.price.amount ?? 0,
-      formatted: point.price.formatted ?? "",
-    }))
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
-}
 
 interface PriceHistoryChartProps {
   productId: number;
@@ -55,136 +40,188 @@ interface PriceHistoryChartProps {
 
 export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHistoryChartProps) {
   const [period, setPeriod] = useState(defaultPeriod);
-  const { data, isLoading, isFetching, error } = usePriceHistory(productId, period);
+  const { data, isLoading } = usePriceHistory(productId, period);
 
-  const chartData = useMemo(() => buildChartData(data), [data]);
-  const isBusy = isLoading || isFetching;
-  const isHistoricLow = useMemo(() => {
-    if (!data) {
-      return false;
+  const currency = data?.history?.[0]?.currency ?? "EUR";
+  const formatter = useMemo(
+    () =>
+      new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency,
+        maximumFractionDigits: 2,
+      }),
+    [currency],
+  );
+
+  const chartData = useMemo(() => {
+    if (!data?.history) {
+      return [];
     }
-    const current = data.statistics.current.amount;
-    const lowest = data.statistics.lowest.amount;
-    if (current === null || current === undefined || lowest === null || lowest === undefined) {
-      return false;
-    }
-    return current <= lowest;
+
+    return data.history
+      .map((entry) => {
+        const date = new Date(entry.date);
+        return {
+          date,
+          label: SHORT_DATE.format(date),
+          tooltip: FULL_DATE.format(date),
+          price: entry.price,
+        };
+      })
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [data]);
 
+  const statistics = data?.statistics ?? null;
+  const hasHistory = chartData.length > 0;
+  const showHistoricLow = Boolean(statistics?.is_historical_low);
+
+  const TrendIcon = statistics?.trend === "hausse" ? TrendingUp : TrendingDown;
+  const trendColor =
+    statistics?.trend === "hausse"
+      ? "text-emerald-500"
+      : statistics?.trend === "baisse"
+        ? "text-red-500"
+        : "text-slate-500";
+
   return (
-    <section className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-white">Historique des prix</h2>
-          <p className="text-sm text-gray-300">Suivi journalier du meilleur prix relevé par le scraper.</p>
-          {isHistoricLow && (
-            <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-              <span aria-hidden>📉</span>
-              Prix historiquement bas actuellement !
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          Période
-          <div className="flex flex-wrap gap-2">
-            {PERIOD_OPTIONS.map((option) => {
-              const active = option.value === period;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setPeriod(option.value)}
-                  className={`rounded-full px-3 py-1 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ${
-                    active
-                      ? "bg-orange-500 text-white shadow"
-                      : "bg-white/10 text-gray-200 hover:bg-white/20"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
+    <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3 text-slate-700">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-500">
+            <Calendar className="h-5 w-5" aria-hidden />
           </div>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Historique des prix</h2>
+            <p className="text-sm text-slate-500">
+              Suivi de l&apos;évolution du meilleur tarif détecté sur les places de marché partenaires.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {PERIOD_OPTIONS.map((option) => {
+            const isActive = option.value === period;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setPeriod(option.value)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ${
+                  isActive
+                    ? "bg-orange-500 text-white shadow"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       </header>
 
-      {error && (
-        <p className="rounded-lg bg-red-500/20 px-3 py-2 text-sm text-red-100">
-          Impossible de charger l&apos;historique des prix. Réessayez plus tard.
-        </p>
+      {showHistoricLow && statistics && (
+        <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+          <CheckCircle className="h-5 w-5 flex-shrink-0 text-emerald-500" aria-hidden />
+          <div>
+            <p className="font-semibold">Prix historiquement bas</p>
+            <p className="text-xs">C&apos;est le moment idéal pour déclencher une alerte ou acheter.</p>
+          </div>
+        </div>
       )}
 
-      {isBusy && (
-        <div className="h-60 animate-pulse rounded-xl bg-white/10" aria-hidden />
+      {statistics && (
+        <div className="flex flex-wrap gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          <div className="flex flex-1 min-w-[140px] items-center gap-2">
+            <TrendIcon className={`h-5 w-5 ${trendColor}`} aria-hidden />
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-400">Tendance</p>
+              <p className="font-semibold text-slate-900">
+                {statistics.trend === "stable"
+                  ? "Stable"
+                  : statistics.trend === "hausse"
+                    ? "Hausse"
+                    : "Baisse"}
+                {typeof statistics.price_change_percent === "number" && !Number.isNaN(statistics.price_change_percent) && (
+                  <span className={`ml-2 text-xs font-medium ${trendColor}`}>
+                    {statistics.price_change_percent > 0 ? "+" : ""}
+                    {statistics.price_change_percent.toFixed(2)}%
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="grid flex-1 min-w-[200px] grid-cols-2 gap-4">
+            {[{
+              label: "Actuel",
+              value: statistics.current_price,
+            },
+            {
+              label: "Plus bas",
+              value: statistics.lowest_price,
+            },
+            {
+              label: "Plus haut",
+              value: statistics.highest_price,
+            },
+            {
+              label: "Moyenne",
+              value: statistics.average_price,
+            }].map(({ label, value }) => (
+              <div key={label}>
+                <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
+                <p className="text-base font-semibold text-slate-900">{formatter.format(value)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
-      {!isBusy && chartData.length > 0 && (
-        <div className="h-60">
+      {isLoading && <div className="h-64 animate-pulse rounded-xl bg-slate-100" aria-hidden />}
+
+      {!isLoading && hasHistory && (
+        <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.6} />
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.4} />
                   <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis
-                dataKey="date"
-                tickFormatter={(value: Date) => dateFormatter.format(value)}
-                stroke="rgba(255,255,255,0.6)"
-                tickLine={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="label" tickLine={false} stroke="#94a3b8" />
               <YAxis
                 dataKey="price"
-                stroke="rgba(255,255,255,0.6)"
-                tickFormatter={(value: number) => `${value.toFixed(0)} €`}
-                width={60}
+                width={70}
+                stroke="#94a3b8"
+                tickFormatter={(value: number) => formatter.format(value)}
               />
               <Tooltip
-                content={({ active, payload, label }) => {
+                content={({ active, payload }) => {
                   if (!active || !payload?.length) {
                     return null;
                   }
-                  const dataPoint = payload[0].payload as { date: Date; formatted: string };
+                  const point = payload[0].payload as {
+                    tooltip: string;
+                    price: number;
+                  };
                   return (
-                    <div className="rounded-lg border border-white/10 bg-[#0b1320] px-3 py-2 text-sm text-white shadow-lg">
-                      <p className="font-semibold">{dataPoint.formatted}</p>
-                      <p className="text-xs text-gray-300">{tooltipFormatter.format(dataPoint.date)}</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-lg">
+                      <p className="font-semibold text-slate-900">{point.tooltip}</p>
+                      <p className="text-xs text-slate-500">{formatter.format(point.price)}</p>
                     </div>
                   );
                 }}
               />
-              <Area
-                type="monotone"
-                dataKey="price"
-                stroke="#f97316"
-                fill="url(#priceGradient)"
-                strokeWidth={2}
-              />
+              <Area type="monotone" dataKey="price" stroke="#f97316" strokeWidth={3} fill="url(#priceGradient)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {!isBusy && chartData.length === 0 && (
-        <p className="text-sm text-gray-300">Pas encore de données historiques pour ce produit.</p>
-      )}
-
-      {data && (
-        <dl className="grid gap-4 rounded-xl bg-white/5 p-4 text-sm text-gray-200 sm:grid-cols-2 lg:grid-cols-4">
-          {([
-            ["Prix actuel", data.statistics.current],
-            ["Plus bas", data.statistics.lowest],
-            ["Plus haut", data.statistics.highest],
-            ["Moyenne", data.statistics.average],
-          ] as const).map(([label, value]) => (
-            <div key={label}>
-              <dt className="text-xs uppercase tracking-wide text-gray-400">{label}</dt>
-              <dd className="text-base font-semibold text-white">{value.formatted ?? "—"}</dd>
-            </div>
-          ))}
-        </dl>
+      {!isLoading && !hasHistory && (
+        <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+          Historique de prix non disponible pour cette période.
+        </div>
       )}
     </section>
   );
