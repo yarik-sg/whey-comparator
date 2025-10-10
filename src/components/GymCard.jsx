@@ -88,8 +88,11 @@ export const GymCard = memo(function GymCard({ gym }) {
     distanceKm,
     travelTime,
     amenities = [],
-    website,
+    website: websiteFromApi,
+    link,
   } = gym;
+
+  const website = websiteFromApi ?? link ?? null;
 
   const formattedPrice = useMemo(() => {
     if (typeof monthlyPrice === 'number' && Number.isFinite(monthlyPrice)) {

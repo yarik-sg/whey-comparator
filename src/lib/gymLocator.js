@@ -34,8 +34,10 @@ const MOCK_GYMS = [
     longitude: 2.3831,
     distance_km: 1.1,
     monthly_price: 24.99,
+    price: 24.99,
     currency: 'EUR',
     website: 'https://www.basic-fit.com/fr-fr/clubs/basic-fit-paris-bercy',
+    link: 'https://www.basic-fit.com/fr-fr/clubs/basic-fit-paris-bercy',
     amenities: ['24/7', 'Cours collectifs virtuels', 'Zone functional training'],
     source: { provider: 'mock', brand: 'Basic-Fit' },
   },
@@ -50,8 +52,10 @@ const MOCK_GYMS = [
     longitude: 4.85538,
     distance_km: 1.8,
     monthly_price: 29.95,
+    price: 29.95,
     currency: 'EUR',
     website: 'https://www.fitnesspark.fr/clubs/lyon-part-dieu/',
+    link: 'https://www.fitnesspark.fr/clubs/lyon-part-dieu/',
     amenities: ['Espace musculation', 'Cardio-training', 'Studio biking'],
     source: { provider: 'mock', brand: 'Fitness Park' },
   },
@@ -66,8 +70,10 @@ const MOCK_GYMS = [
     longitude: 5.37897,
     distance_km: 2.4,
     monthly_price: 34.9,
+    price: 34.9,
     currency: 'EUR',
     website: 'https://www.onair-fitness.fr/clubs/marseille-prado',
+    link: 'https://www.onair-fitness.fr/clubs/marseille-prado',
     amenities: ['Cours collectifs live', 'Espace cross training', 'Sauna'],
     source: { provider: 'mock', brand: 'On Air' },
   },
@@ -82,8 +88,10 @@ const MOCK_GYMS = [
     longitude: 2.34699,
     distance_km: 0.8,
     monthly_price: 19.9,
+    price: 19.9,
     currency: 'EUR',
     website: 'https://www.neoness.fr/salle-de-sport/paris-chatelet',
+    link: 'https://www.neoness.fr/salle-de-sport/paris-chatelet',
     amenities: ['Cardio', 'Cross-training', 'Studio danse'],
     source: { provider: 'mock', brand: 'Neoness' },
   },
@@ -98,8 +106,10 @@ const MOCK_GYMS = [
     longitude: 1.44329,
     distance_km: 0.6,
     monthly_price: 29.9,
+    price: 29.9,
     currency: 'EUR',
     website: 'https://www.keepcool.fr/salle-de-sport/toulouse-capitole',
+    link: 'https://www.keepcool.fr/salle-de-sport/toulouse-capitole',
     amenities: ['Small group training', 'Espace femme', 'Coaching inclus'],
     source: { provider: 'mock', brand: 'Keepcool' },
   },
@@ -114,8 +124,10 @@ const MOCK_GYMS = [
     longitude: 3.06971,
     distance_km: 1.5,
     monthly_price: 22.99,
+    price: 22.99,
     currency: 'EUR',
     website: 'https://www.basic-fit.com/fr-fr/clubs/basic-fit-lille-euralille',
+    link: 'https://www.basic-fit.com/fr-fr/clubs/basic-fit-lille-euralille',
     amenities: ['Zone cycle', 'Cours virtuels', 'Espace musculation'],
     source: { provider: 'mock', brand: 'Basic-Fit' },
   },
@@ -130,8 +142,10 @@ const MOCK_GYMS = [
     longitude: -0.56416,
     distance_km: 3.4,
     monthly_price: 29.95,
+    price: 29.95,
     currency: 'EUR',
     website: 'https://www.fitnesspark.fr/clubs/bordeaux-lac/',
+    link: 'https://www.fitnesspark.fr/clubs/bordeaux-lac/',
     amenities: ['Parking gratuit', 'Studio biking', 'Zone cross training'],
     source: { provider: 'mock', brand: 'Fitness Park' },
   },
@@ -146,8 +160,10 @@ const MOCK_GYMS = [
     longitude: 7.19748,
     distance_km: 4.1,
     monthly_price: 39.9,
+    price: 39.9,
     currency: 'EUR',
     website: 'https://www.onair-fitness.fr/clubs/nice-lingostiere',
+    link: 'https://www.onair-fitness.fr/clubs/nice-lingostiere',
     amenities: ['Espace premium', 'Cours immersive', 'Studio cycling'],
     source: { provider: 'mock', brand: 'On Air' },
   },
@@ -208,6 +224,7 @@ const normalizeGymRecord = (record, { fallbackProvider = 'mock' } = {}) => {
   const monthlyPrice =
     normalizeNumber(record?.monthly_price) ??
     normalizeNumber(record?.monthlyPrice) ??
+    normalizeNumber(record?.price) ??
     normalizeNumber(record?.price_per_month);
 
   const latitude = normalizeNumber(record?.latitude);
@@ -229,6 +246,8 @@ const normalizeGymRecord = (record, { fallbackProvider = 'mock' } = {}) => {
     };
   })();
 
+  const website = normalizeString(record?.website || record?.link || record?.url) || null;
+
   return {
     id: normalizeString(record?.id) || normalizeString(record?.slug) || normalizeString(record?.name),
     name: normalizeString(record?.name) || 'Salle de sport',
@@ -241,8 +260,10 @@ const normalizeGymRecord = (record, { fallbackProvider = 'mock' } = {}) => {
     distanceKm: distanceKm !== null ? Number.parseFloat(distanceKm.toFixed(2)) : null,
     travelTime: normalizeString(record?.estimated_duration || record?.travelTime) || null,
     monthlyPrice,
+    price: monthlyPrice,
     currency: normalizeString(record?.currency) || 'EUR',
-    website: normalizeString(record?.website || record?.url) || null,
+    website,
+    link: website,
     amenities: normalizedAmenities,
     images: Array.isArray(record?.images) ? record.images : [],
     source: resolvedSource,
