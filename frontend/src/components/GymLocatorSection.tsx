@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
 import { MapPin, MapPinned } from "lucide-react";
@@ -8,8 +8,8 @@ import { MapPin, MapPinned } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GymCard } from "@/components/GymCard";
-import { useGyms } from "@/hooks/useGyms";
-import type { GymLocation } from "@/lib/gymLocator";
+import type { GymLocatorResponse, GymLocation } from "@/lib/gymLocator";
+import { fetchGymsFromApi } from "@/lib/gymLocator";
 
 type GeoStatus = "idle" | "pending" | "success" | "error";
 
@@ -55,6 +55,11 @@ export function GymLocatorSection() {
   const [showAll, setShowAll] = useState(false);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const [geoMessage, setGeoMessage] = useState<string | null>(null);
+  const [response, setResponse] = useState<GymLocatorResponse | null>(null);
+  const responseRef = useRef<GymLocatorResponse | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const filters = useMemo(
     () => ({
@@ -67,14 +72,72 @@ export function GymLocatorSection() {
     [coordinates, maxDistance, selectedCity, showAll],
   );
 
-  const { data, isPending, isFetching, error } = useGyms(filters);
+  useEffect(() => {
+    let cancelled = false;
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : undefined;
 
-  const gyms = data?.gyms ?? emptyGyms;
-  const availableCities = data?.availableCities ?? [];
-  const totalResults = data?.total ?? gyms.length;
+    const loadGyms = async () => {
+      setErrorMessage(null);
+
+      const hasExistingGyms = (responseRef.current?.gyms?.length ?? 0) > 0;
+
+      if (!hasExistingGyms) {
+        setIsLoadingInitial(true);
+      } else {
+        setIsRefreshing(true);
+      }
+
+      try {
+        const result = await fetchGymsFromApi(filters, { signal: controller?.signal });
+
+        if (cancelled) {
+          return;
+        }
+
+        responseRef.current = result;
+        setResponse(result);
+      } catch (fetchError) {
+        if (cancelled) {
+          return;
+        }
+
+        const errorInstance = fetchError instanceof Error ? fetchError : undefined;
+        if (errorInstance?.name === "AbortError") {
+          return;
+        }
+
+        globalThis.console?.error?.("Unable to fetch gyms", fetchError);
+        setErrorMessage("Impossible de charger les salles de sport pour le moment. Réessayez plus tard.");
+
+        if (!hasExistingGyms) {
+          responseRef.current = null;
+          setResponse(null);
+        }
+      } finally {
+        if (cancelled) {
+          return;
+        }
+
+        setIsLoadingInitial(false);
+        setIsRefreshing(false);
+      }
+    };
+
+    loadGyms().catch((reason) => {
+      globalThis.console?.error?.("Unhandled gym fetch error", reason);
+    });
+
+    return () => {
+      cancelled = true;
+      controller?.abort();
+    };
+  }, [filters]);
+
+  const gyms = response?.gyms ?? emptyGyms;
+  const availableCities = response?.availableCities ?? [];
+  const totalResults = response?.total ?? gyms.length;
   const canExpand = !showAll && totalResults > gyms.length;
-  const isLoadingInitial = isPending && gyms.length === 0;
-  const isLoadingMore = isFetching && gyms.length > 0;
+  const isLoadingMore = isRefreshing && gyms.length > 0;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -255,9 +318,9 @@ export function GymLocatorSection() {
         ) : null}
       </div>
 
-      {error ? (
+      {errorMessage ? (
         <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
-          Impossible de charger les salles de sport pour le moment. Réessayez plus tard.
+          {errorMessage}
         </div>
       ) : null}
 
@@ -275,7 +338,7 @@ export function GymLocatorSection() {
           : gyms.map((gym) => <GymCard key={gym.id} gym={gym} />)}
       </div>
 
-      {gyms.length === 0 && !isPending ? (
+      {gyms.length === 0 && !isLoadingInitial && !isRefreshing ? (
         <div className="rounded-2xl border border-orange-100 bg-orange-50/80 p-6 text-center text-sm text-orange-700">
           Aucune salle trouvée
         </div>

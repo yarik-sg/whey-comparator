@@ -35,115 +35,6 @@ const clearScheduledTimeout =
   typeof globalThis.clearTimeout === "function" ? globalThis.clearTimeout.bind(globalThis) : undefined;
 const SearchParams = typeof globalThis.URLSearchParams === "function" ? globalThis.URLSearchParams : undefined;
 
-const FALLBACK_GYMS = {
-  "basic-fit": [
-    {
-      id: "basicfit-paris-bercy",
-      name: "Basic-Fit Paris Bercy",
-      brand: "Basic-Fit",
-      address: "24 Rue de Bercy",
-      postal_code: "75012",
-      city: "Paris",
-      latitude: 48.84005,
-      longitude: 2.3831,
-      price: 24.99,
-      currency: "EUR",
-      link: "https://www.basic-fit.com/fr-fr/clubs/basic-fit-paris-bercy",
-      source: { provider: "fallback", external_id: "FR001" },
-    },
-    {
-      id: "basicfit-lille-euralille",
-      name: "Basic-Fit Lille Euralille",
-      brand: "Basic-Fit",
-      address: "150 Centre Commercial Euralille",
-      postal_code: "59777",
-      city: "Lille",
-      latitude: 50.63709,
-      longitude: 3.06971,
-      price: 22.99,
-      currency: "EUR",
-      link: "https://www.basic-fit.com/fr-fr/clubs/basic-fit-lille-euralille",
-      source: { provider: "fallback", external_id: "FR002" },
-    },
-  ],
-  "fitness-park": [
-    {
-      id: "fitnesspark-lyon-part-dieu",
-      name: "Fitness Park Lyon Part-Dieu",
-      brand: "Fitness Park",
-      address: "91 Cours Lafayette",
-      postal_code: "69006",
-      city: "Lyon",
-      latitude: 45.76266,
-      longitude: 4.85538,
-      price: 29.95,
-      currency: "EUR",
-      link: "https://www.fitnesspark.fr/clubs/lyon-part-dieu/",
-      source: { provider: "fallback", external_id: "FP001" },
-    },
-    {
-      id: "fitnesspark-bordeaux-lac",
-      name: "Fitness Park Bordeaux Lac",
-      brand: "Fitness Park",
-      address: "Rue du Professeur Georges Jeanneney",
-      postal_code: "33300",
-      city: "Bordeaux",
-      latitude: 44.88798,
-      longitude: -0.56416,
-      price: 29.95,
-      currency: "EUR",
-      link: "https://www.fitnesspark.fr/clubs/bordeaux-lac/",
-      source: { provider: "fallback", external_id: "FP002" },
-    },
-  ],
-  neoness: [
-    {
-      id: "neoness-paris-chatelet",
-      name: "Neoness Paris Châtelet",
-      brand: "Neoness",
-      address: "5 Rue de la Ferronnerie",
-      postal_code: "75001",
-      city: "Paris",
-      latitude: 48.86078,
-      longitude: 2.34699,
-      price: 19.9,
-      currency: "EUR",
-      link: "https://www.neoness.fr/salle-de-sport/paris-chatelet",
-      source: { provider: "fallback", external_id: "NE001" },
-    },
-  ],
-  "on-air": [
-    {
-      id: "onair-marseille-prado",
-      name: "On Air Marseille Prado",
-      brand: "On Air",
-      address: "6 Avenue du Prado",
-      postal_code: "13006",
-      city: "Marseille",
-      latitude: 43.28535,
-      longitude: 5.37897,
-      price: 34.9,
-      currency: "EUR",
-      link: "https://www.onair-fitness.fr/clubs/marseille-prado",
-      source: { provider: "fallback", external_id: "OA001" },
-    },
-    {
-      id: "onair-nice-lingostiere",
-      name: "On Air Nice Lingostière",
-      brand: "On Air",
-      address: "652 Route de Grenoble",
-      postal_code: "06200",
-      city: "Nice",
-      latitude: 43.70853,
-      longitude: 7.19748,
-      price: 39.9,
-      currency: "EUR",
-      link: "https://www.onair-fitness.fr/clubs/nice-lingostiere",
-      source: { provider: "fallback", external_id: "OA002" },
-    },
-  ],
-};
-
 const normalizeString = (value) => {
   if (typeof value === "string") {
     const trimmed = value.trim();
@@ -665,7 +556,7 @@ const mapWordpressLocation = (entry, { brand, provider }) => {
   });
 };
 
-const fetchBasicFitGyms = async (filters = {}) => {
+const fetchBasicFitGymsInternal = async (filters = {}) => {
   if (!SearchParams) {
     throw new Error("URLSearchParams is not available in this runtime");
   }
@@ -689,24 +580,15 @@ const fetchBasicFitGyms = async (filters = {}) => {
     const payload = await fetchJson(url);
     const stores = extractBasicFitStores(payload);
     const gyms = stores.map(mapBasicFitStore).filter(Boolean);
-    if (gyms.length > 0) {
-      return { gyms: deduplicateGyms(gyms), fallback: false };
-    }
+    return deduplicateGyms(gyms);
   } catch (error) {
     globalThis.console?.warn?.("Failed to fetch Basic-Fit gyms", error);
   }
 
-  const fallbackGyms = FALLBACK_GYMS["basic-fit"].map((gym) =>
-    createGymRecord({
-      ...gym,
-      provider: "fallback-basic-fit",
-      externalId: gym.source?.external_id ?? gym.source?.externalId,
-    }),
-  );
-  return { gyms: fallbackGyms, fallback: true };
+  return [];
 };
 
-const fetchFromWordpress = async (endpoints, mapper, fallbackKey) => {
+const fetchFromWordpress = async (endpoints, mapper) => {
   for (const endpoint of endpoints) {
     try {
       const payload = await fetchJson(endpoint);
@@ -720,7 +602,7 @@ const fetchFromWordpress = async (endpoints, mapper, fallbackKey) => {
 
       const gyms = entries.map(mapper).filter(Boolean);
       if (gyms.length > 0) {
-        return { gyms: deduplicateGyms(gyms), fallback: false };
+        return deduplicateGyms(gyms);
       }
     } catch (error) {
       globalThis.console?.warn?.(`Failed to fetch gyms from ${endpoint}`, error);
@@ -728,64 +610,82 @@ const fetchFromWordpress = async (endpoints, mapper, fallbackKey) => {
     }
   }
 
-  const fallbackGyms = (FALLBACK_GYMS[fallbackKey] ?? []).map((gym) =>
-    createGymRecord({
-      ...gym,
-      provider: `fallback-${fallbackKey}`,
-      externalId: gym.source?.external_id ?? gym.source?.externalId,
-    }),
-  );
-  return { gyms: fallbackGyms, fallback: true };
+  return [];
 };
-
-export const fetchFitnessParkGyms = async () => {
+const fetchFitnessParkGymsInternal = async () => {
   const mapper = (entry) =>
     mapWordpressLocation(entry, { brand: "Fitness Park", provider: "fitness-park" });
-  return fetchFromWordpress(FITNESS_PARK_ENDPOINTS, mapper, "fitness-park");
+  return fetchFromWordpress(FITNESS_PARK_ENDPOINTS, mapper);
 };
 
-export const fetchNeonessGyms = async () => {
+const fetchNeonessGymsInternal = async () => {
   const mapper = (entry) => mapWordpressLocation(entry, { brand: "Neoness", provider: "neoness" });
-  return fetchFromWordpress(NEONESS_ENDPOINTS, mapper, "neoness");
+  return fetchFromWordpress(NEONESS_ENDPOINTS, mapper);
 };
 
-export const fetchOnAirGyms = async () => {
+const fetchOnAirGymsInternal = async () => {
   const mapper = (entry) => mapWordpressLocation(entry, { brand: "On Air", provider: "on-air" });
-  return fetchFromWordpress(ON_AIR_ENDPOINTS, mapper, "on-air");
+  return fetchFromWordpress(ON_AIR_ENDPOINTS, mapper);
 };
 
 const buildCombinedDataset = async (filters = {}) => {
   const [basicFit, fitnessPark, neoness, onAir] = await Promise.all([
-    fetchBasicFitGyms(filters),
-    fetchFitnessParkGyms(filters),
-    fetchNeonessGyms(filters),
-    fetchOnAirGyms(filters),
+    fetchBasicFitGymsInternal(filters),
+    fetchFitnessParkGymsInternal(),
+    fetchNeonessGymsInternal(),
+    fetchOnAirGymsInternal(),
   ]);
 
-  const combined = flatten([
-    basicFit.gyms,
-    fitnessPark.gyms,
-    neoness.gyms,
-    onAir.gyms,
-  ]);
-
-  const fallbackOnly = [basicFit, fitnessPark, neoness, onAir].every((result) => result.fallback);
+  const combined = flatten([basicFit, fitnessPark, neoness, onAir]);
+  const gyms = deduplicateGyms(combined);
 
   return {
-    gyms: deduplicateGyms(combined),
-    servedFrom: fallbackOnly ? "mock" : "api",
+    gyms,
+    servedFrom: "api",
   };
 };
 
-export const getAllGyms = async (rawFilters = {}) => {
+const normalizeFilterInput = (latOrFilters, maybeLng) => {
+  if (latOrFilters && typeof latOrFilters === "object" && !Array.isArray(latOrFilters)) {
+    return latOrFilters;
+  }
+
+  const result = {};
+
+  if (typeof latOrFilters === "number" && Number.isFinite(latOrFilters)) {
+    result.lat = latOrFilters;
+  }
+
+  if (typeof maybeLng === "number" && Number.isFinite(maybeLng)) {
+    result.lng = maybeLng;
+  }
+
+  return result;
+};
+
+export const fetchBasicFitGyms = async (latOrFilters, maybeLng) => {
+  const filters = normalizeFilterInput(latOrFilters, maybeLng);
+  return fetchBasicFitGymsInternal(filters);
+};
+
+export const fetchFitnessParkGyms = async () => fetchFitnessParkGymsInternal();
+
+export const fetchNeonessGyms = async () => fetchNeonessGymsInternal();
+
+export const fetchOnAirGyms = async () => fetchOnAirGymsInternal();
+
+export const getAllGyms = async (latOrFilters = {}, maybeLng) => {
+  const rawFilters = normalizeFilterInput(latOrFilters, maybeLng);
   const filters = sanitizeFilters(rawFilters);
   const { gyms, servedFrom } = await buildCombinedDataset(filters);
 
   const enriched = enrichWithGeo(gyms, filters);
 
   const limitedFilters = { ...filters };
-  const limit = limitedFilters.limit;
-  limitedFilters.limit = undefined;
+  const limit = typeof limitedFilters.limit === "number" ? limitedFilters.limit : undefined;
+  if (limit != null) {
+    limitedFilters.limit = undefined;
+  }
 
   const filteredWithoutLimit = filterGyms(enriched, limitedFilters);
   const finalGyms = limit ? filteredWithoutLimit.slice(0, limit) : filteredWithoutLimit;
@@ -798,10 +698,6 @@ export const getAllGyms = async (rawFilters = {}) => {
     filters,
     servedFrom,
   };
-};
-
-export {
-  fetchBasicFitGyms,
 };
 
 export default {
