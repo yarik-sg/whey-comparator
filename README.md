@@ -9,6 +9,7 @@ Comparateur multi-sources pour les compléments alimentaires (whey, créatine, e
 - **Page produit enrichie** : fiches détaillées affichant carrousel média, tableau d'offres, historique de prix, avis, flux de collecte et recommandations similaires avec bascule automatique sur les données fallback si l'API principale échoue.
 - **Historique et fallback** : données de secours embarquées lorsque le scraper est indisponible, avec génération d'images réalistes, normalisation automatique des URLs distantes et fusion intelligente des réponses pour le comparateur et les pages produit.
 - **Front moderne** : composants Tailwind réutilisables, mode sombre natif, navigation fluide entre catalogue, promotions et comparateur.
+- **Localisateur de salles de sport** : section d’accueil « Trouvez votre salle de sport » affichant les clubs Basic-Fit, Fitness Park, On Air, Neoness, etc. à proximité, avec filtrage par ville/rayon, géolocalisation et bouton « Voir toutes les salles proches ».
 
 ## 🏗️ Architecture du dépôt
 

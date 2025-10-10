@@ -7,6 +7,7 @@ import os, re
 import requests
 from urllib.parse import urlparse, parse_qs, quote
 from functools import lru_cache
+from math import atan2, cos, radians, sin, sqrt
 from typing import Dict, Any, List, Optional, Union
 
 app = FastAPI()
@@ -53,6 +54,215 @@ PRICE_HISTORY_PERIODS = {
     "6m": timedelta(days=180),
     "1y": timedelta(days=365),
 }
+
+# --- Gym directory (mock dataset ready for partner integrations) ---
+
+GYM_DIRECTORY: List[Dict[str, Any]] = [
+    {
+        "id": "basicfit-paris-bercy",
+        "name": "Basic-Fit Paris Bercy",
+        "brand": "Basic-Fit",
+        "address": "24 Rue de Bercy",
+        "postal_code": "75012",
+        "city": "Paris",
+        "latitude": 48.84005,
+        "longitude": 2.3831,
+        "distance_km": 1.1,
+        "monthly_price": 24.99,
+        "currency": "EUR",
+        "amenities": ["24/7", "Cours collectifs virtuels", "Zone functional training"],
+        "website": "https://www.basic-fit.com/fr-fr/clubs/basic-fit-paris-bercy",
+        "source": {
+            "provider": "mock",
+            "brand": "Basic-Fit",
+            "supports_live_pricing": False,
+        },
+    },
+    {
+        "id": "fitnesspark-lyon-part-dieu",
+        "name": "Fitness Park Lyon Part-Dieu",
+        "brand": "Fitness Park",
+        "address": "91 Cours Lafayette",
+        "postal_code": "69006",
+        "city": "Lyon",
+        "latitude": 45.76266,
+        "longitude": 4.85538,
+        "distance_km": 1.8,
+        "monthly_price": 29.95,
+        "currency": "EUR",
+        "amenities": ["Espace musculation", "Cardio-training", "Studio biking"],
+        "website": "https://www.fitnesspark.fr/clubs/lyon-part-dieu/",
+        "source": {
+            "provider": "mock",
+            "brand": "Fitness Park",
+            "supports_live_pricing": False,
+        },
+    },
+    {
+        "id": "onair-marseille-prado",
+        "name": "On Air Marseille Prado",
+        "brand": "On Air",
+        "address": "6 Avenue du Prado",
+        "postal_code": "13006",
+        "city": "Marseille",
+        "latitude": 43.28535,
+        "longitude": 5.37897,
+        "distance_km": 2.4,
+        "monthly_price": 34.9,
+        "currency": "EUR",
+        "amenities": ["Cours collectifs live", "Espace cross training", "Sauna"],
+        "website": "https://www.onair-fitness.fr/clubs/marseille-prado",
+        "source": {
+            "provider": "mock",
+            "brand": "On Air",
+            "supports_live_pricing": False,
+        },
+    },
+    {
+        "id": "neoness-paris-chatelet",
+        "name": "Neoness Paris Châtelet",
+        "brand": "Neoness",
+        "address": "5 Rue de la Ferronnerie",
+        "postal_code": "75001",
+        "city": "Paris",
+        "latitude": 48.86078,
+        "longitude": 2.34699,
+        "distance_km": 0.8,
+        "monthly_price": 19.9,
+        "currency": "EUR",
+        "amenities": ["Cardio", "Cross-training", "Studio danse"],
+        "website": "https://www.neoness.fr/salle-de-sport/paris-chatelet",
+        "source": {
+            "provider": "mock",
+            "brand": "Neoness",
+            "supports_live_pricing": False,
+        },
+    },
+    {
+        "id": "keepcool-toulouse-capitole",
+        "name": "Keepcool Toulouse Capitole",
+        "brand": "Keepcool",
+        "address": "11 Rue du Poids de l’Huile",
+        "postal_code": "31000",
+        "city": "Toulouse",
+        "latitude": 43.60398,
+        "longitude": 1.44329,
+        "distance_km": 0.6,
+        "monthly_price": 29.9,
+        "currency": "EUR",
+        "amenities": ["Small group training", "Espace femme", "Coaching inclus"],
+        "website": "https://www.keepcool.fr/salle-de-sport/toulouse-capitole",
+        "source": {
+            "provider": "mock",
+            "brand": "Keepcool",
+            "supports_live_pricing": False,
+        },
+    },
+    {
+        "id": "basicfit-lille-euralille",
+        "name": "Basic-Fit Lille Euralille",
+        "brand": "Basic-Fit",
+        "address": "150 Centre Commercial Euralille",
+        "postal_code": "59777",
+        "city": "Lille",
+        "latitude": 50.63709,
+        "longitude": 3.06971,
+        "distance_km": 1.5,
+        "monthly_price": 22.99,
+        "currency": "EUR",
+        "amenities": ["Zone cycle", "Cours virtuels", "Espace musculation"],
+        "website": "https://www.basic-fit.com/fr-fr/clubs/basic-fit-lille-euralille",
+        "source": {
+            "provider": "mock",
+            "brand": "Basic-Fit",
+            "supports_live_pricing": False,
+        },
+    },
+    {
+        "id": "fitnesspark-bordeaux-lac",
+        "name": "Fitness Park Bordeaux Lac",
+        "brand": "Fitness Park",
+        "address": "Rue du Professeur Georges Jeanneney",
+        "postal_code": "33300",
+        "city": "Bordeaux",
+        "latitude": 44.88798,
+        "longitude": -0.56416,
+        "distance_km": 3.4,
+        "monthly_price": 29.95,
+        "currency": "EUR",
+        "amenities": ["Parking gratuit", "Studio biking", "Zone cross training"],
+        "website": "https://www.fitnesspark.fr/clubs/bordeaux-lac/",
+        "source": {
+            "provider": "mock",
+            "brand": "Fitness Park",
+            "supports_live_pricing": False,
+        },
+    },
+    {
+        "id": "onair-nice-lingostiere",
+        "name": "On Air Nice Lingostière",
+        "brand": "On Air",
+        "address": "652 Route de Grenoble",
+        "postal_code": "06200",
+        "city": "Nice",
+        "latitude": 43.70853,
+        "longitude": 7.19748,
+        "distance_km": 4.1,
+        "monthly_price": 39.9,
+        "currency": "EUR",
+        "amenities": ["Espace premium", "Cours immersive", "Studio cycling"],
+        "website": "https://www.onair-fitness.fr/clubs/nice-lingostiere",
+        "source": {
+            "provider": "mock",
+            "brand": "On Air",
+            "supports_live_pricing": False,
+        },
+    },
+]
+
+
+def _sanitize_city(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    sanitized = value.strip()
+    return sanitized or None
+
+
+def _available_gym_cities() -> List[str]:
+    cities = sorted({gym.get("city", "") for gym in GYM_DIRECTORY if gym.get("city")})
+    return cities
+
+
+def _haversine_distance_km(lat1: Optional[float], lng1: Optional[float], lat2: Optional[float], lng2: Optional[float]) -> Optional[float]:
+    try:
+        if None in (lat1, lng1, lat2, lng2):
+            return None
+        rlat1, rlng1, rlat2, rlng2 = map(radians, [lat1, lng1, lat2, lng2])
+        dlat = rlat2 - rlat1
+        dlng = rlng2 - rlng1
+        a = sin(dlat / 2) ** 2 + cos(rlat1) * cos(rlat2) * sin(dlng / 2) ** 2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return round(6371 * c, 2)
+    except Exception:
+        return None
+
+
+def _estimate_travel_time(distance_km: Optional[float]) -> Optional[str]:
+    if distance_km is None:
+        return None
+    try:
+        minutes = int(max(distance_km, 0) / 25 * 60)
+        minutes = max(minutes, 1)
+        if minutes < 60:
+            return f"≈ {minutes} min"
+        hours = minutes // 60
+        remaining = minutes % 60
+        if remaining == 0:
+            return f"≈ {hours} h"
+        return f"≈ {hours} h {remaining} min"
+    except Exception:
+        return None
+
 
 # Cache used to reuse SERP API responses and fallback data when
 # additional requests fail (e.g. API quota exceeded or network error).
@@ -1290,6 +1500,107 @@ def pick_best_offer(offers: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
             continue
     cleaned.sort(key=lambda x: (x["total_price_num"] if x["total_price_num"] is not None else 1e12))
     return cleaned[0]
+
+
+@app.get("/gyms")
+def list_gyms(
+    city: Optional[str] = Query(None, description="Filtrer par ville (Paris, Lyon, ...)."),
+    max_distance_km: Optional[float] = Query(
+        None, ge=0, description="Filtrer par distance maximale en kilomètres."
+    ),
+    lat: Optional[float] = Query(None, description="Latitude utilisateur pour filtrer par proximité."),
+    lng: Optional[float] = Query(None, description="Longitude utilisateur pour filtrer par proximité."),
+    limit: Optional[int] = Query(12, ge=1, le=50, description="Nombre maximum de clubs renvoyés."),
+):
+    normalized_city = _sanitize_city(city)
+    normalized_distance = None
+    if max_distance_km is not None:
+        try:
+            normalized_distance = max(float(max_distance_km), 0.0)
+        except (TypeError, ValueError):
+            normalized_distance = None
+
+    coordinates = None
+    if lat is not None and lng is not None:
+        try:
+            coordinates = (float(lat), float(lng))
+        except (TypeError, ValueError):
+            coordinates = None
+
+    gyms: List[Dict[str, Any]] = []
+    for item in GYM_DIRECTORY:
+        entry = {
+            "id": item.get("id"),
+            "name": item.get("name"),
+            "brand": item.get("brand"),
+            "address": item.get("address"),
+            "postal_code": item.get("postal_code"),
+            "city": item.get("city"),
+            "latitude": item.get("latitude"),
+            "longitude": item.get("longitude"),
+            "monthly_price": item.get("monthly_price"),
+            "currency": item.get("currency", "EUR"),
+            "amenities": item.get("amenities", []),
+            "website": item.get("website"),
+            "source": item.get("source", {}),
+        }
+
+        if coordinates is not None:
+            entry_distance = _haversine_distance_km(
+                coordinates[0], coordinates[1], item.get("latitude"), item.get("longitude")
+            )
+        else:
+            raw_distance = item.get("distance_km")
+            entry_distance = round(float(raw_distance), 2) if isinstance(raw_distance, (int, float)) else None
+
+        entry["distance_km"] = entry_distance
+        entry["estimated_duration"] = _estimate_travel_time(entry_distance)
+
+        if normalized_city and entry.get("city") and entry["city"].lower() != normalized_city.lower():
+            continue
+
+        if (
+            normalized_distance is not None
+            and entry_distance is not None
+            and entry_distance > normalized_distance
+        ):
+            continue
+
+        gyms.append(entry)
+
+    gyms.sort(
+        key=lambda gym: (
+            gym.get("distance_km") if gym.get("distance_km") is not None else float("inf"),
+            gym.get("name") or "",
+        )
+    )
+
+    total = len(gyms)
+    limit_value = total if limit is None else min(max(limit, 1), 50)
+    sliced = gyms[:limit_value]
+
+    return {
+        "gyms": sliced,
+        "count": len(sliced),
+        "total": total,
+        "available_cities": _available_gym_cities(),
+        "filters": {
+            "city": normalized_city,
+            "max_distance_km": normalized_distance,
+            "lat": coordinates[0] if coordinates else None,
+            "lng": coordinates[1] if coordinates else None,
+            "limit": limit_value,
+        },
+        "meta": {
+            "served_from": "mock",
+            "providers_ready": sorted({
+                item.get("brand") for item in GYM_DIRECTORY if item.get("brand")
+            }),
+            "supports_geolocation": coordinates is not None,
+            "available_filters": ["city", "max_distance_km", "lat", "lng"],
+            "notes": "Mock gyms directory — ready for Basic-Fit, Fitness Park et On Air.",
+        },
+    }
 
 # --- Routes ---
 
