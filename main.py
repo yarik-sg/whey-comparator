@@ -1502,7 +1502,10 @@ def pick_best_offer(offers: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     return cleaned[0]
 
 
+# Support both /gyms and /api/gyms to keep backward compatibility while
+# exposing the documented /api/gyms path for the frontend.
 @app.get("/gyms")
+@app.get("/api/gyms")
 def list_gyms(
     city: Optional[str] = Query(None, description="Filtrer par ville (Paris, Lyon, ...)."),
     max_distance_km: Optional[float] = Query(

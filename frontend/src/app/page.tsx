@@ -7,6 +7,7 @@ import { DealsShowcase } from "@/components/DealsShowcase";
 import { HeroSection } from "@/components/HeroSection";
 import { PartnerLogos } from "@/components/PartnerLogos";
 import { PopularCategories } from "@/components/PopularCategories";
+import { GymLocatorSection } from "@/components/GymLocatorSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { StatsSection } from "@/components/StatsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
@@ -38,6 +39,7 @@ export default function Home() {
       <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
       <PopularCategories onSelectCategory={handleSelectCategory} />
       <DealsShowcase />
+      <GymLocatorSection />
       <StatsSection />
       <PartnerLogos />
       <WhyChooseUsSection />

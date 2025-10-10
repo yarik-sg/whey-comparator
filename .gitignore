@@ -1,0 +1,17 @@
+# Node dependencies
+node_modules/
+frontend/node_modules/
+
+# Next.js build output
+.next/
+.turbo/
+out/
+
+# Logs & environment files
+*.log
+.env*
+
+# Editor metadata
+.DS_Store
+.idea/
+*.swp
