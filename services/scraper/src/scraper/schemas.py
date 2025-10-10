@@ -41,11 +41,30 @@ class ProductWithOffersSchema(ProductSchema):
     offers: list[OfferSchema]
 
 
-class PriceHistoryPointSchema(BaseModel):
+class PriceHistoryEntrySchema(BaseModel):
+    date: datetime
     price: float
     currency: str
-    source: str | None
-    recorded_at: datetime
+    platform: str | None = None
+    in_stock: bool | None = None
 
     class Config:
         from_attributes = True
+
+
+class PriceHistoryStatisticsSchema(BaseModel):
+    current_price: float
+    lowest_price: float
+    highest_price: float
+    average_price: float
+    price_change_percent: float
+    trend: str
+    data_points: int
+    is_historical_low: bool
+
+
+class PriceHistoryResponseSchema(BaseModel):
+    product_id: int
+    period: str
+    history: list[PriceHistoryEntrySchema]
+    statistics: PriceHistoryStatisticsSchema | None

@@ -101,11 +101,16 @@ async def _record_price_history(
         .order_by(PriceHistory.recorded_at.desc())
     )
 
+    if latest:
+        latest_price = float(latest.price)
+    else:
+        latest_price = None
+
     if (
-        latest
-        and abs(latest.price - best_total) < 1e-6
+        latest_price is not None
+        and abs(latest_price - best_total) < 1e-6
         and latest.currency == best_offer.currency
-        and latest.source == best_offer.source
+        and latest.platform == best_offer.source
     ):
         return
 
@@ -114,7 +119,8 @@ async def _record_price_history(
             product=product,
             price=best_total,
             currency=best_offer.currency,
-            source=best_offer.source,
+            platform=best_offer.source,
+            in_stock=best_offer.in_stock if best_offer.in_stock is not None else True,
         )
     )
     await session.flush()

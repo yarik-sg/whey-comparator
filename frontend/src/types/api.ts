@@ -28,22 +28,29 @@ export interface DealItem {
 }
 
 export interface PriceHistoryPoint {
-  recordedAt: string;
-  source?: string | null;
+  date: string;
+  price: number;
+  currency: string;
   platform?: string | null;
-  price: ApiPrice;
+  in_stock?: boolean | null;
+}
+
+export interface PriceHistoryStatistics {
+  current_price: number;
+  lowest_price: number;
+  highest_price: number;
+  average_price: number;
+  price_change_percent: number;
+  trend: string;
+  data_points: number;
+  is_historical_low: boolean;
 }
 
 export interface PriceHistoryResponse {
-  productId: number;
+  product_id: number;
   period: string;
-  points: PriceHistoryPoint[];
-  statistics: {
-    lowest: ApiPrice;
-    highest: ApiPrice;
-    average: ApiPrice;
-    current: ApiPrice;
-  };
+  history: PriceHistoryPoint[];
+  statistics: PriceHistoryStatistics | null;
 }
 
 export interface ProductSummary {
@@ -68,6 +75,9 @@ export interface ProductSummary {
   proteinPerEuro?: number | null;
   pricePerKg?: number | null;
   bestVendor?: string | null;
+  isBestPrice?: boolean | null;
+  discount?: number | null;
+  originalPrice?: ApiPrice | null;
 }
 
 export interface ProductListResponse {

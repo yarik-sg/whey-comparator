@@ -95,6 +95,7 @@ def record_daily_price_snapshot() -> None:
                 platform=best_offer.supplier.name if best_offer.supplier else None,
                 price=best_offer.price,
                 currency=best_offer.currency,
+                in_stock=best_offer.available,
                 recorded_at=now,
             )
             session.add(history_entry)

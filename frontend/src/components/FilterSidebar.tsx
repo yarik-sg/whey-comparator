@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Filter, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 
 export interface ProductFilters {
   minPrice?: number | null;
@@ -21,14 +24,7 @@ interface FilterSidebarProps {
   isLoading?: boolean;
 }
 
-function parseNumber(value: string): number | null {
-  if (value.trim() === "") {
-    return null;
-  }
-
-  const parsed = Number(value);
-  return Number.isNaN(parsed) ? null : parsed;
-}
+const DEFAULT_PRICE_MAX = 200;
 
 export function FilterSidebar({
   filters,
@@ -37,29 +33,58 @@ export function FilterSidebar({
   availableBrands,
   isLoading = false,
 }: FilterSidebarProps) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  const sliderMin = 0;
+  const sliderMax = Math.max(filters.maxPrice ?? DEFAULT_PRICE_MAX, DEFAULT_PRICE_MAX);
+  const sliderValue: [number, number] = [
+    filters.minPrice ?? sliderMin,
+    filters.maxPrice ?? sliderMax,
+  ];
+
   const brandOptions = useMemo(
-    () => availableBrands.slice(0, 12).sort((a, b) => a.localeCompare(b)),
+    () => availableBrands.slice(0, 10).sort((a, b) => a.localeCompare(b, "fr", { sensitivity: "base" })),
     [availableBrands],
   );
 
-  const handleToggleBrand = (brand: string) => {
+  const handlePriceChange = ([minValue, maxValue]: [number, number]) => {
+    const normalizedMin = minValue <= sliderMin ? null : Math.round(minValue);
+    const normalizedMax = maxValue >= sliderMax ? null : Math.round(maxValue);
+
+    onChange({
+      ...filters,
+      minPrice: normalizedMin,
+      maxPrice: normalizedMax,
+    });
+  };
+
+  const toggleBrand = (brand: string) => {
     const normalized = brand.toLowerCase();
     const hasBrand = filters.brands.some((value) => value.toLowerCase() === normalized);
-
-    const updatedBrands = hasBrand
+    const nextBrands = hasBrand
       ? filters.brands.filter((value) => value.toLowerCase() !== normalized)
       : [...filters.brands, brand];
-
-    onChange({ ...filters, brands: updatedBrands });
+    onChange({ ...filters, brands: nextBrands });
   };
+
+  const priceActive =
+    filters.minPrice !== null && filters.minPrice !== undefined
+      ? true
+      : filters.maxPrice !== null && filters.maxPrice !== undefined;
+  const activeFiltersCount =
+    (filters.brands?.length ?? 0) +
+    (filters.minRating ? 1 : 0) +
+    (filters.inStock ? 1 : 0) +
+    (filters.category ? 1 : 0) +
+    (priceActive ? 1 : 0);
 
   if (isLoading) {
     return (
-      <aside className="space-y-4 rounded-3xl border border-slate-200 bg-white p-4">
-        <div className="h-6 w-32 animate-pulse rounded bg-orange-100" />
-        <div className="space-y-3">
+      <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="h-5 w-28 animate-pulse rounded-full bg-slate-200" />
+        <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-4 w-full animate-pulse rounded bg-slate-100" />
+            <div key={index} className="h-4 w-full animate-pulse rounded-full bg-slate-100" />
           ))}
         </div>
       </aside>
@@ -67,131 +92,123 @@ export function FilterSidebar({
   }
 
   return (
-    <aside className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-900">Filtres</h2>
+    <aside className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+        <div className="flex items-center gap-2 text-slate-700">
+          <Filter className="h-5 w-5 text-orange-500" aria-hidden />
+          <h3 className="font-semibold">Filtres</h3>
+          {activeFiltersCount > 0 && (
+            <span className="rounded-full bg-orange-500 px-2 py-0.5 text-xs font-semibold text-white">
+              {activeFiltersCount}
+            </span>
+          )}
+        </div>
         <button
           type="button"
-          onClick={onReset}
-          className="text-xs font-medium text-orange-500 transition hover:text-orange-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2"
+          className="lg:hidden"
+          onClick={() => setIsOpen((value) => !value)}
+          aria-label={isOpen ? "Masquer les filtres" : "Afficher les filtres"}
         >
-          Réinitialiser
+          {isOpen ? <X className="h-5 w-5" aria-hidden /> : <Filter className="h-5 w-5" aria-hidden />}
         </button>
       </div>
 
-      <fieldset className="space-y-3">
-        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Prix (€)
-        </legend>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-slate-400">Min</span>
-            <Input
-              type="number"
-              min={0}
-              inputMode="decimal"
-              value={filters.minPrice ?? ""}
-              onChange={(event) =>
-                onChange({ ...filters, minPrice: parseNumber(event.target.value) })
-              }
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-slate-400">Max</span>
-            <Input
-              type="number"
-              min={0}
-              inputMode="decimal"
-              value={filters.maxPrice ?? ""}
-              onChange={(event) =>
-                onChange({ ...filters, maxPrice: parseNumber(event.target.value) })
-              }
-            />
-          </label>
-        </div>
-      </fieldset>
-
-      {brandOptions.length > 0 && (
-        <fieldset className="space-y-3">
-          <legend className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Marques
-          </legend>
-          <div className="space-y-2">
-            {brandOptions.map((brand) => {
-              const id = `brand-${brand.toLowerCase().replace(/[^a-z0-9]/gi, "-")}`;
-              const checked = filters.brands.some(
-                (value) => value.toLowerCase() === brand.toLowerCase(),
-              );
-
-              return (
-                <label key={brand} htmlFor={id} className="flex items-center gap-2 text-slate-600">
-                  <input
-                    id={id}
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => handleToggleBrand(brand)}
-                    className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-400"
-                  />
-                  <span>{brand}</span>
-                </label>
-              );
-            })}
+      <div className={`${isOpen ? "block" : "hidden lg:block"}`}>
+        <section className="space-y-4 border-b border-slate-200 px-4 py-4">
+          <h4 className="text-sm font-semibold text-slate-900">Budget</h4>
+          <Slider min={sliderMin} max={sliderMax} step={5} value={sliderValue} onValueChange={handlePriceChange} />
+          <div className="flex justify-between text-xs text-slate-500">
+            <span>{(filters.minPrice ?? sliderMin).toLocaleString("fr-FR")}€</span>
+            <span>{(filters.maxPrice ?? sliderMax).toLocaleString("fr-FR")}€</span>
           </div>
-        </fieldset>
-      )}
+        </section>
 
-      <fieldset className="space-y-3">
-        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Note minimale
-        </legend>
-        <select
-          value={filters.minRating ?? ""}
-          onChange={(event) =>
-            onChange({
-              ...filters,
-              minRating: event.target.value === "" ? null : Number(event.target.value),
-            })
-          }
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200"
-        >
-          <option value="">Toutes</option>
-          <option value="3">3 ★</option>
-          <option value="3.5">3.5 ★</option>
-          <option value="4">4 ★</option>
-          <option value="4.5">4.5 ★</option>
-        </select>
-      </fieldset>
+        {brandOptions.length > 0 && (
+          <section className="space-y-3 border-b border-slate-200 px-4 py-4">
+            <h4 className="text-sm font-semibold text-slate-900">Marques populaires</h4>
+            <div className="max-h-56 space-y-2 overflow-y-auto pr-1 text-sm">
+              {brandOptions.map((brand) => {
+                const checked = filters.brands.some(
+                  (value) => value.toLowerCase() === brand.toLowerCase(),
+                );
+                return (
+                  <label key={brand} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-slate-600 hover:bg-slate-50">
+                    <div className="flex items-center gap-2">
+                      <Checkbox checked={checked} onChange={() => toggleBrand(brand)} />
+                      <span>{brand}</span>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-      <fieldset className="flex items-center justify-between">
-        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Disponibilité
-        </legend>
-        <label className="inline-flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={Boolean(filters.inStock)}
+        <section className="space-y-3 border-b border-slate-200 px-4 py-4">
+          <h4 className="text-sm font-semibold text-slate-900">Note minimale</h4>
+          <div className="flex flex-col gap-2 text-sm text-slate-600">
+            {[4, 3, 2].map((rating) => (
+              <label key={rating} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="rating"
+                  value={rating}
+                  checked={filters.minRating === rating}
+                  onChange={() => onChange({ ...filters, minRating: rating })}
+                />
+                <span>{rating}+ étoiles</span>
+              </label>
+            ))}
+            <button
+              type="button"
+              onClick={() => onChange({ ...filters, minRating: null })}
+              className="self-start text-xs font-medium text-orange-500 hover:text-orange-400"
+            >
+              Réinitialiser la note
+            </button>
+          </div>
+        </section>
+
+        <section className="space-y-3 border-b border-slate-200 px-4 py-4">
+          <h4 className="text-sm font-semibold text-slate-900">Disponibilité</h4>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <Checkbox
+              checked={Boolean(filters.inStock)}
+              onChange={(event) =>
+                onChange({ ...filters, inStock: event.target.checked ? true : null })
+              }
+            />
+            En stock uniquement
+          </label>
+        </section>
+
+        <section className="space-y-3 border-b border-slate-200 px-4 py-4">
+          <h4 className="text-sm font-semibold text-slate-900">Catégorie</h4>
+          <Input
+            type="text"
+            value={filters.category ?? ""}
             onChange={(event) =>
-              onChange({ ...filters, inStock: event.target.checked ? true : null })
+              onChange({ ...filters, category: event.target.value.trim() || null })
             }
-            className="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-400"
+            placeholder="Ex: whey, vegan..."
           />
-          <span className="text-slate-600">En stock uniquement</span>
-        </label>
-      </fieldset>
+        </section>
 
-      <fieldset className="space-y-3">
-        <legend className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-          Catégorie
-        </legend>
-        <Input
-          type="text"
-          value={filters.category ?? ""}
-          onChange={(event) =>
-            onChange({ ...filters, category: event.target.value || null })
-          }
-          placeholder="Ex: whey, vegan..."
-        />
-      </fieldset>
+        <div className="px-4 py-4">
+          <button
+            type="button"
+            onClick={onReset}
+            disabled={activeFiltersCount === 0}
+            className={`w-full rounded-full px-4 py-2 text-sm font-semibold transition ${
+              activeFiltersCount > 0
+                ? "bg-slate-900 text-white hover:bg-slate-800"
+                : "bg-slate-100 text-slate-400"
+            }`}
+          >
+            Réinitialiser
+          </button>
+        </div>
+      </div>
     </aside>
   );
 }
