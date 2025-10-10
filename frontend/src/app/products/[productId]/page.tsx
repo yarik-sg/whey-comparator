@@ -9,7 +9,6 @@ import { PriceHistoryChart } from "@/components/PriceHistoryChart";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductMediaCarousel } from "@/components/ProductMediaCarousel";
 import { ReviewsSection } from "@/components/ReviewsSection";
-import { SiteFooter } from "@/components/SiteFooter";
 import apiClient, { ApiError } from "@/lib/apiClient";
 import {
   getFallbackProductOffers,
@@ -185,56 +184,38 @@ export default async function ProductDetailPage({
   const analyticsProductId = parseNumericIdentifier(product.id ?? canonicalProductId ?? rawProductId);
 
   return (
-    <div className="min-h-screen bg-[#0b1320] text-white">
-      <header className="border-b border-white/10 bg-[#0d1b2a]">
-        <div className="container mx-auto flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="text-2xl font-extrabold text-orange-500">
-            💪 Sport Comparator
-          </Link>
-          <nav className="flex items-center gap-4 text-sm text-gray-300">
-            <Link href="/products" className="transition hover:text-white">
-              Catalogue
-            </Link>
-            <Link href="/comparison" className="transition hover:text-white">
-              Comparaison
-            </Link>
-            <Link href="/#promotions" className="transition hover:text-white">
-              Promotions
-            </Link>
-            <Link href="/alerts" className="transition hover:text-white">
-              Mes alertes
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-6 py-12">
+    <div className="bg-gradient-to-b from-white via-white to-slate-50 pb-16 pt-10">
+      <div className="container mx-auto flex flex-col gap-10 px-6">
         <Breadcrumb
           items={[
             { label: "Accueil", href: "/" },
             { label: "Catalogue", href: "/products" },
             { label: product.name, href: `#product-${sectionAnchorId}` },
           ]}
-          className="mb-6 text-gray-300"
+          className="text-sm text-slate-500"
         />
 
         <div id={`product-${sectionAnchorId}`} className="grid gap-10 lg:grid-cols-[360px,1fr]">
           <div className="space-y-6">
-            <ProductMediaCarousel images={galleryImages} alt={product.name} />
+            <ProductMediaCarousel
+              images={galleryImages}
+              alt={product.name}
+              className="lg:sticky lg:top-28"
+            />
 
-            <section className="space-y-5 rounded-3xl border border-white/10 bg-white/5 p-6">
+            <section className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-4">
                 <Link
                   href="/products"
-                  className="text-xs font-semibold uppercase tracking-wide text-orange-300 transition hover:text-orange-200"
+                  className="text-xs font-semibold uppercase tracking-wide text-orange-600 transition hover:text-orange-500"
                 >
                   ← Retour au catalogue
                 </Link>
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-3xl font-bold sm:text-4xl">{product.name}</h1>
-                  {product.brand && <p className="text-sm text-gray-300">{product.brand}</p>}
+                  <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">{product.name}</h1>
+                  {product.brand && <p className="text-sm text-slate-500">{product.brand}</p>}
                   {hasAverageRating && (
-                    <p className="text-sm text-emerald-300">
+                    <p className="text-sm font-semibold text-emerald-600">
                       {averageRating.toFixed(1)} ★
                       {hasReviewsCount
                         ? ` · ${reviewsCount.toLocaleString("fr-FR")} avis`
@@ -244,7 +225,7 @@ export default async function ProductDetailPage({
                 </div>
                 <CompareLinkButton
                   href={buildComparisonHref(canonicalProductId)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
                   aria-label={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
                   title={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
                 >
@@ -252,37 +233,37 @@ export default async function ProductDetailPage({
                 </CompareLinkButton>
               </div>
 
-              <dl className="grid gap-4 rounded-2xl bg-white/5 p-4 text-sm text-gray-200">
+              <dl className="grid gap-4 rounded-2xl border border-orange-100 bg-orange-50/80 p-4 text-sm text-slate-600">
                 <div>
-                  <dt className="text-xs uppercase tracking-wide text-gray-400">Prix constaté</dt>
-                  <dd className="text-lg font-semibold text-white">{product.bestPrice.formatted ?? "—"}</dd>
+                  <dt className="text-xs uppercase tracking-wide text-orange-500/80">Prix constaté</dt>
+                  <dd className="text-lg font-semibold text-slate-900">{product.bestPrice?.formatted ?? "—"}</dd>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-xs text-gray-300">
+                <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
                   <div>
-                    <p className="uppercase tracking-wide text-gray-400">€/kg</p>
-                    <p className="text-base font-semibold text-white">
+                    <p className="uppercase tracking-wide text-[11px] text-slate-400">€/kg</p>
+                    <p className="text-base font-semibold text-slate-900">
                       {typeof product.pricePerKg === "number"
                         ? `${product.pricePerKg.toFixed(2)} €`
                         : "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="uppercase tracking-wide text-gray-400">Protéines / €</p>
-                    <p className="text-base font-semibold text-white">
+                    <p className="uppercase tracking-wide text-[11px] text-slate-400">Protéines / €</p>
+                    <p className="text-base font-semibold text-slate-900">
                       {typeof product.proteinPerEuro === "number"
                         ? product.proteinPerEuro.toFixed(2)
                         : "—"}
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-xs text-gray-300">
+                <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
                   <div>
-                    <p className="uppercase tracking-wide text-gray-400">Offres actives</p>
-                    <p className="text-base font-semibold text-white">{offers.length}</p>
+                    <p className="uppercase tracking-wide text-[11px] text-slate-400">Offres actives</p>
+                    <p className="text-base font-semibold text-slate-900">{offers.length}</p>
                   </div>
                   <div>
-                    <p className="uppercase tracking-wide text-gray-400">Disponibilité</p>
-                    <p className="text-base font-semibold text-white">
+                    <p className="uppercase tracking-wide text-[11px] text-slate-400">Disponibilité</p>
+                    <p className="text-base font-semibold text-slate-900">
                       {product.inStock === true
                         ? "En stock"
                         : product.stockStatus ?? "À vérifier"}
@@ -291,7 +272,7 @@ export default async function ProductDetailPage({
                 </div>
               </dl>
 
-              <div className="space-y-1 text-xs text-gray-400">
+              <div className="space-y-1 text-xs text-slate-400">
                 <p>ID #{canonicalProductId}</p>
                 <p>Sources agrégées : {offers.length}</p>
                 <p>Entrées scraper : {sources.scraper.length}</p>
@@ -299,29 +280,29 @@ export default async function ProductDetailPage({
             </section>
 
             {bestOffer && (
-              <section className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
-                <h2 className="text-lg font-semibold text-white">Offre mise en avant</h2>
-                <div className="space-y-2 rounded-2xl bg-white/5 p-4">
-                  <p className="text-sm text-gray-300">
+              <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+                <h2 className="text-lg font-semibold text-slate-900">Offre mise en avant</h2>
+                <div className="space-y-2 rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
+                  <p className="text-sm font-semibold text-slate-900">
                     {bestOffer.vendor} · {bestOffer.price.formatted}
                     {bestOffer.shippingText ? ` (${bestOffer.shippingText})` : ""}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-500">
                     Total TTC : {bestOffer.totalPrice?.formatted ?? bestOffer.price.formatted}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-500">
                     {bestOffer.stockStatus
                       ? `Disponibilité : ${bestOffer.stockStatus}`
                       : bestOffer.inStock
-                      ? "Produit disponible"
-                      : "Stock à confirmer"}
+                        ? "Produit disponible"
+                        : "Stock à confirmer"}
                   </p>
                 </div>
                 <a
                   href={bestOffer.link ?? undefined}
                   target={bestOffer.link ? "_blank" : undefined}
                   rel={bestOffer.link ? "noopener noreferrer" : undefined}
-                  className="inline-flex w-full items-center justify-center rounded-full border border-orange-200 px-4 py-2 text-xs font-semibold text-orange-300 transition hover:border-orange-300 hover:text-orange-200"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-orange-200 px-4 py-2 text-xs font-semibold text-orange-600 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
                 >
                   Consulter l&apos;offre chez {bestOffer.vendor} →
                 </a>
@@ -339,14 +320,16 @@ export default async function ProductDetailPage({
             )}
             <CreatePriceAlert product={product} />
 
-            <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
-              <h2 className="text-lg font-semibold text-white">Flux de données</h2>
-              <p className="mt-2 text-gray-300">
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
+              <h2 className="text-lg font-semibold text-slate-900">Flux de données</h2>
+              <p className="mt-2 text-slate-600">
                 Ces offres combinent les résultats SerpAPI/Google Shopping et nos collecteurs internes (Amazon, MyProtein…). Les
                 données sont rafraîchies quotidiennement et stockées dans PostgreSQL.
               </p>
-              <p className="mt-4 text-xs text-gray-400">Dernières sources collectées :</p>
-              <ul className="mt-2 space-y-1 text-xs text-gray-400">
+              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Dernières sources collectées :
+              </p>
+              <ul className="mt-2 space-y-1 text-xs text-slate-500">
                 {sources.scraper.slice(0, 5).map((offer) => (
                   <li key={offer.id}>
                     {offer.source} — {offer.price.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} {offer.currency}
@@ -358,10 +341,10 @@ export default async function ProductDetailPage({
             </section>
 
             {similarProducts.length > 0 && (
-              <section className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
+              <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-lg font-semibold text-white">Produits similaires</h2>
-                  <p className="text-xs text-gray-400">
+                  <h2 className="text-lg font-semibold text-slate-900">Produits similaires</h2>
+                  <p className="text-xs text-slate-500">
                     Basés sur la marque, la catégorie et la performance nutritionnelle.
                   </p>
                 </div>
@@ -377,11 +360,11 @@ export default async function ProductDetailPage({
                         product={similarProduct}
                         href={similarHref}
                         footer={
-                          <div className="flex items-center justify-between text-xs text-gray-400">
+                          <div className="flex items-center justify-between text-xs text-slate-500">
                             <span>ID #{similarCanonicalId}</span>
                             <CompareLinkButton
                               href={buildComparisonHref(canonicalProductId, similarCanonicalId)}
-                              className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                              className="inline-flex items-center gap-1 font-semibold text-orange-600 transition hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
                               aria-label={`Comparer ${product.name} avec ${similarProduct.name}`}
                               title={`Comparer ${product.name} avec ${similarProduct.name}`}
                             >
@@ -397,9 +380,7 @@ export default async function ProductDetailPage({
             )}
           </div>
         </div>
-      </main>
-
-      <SiteFooter />
+      </div>
     </div>
   );
 }

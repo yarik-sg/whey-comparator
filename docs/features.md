@@ -9,6 +9,11 @@
 - Mise en avant des meilleures offres agrégées côté API.
 - Cartes promotionnelles responsive (images, prix unitaire, prix total avec livraison, stock).
 
+## Fiche produit harmonisée
+- Retour à la charte claire (fond blanc + accents orange) pour la page `/products/[id]` avec composants alignés sur le catalogue.
+- Carrousel média sticky, encarts métriques `bg-orange-50`, CTA « Ajouter à la comparaison » orange plein et liens secondaires outline.
+- Tableau des offres, historique de prix, avis et flux de données regroupés dans des cartes blanches `border-slate-200` pour assurer cohérence visuelle.
+
 ## Localisateur de salles de sport
 - Nouvelle section d’accueil « Trouvez votre salle de sport » (voir `frontend/src/components/GymLocatorSection.tsx`) s’appuyant sur `/api/gyms` via le hook `frontend/src/hooks/useGyms.ts`.
 - Cartes responsive (`frontend/src/components/GymCard.tsx`) listant Basic-Fit, Fitness Park, On Air, Neoness, Keepcool… avec adresse complète, distance estimée, temps de trajet et prix mensuel.
