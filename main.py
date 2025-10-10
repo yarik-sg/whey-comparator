@@ -10,6 +10,8 @@ from functools import lru_cache
 from math import atan2, cos, radians, sin, sqrt
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from fallback_catalogue import get_fallback_product, get_fallback_products
+
 app = FastAPI()
 
 # --- CORS (ok pour dev; en prod restreins à ton domaine) ---
@@ -372,6 +374,346 @@ def _update_serp_cache_entry(
             entry["offers"] = cloned_offers
 
     entry["updated_at"] = datetime.utcnow()
+
+
+def _clone_serp_summary(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    summary = entry.get("summary")
+    if isinstance(summary, dict) and summary:
+        return dict(summary)
+
+    deal = entry.get("deal")
+    if isinstance(deal, dict) and deal:
+        return build_serp_product_summary(deal, fallback_index=0)
+
+    offers = entry.get("offers")
+    if isinstance(offers, list) and offers:
+        first_offer = offers[0]
+        if isinstance(first_offer, dict):
+            return build_serp_product_summary(first_offer, fallback_index=0)
+
+    return None
+
+
+def _find_serp_similar(identifier: Any, *, limit: int) -> List[Dict[str, Any]]:
+    match = find_product_by_id(identifier)
+    if not match:
+        return []
+
+    cache_key, entry = match
+    base_summary = _clone_serp_summary(entry)
+    if not base_summary:
+        return []
+
+    candidates: List[tuple[float, Dict[str, Any]]] = []
+    base_query = entry.get("query")
+
+    for other_key, other_entry in SERP_PRODUCT_CACHE.items():
+        if other_key == cache_key:
+            continue
+
+        if base_query:
+            other_query = other_entry.get("query")
+            if other_query and other_query != base_query:
+                continue
+
+        summary = _clone_serp_summary(other_entry)
+        if not summary:
+            continue
+
+        score = compute_similarity_score(base_summary, summary)
+        candidates.append((score, dict(summary)))
+
+    if not candidates:
+        return []
+
+    candidates.sort(
+        key=lambda item: (
+            item[0],
+            parse_float(item[1].get("rating")) or 0.0,
+            -(parse_float(item[1].get("bestPrice", {}).get("amount")) or float("inf")),
+        ),
+        reverse=True,
+    )
+
+    return [item[1] for item in candidates[:limit]]
+
+
+def _build_fallback_product_summary(product: Dict[str, Any]) -> Dict[str, Any]:
+    offers = product.get("offers")
+    best_offer_payload: Optional[Dict[str, Any]] = None
+    best_total: Optional[float] = None
+    best_currency: Optional[str] = None
+
+    if isinstance(offers, list):
+        for index, offer in enumerate(offers):
+            if not isinstance(offer, dict):
+                continue
+            price_amount = parse_float(offer.get("price"))
+            currency = offer.get("currency") or "EUR"
+            shipping_cost = parse_float(offer.get("shipping_cost") or offer.get("shippingCost"))
+            total = price_amount
+            if total is not None and shipping_cost is not None:
+                total += shipping_cost
+
+            if total is None:
+                continue
+
+            if best_total is None or total < best_total:
+                best_total = total
+                best_currency = currency
+                vendor = offer.get("source") or offer.get("vendor") or "Marchand"
+                best_offer_payload = {
+                    "id": offer.get("id") or f"fallback-{product.get('id')}-{index}",
+                    "title": offer.get("title") or product.get("name") or "Offre",
+                    "vendor": vendor,
+                    "price": build_price_summary(price_amount, currency),
+                    "totalPrice": build_price_summary(total, currency),
+                    "shippingCost": shipping_cost,
+                    "shippingText": offer.get("shipping_text") or offer.get("shippingText"),
+                    "inStock": offer.get("in_stock") if offer.get("in_stock") is not None else offer.get("inStock"),
+                    "stockStatus": offer.get("stock_status") or offer.get("stockStatus"),
+                    "link": offer.get("url") or offer.get("link"),
+                    "image": offer.get("image"),
+                    "rating": parse_float(offer.get("rating")),
+                    "reviewsCount": parse_int(offer.get("reviews") or offer.get("reviewsCount")),
+                    "bestPrice": True,
+                    "isBestPrice": True,
+                    "source": vendor,
+                    "productId": str(product.get("id")) if product.get("id") is not None else None,
+                }
+
+    image_candidates: List[Optional[str]] = [
+        product.get("image"),
+        product.get("image_url"),
+        product.get("imageUrl"),
+        product.get("thumbnail"),
+        product.get("img"),
+    ]
+
+    if isinstance(offers, list):
+        for offer in offers:
+            if isinstance(offer, dict):
+                image_candidates.extend(
+                    [
+                        offer.get("image"),
+                        offer.get("image_url"),
+                        offer.get("imageUrl"),
+                        offer.get("thumbnail"),
+                        offer.get("img"),
+                    ]
+                )
+
+    resolved_image = resolve_image_with_placeholder(
+        image_candidates,
+        name=product.get("name"),
+        brand=product.get("brand"),
+    )
+
+    best_price_amount = best_total
+    best_price_currency = best_currency
+    best_price_payload = build_price_summary(best_price_amount, best_price_currency)
+
+    protein_per_serving = parse_float(product.get("protein_per_serving_g"))
+    serving_size = parse_float(product.get("serving_size_g"))
+    protein_per_euro: Optional[float] = None
+    if (
+        protein_per_serving is not None
+        and protein_per_serving > 0
+        and serving_size is not None
+        and serving_size > 0
+        and best_total is not None
+        and best_total > 0
+    ):
+        servings = 1000 / serving_size
+        total_protein = servings * protein_per_serving
+        protein_per_euro = round(total_protein / best_total, 2)
+
+    return {
+        "id": product.get("id"),
+        "product_id": str(product.get("id")) if product.get("id") is not None else None,
+        "name": product.get("name"),
+        "brand": product.get("brand"),
+        "flavour": product.get("flavour"),
+        "image": resolved_image,
+        "image_url": pick_best_image_candidate(image_candidates) or resolved_image,
+        "protein_per_serving_g": protein_per_serving,
+        "serving_size_g": serving_size,
+        "category": product.get("category"),
+        "bestPrice": best_price_payload,
+        "totalPrice": best_price_payload,
+        "bestDeal": best_offer_payload,
+        "offersCount": len(offers) if isinstance(offers, list) else 0,
+        "inStock": best_offer_payload.get("inStock") if best_offer_payload else None,
+        "stockStatus": best_offer_payload.get("stockStatus") if best_offer_payload else None,
+        "rating": parse_float(product.get("rating"))
+        or (best_offer_payload.get("rating") if best_offer_payload else None),
+        "reviewsCount": parse_int(product.get("reviewsCount"))
+        or (best_offer_payload.get("reviewsCount") if best_offer_payload else None),
+        "proteinPerEuro": protein_per_euro,
+        "pricePerKg": None,
+        "bestVendor": best_offer_payload.get("vendor") if best_offer_payload else None,
+    }
+
+
+def _find_fallback_similar(product_id: int, *, limit: int) -> List[Dict[str, Any]]:
+    base_product = get_fallback_product(product_id)
+    if not base_product:
+        return []
+
+    candidates = [
+        item
+        for item in get_fallback_products()
+        if isinstance(item, dict) and item.get("id") != product_id
+    ]
+
+    scored: List[tuple[float, Dict[str, Any]]] = []
+    for candidate in candidates:
+        score = compute_similarity_score(base_product, candidate)
+        summary = _build_fallback_product_summary(candidate)
+        scored.append((score, summary))
+
+    scored.sort(
+        key=lambda item: (
+            item[0],
+            parse_float(item[1].get("rating")) or 0.0,
+        ),
+        reverse=True,
+    )
+
+    return [item[1] for item in scored[:limit]]
+
+
+def _extract_rating_reviews(product: Dict[str, Any]) -> tuple[Optional[float], int]:
+    rating = parse_float(product.get("rating"))
+    reviews_count = parse_int(product.get("reviewsCount")) or 0
+
+    if rating is None:
+        best_deal = product.get("bestDeal")
+        if isinstance(best_deal, dict):
+            rating = parse_float(best_deal.get("rating"))
+            reviews_count = reviews_count or parse_int(best_deal.get("reviewsCount")) or 0
+
+    if rating is None:
+        offers = product.get("offers")
+        if isinstance(offers, list):
+            for offer in offers:
+                if not isinstance(offer, dict):
+                    continue
+                rating = parse_float(offer.get("rating"))
+                if rating is not None:
+                    reviews_count = reviews_count or parse_int(offer.get("reviews") or offer.get("reviewsCount")) or 0
+                    break
+
+    return rating, reviews_count
+
+
+def _estimate_review_distribution(average: Optional[float], total_reviews: int) -> List[Dict[str, Any]]:
+    buckets: List[Dict[str, Any]] = []
+
+    if average is None or total_reviews <= 0:
+        for stars in range(5, 0, -1):
+            buckets.append({"stars": stars, "count": 0, "percentage": 0.0})
+        return buckets
+
+    weights: List[float] = []
+    for stars in range(5, 0, -1):
+        distance = abs(average - stars)
+        weight = max(0.1, 1 - distance / 4)
+        weights.append(weight)
+
+    total_weight = sum(weights) or 1.0
+    raw_counts = [weight / total_weight * total_reviews for weight in weights]
+    counts = [int(value) for value in raw_counts]
+    remainder = total_reviews - sum(counts)
+
+    if remainder > 0:
+        fractional = [value - int(value) for value in raw_counts]
+        while remainder > 0:
+            index = max(range(len(fractional)), key=fractional.__getitem__)
+            counts[index] += 1
+            fractional[index] = 0
+            remainder -= 1
+
+    for index, stars in enumerate(range(5, 0, -1)):
+        count = counts[index]
+        percentage = (count / total_reviews) * 100 if total_reviews else 0
+        buckets.append({"stars": stars, "count": count, "percentage": round(percentage, 2)})
+
+    return buckets
+
+
+def _build_review_highlights(average: Optional[float], reviews_count: int) -> List[Dict[str, Any]]:
+    if average is None or reviews_count <= 0:
+        return []
+
+    highlights: List[Dict[str, Any]] = [
+        {
+            "id": "strengths",
+            "title": "Les clients adorent",
+            "rating": round(average, 1),
+            "summary": "Goût, miscibilité et digestion sont régulièrement cités comme points forts.",
+            "source": "Synthèse Whey Comparator",
+        }
+    ]
+
+    if average < 4:
+        highlights.append(
+            {
+                "id": "improvements",
+                "title": "Peut mieux faire",
+                "rating": round(min(average + 0.3, 5.0), 1),
+                "summary": "Certains clients aimeraient une meilleure solubilité ou des saveurs plus naturelles.",
+                "source": "Synthèse Whey Comparator",
+            }
+        )
+
+    return highlights
+
+
+def _resolve_similar_products(product_id: int, limit: int) -> List[Dict[str, Any]]:
+    products = fetch_scraper_products()
+    base_product: Optional[Dict[str, Any]] = None
+
+    for product in products:
+        try:
+            if int(product.get("id")) == product_id:
+                base_product = product
+                break
+        except (TypeError, ValueError):
+            continue
+
+    if base_product is not None:
+        return find_related_products(products, base_product, limit=limit)
+
+    serp_similar = _find_serp_similar(product_id, limit=limit)
+    if not serp_similar:
+        serp_similar = _find_serp_similar(str(product_id), limit=limit)
+    if serp_similar:
+        return serp_similar[:limit]
+
+    return _find_fallback_similar(product_id, limit=limit)
+
+
+def _resolve_product_for_reviews(product_id: int) -> Optional[Dict[str, Any]]:
+    products = fetch_scraper_products()
+    for product in products:
+        try:
+            if int(product.get("id")) == product_id:
+                return build_product_summary(product)
+        except (TypeError, ValueError):
+            continue
+
+    fallback_product = get_fallback_product(product_id)
+    if fallback_product:
+        return dict(fallback_product)
+
+    match = find_product_by_id(product_id) or find_product_by_id(str(product_id))
+    if match:
+        summary = _clone_serp_summary(match[1])
+        if summary:
+            return summary
+
+    return None
 
 # --- Utils ---
 
@@ -2273,30 +2615,28 @@ def product_offers_endpoint(
     raise HTTPException(status_code=404, detail="Produit introuvable")
 
 
+@app.get("/products/{product_id}/similar")
+def similar_products_endpoint(
+    product_id: int,
+    limit: int = Query(4, ge=1, le=12),
+):
+    similar = _resolve_similar_products(product_id, limit)
+    return {
+        "productId": product_id,
+        "similar": similar,
+    }
+
+
 @app.get("/products/{product_id}/related")
 def related_products_endpoint(
     product_id: int,
     limit: int = Query(4, ge=1, le=12),
 ):
-    products = fetch_scraper_products()
-    base_product: Optional[Dict[str, Any]] = None
-    for product in products:
-        try:
-            if int(product.get("id")) == product_id:
-                base_product = product
-                break
-        except (TypeError, ValueError):
-            continue
-
-    if base_product is None:
+    related = _resolve_similar_products(product_id, limit)
+    if not related:
         raise HTTPException(status_code=404, detail="Produit introuvable")
 
-    related = find_related_products(products, base_product, limit=limit)
-
-    return {
-        "productId": product_id,
-        "related": related,
-    }
+    return {"productId": product_id, "related": related}
 
 
 @app.get("/products/{product_id}/price-history")
@@ -2362,6 +2702,30 @@ def product_price_history_endpoint(
             "average": build_price_summary(average, stats_currency),
             "current": build_price_summary(current, stats_currency),
         },
+    }
+
+
+@app.get("/products/{product_id}/reviews")
+def product_reviews_endpoint(product_id: int):
+    product = _resolve_product_for_reviews(product_id)
+    average_rating: Optional[float]
+    reviews_count: int
+
+    if product:
+        average_rating, reviews_count = _extract_rating_reviews(product)
+    else:
+        average_rating, reviews_count = (None, 0)
+
+    distribution = _estimate_review_distribution(average_rating, reviews_count)
+    highlights = _build_review_highlights(average_rating, reviews_count)
+
+    return {
+        "productId": product_id,
+        "averageRating": round(average_rating, 2) if isinstance(average_rating, (int, float)) else None,
+        "reviewsCount": reviews_count,
+        "sources": 1 if reviews_count > 0 else 0,
+        "distribution": distribution,
+        "highlights": highlights,
     }
 
 
