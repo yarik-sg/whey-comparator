@@ -261,6 +261,12 @@ export function GymLocatorSection() {
         </div>
       ) : null}
 
+      {isLoadingInitial ? (
+        <div className="rounded-2xl border border-orange-100 bg-orange-50/90 p-4 text-center text-sm font-medium text-orange-700">
+          Chargement des salles…
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {isLoadingInitial
           ? Array.from({ length: LIMIT_DEFAULT }).map((_, index) => (
@@ -271,7 +277,7 @@ export function GymLocatorSection() {
 
       {gyms.length === 0 && !isPending ? (
         <div className="rounded-2xl border border-orange-100 bg-orange-50/80 p-6 text-center text-sm text-orange-700">
-          Aucune salle ne correspond à ces critères. Essayez un autre rayon ou une autre ville.
+          Aucune salle trouvée
         </div>
       ) : null}
 

@@ -12,8 +12,10 @@ export interface GymLocation {
   distanceKm: number | null;
   travelTime: string | null;
   monthlyPrice: number | null;
+  price: number | null;
   currency: string;
   website: string | null;
+  link: string | null;
   amenities: string[];
   images: string[];
   source: {
@@ -53,8 +55,10 @@ type ApiGymLocation = {
   distance_km?: number | null;
   estimated_duration?: string | null;
   monthly_price?: number | null;
+  price?: number | null;
   currency?: string | null;
   website?: string | null;
+  link?: string | null;
   amenities?: Array<string | null | undefined> | null;
   images?: Array<string | null | undefined> | null;
   source?: {
@@ -175,6 +179,15 @@ const normalizeApiGym = (gym: ApiGymLocation): GymLocation => {
     ...(gym.source?.external_id ? { externalId: normalizeString(gym.source.external_id) } : {}),
   };
 
+  const price =
+    typeof gym.monthly_price === "number" && Number.isFinite(gym.monthly_price)
+      ? gym.monthly_price
+      : typeof gym.price === "number" && Number.isFinite(gym.price)
+        ? gym.price
+        : null;
+
+  const website = normalizeString(gym.website ?? gym.link ?? "") || null;
+
   return {
     id: normalizeString(gym.id ?? "") || fallbackId,
     name,
@@ -186,12 +199,11 @@ const normalizeApiGym = (gym: ApiGymLocation): GymLocation => {
     longitude,
     distanceKm: distance,
     travelTime: gym.estimated_duration ? normalizeString(gym.estimated_duration) : estimateTravelTime(distance),
-    monthlyPrice:
-      typeof gym.monthly_price === "number" && Number.isFinite(gym.monthly_price)
-        ? gym.monthly_price
-        : null,
+    monthlyPrice: price,
+    price,
     currency: normalizeString(gym.currency ?? "EUR") || "EUR",
-    website: normalizeString(gym.website ?? "") || null,
+    website,
+    link: website,
     amenities: sanitizeAmenities(gym.amenities),
     images: sanitizeImages(gym.images),
     source,
@@ -270,8 +282,10 @@ const BASE_MOCK_GYMS: GymLocation[] = [
     distanceKm: 1.1,
     travelTime: estimateTravelTime(1.1),
     monthlyPrice: 24.99,
+    price: 24.99,
     currency: "EUR",
     website: "https://www.basic-fit.com/fr-fr/clubs/basic-fit-paris-bercy",
+    link: "https://www.basic-fit.com/fr-fr/clubs/basic-fit-paris-bercy",
     amenities: ["24/7", "Cours collectifs virtuels", "Zone functional training"],
     images: [],
     source: { provider: "mock", brand: "Basic-Fit" },
@@ -289,8 +303,10 @@ const BASE_MOCK_GYMS: GymLocation[] = [
     distanceKm: 1.8,
     travelTime: estimateTravelTime(1.8),
     monthlyPrice: 29.95,
+    price: 29.95,
     currency: "EUR",
     website: "https://www.fitnesspark.fr/clubs/lyon-part-dieu/",
+    link: "https://www.fitnesspark.fr/clubs/lyon-part-dieu/",
     amenities: ["Espace musculation", "Cardio-training", "Studio biking"],
     images: [],
     source: { provider: "mock", brand: "Fitness Park" },
@@ -308,8 +324,10 @@ const BASE_MOCK_GYMS: GymLocation[] = [
     distanceKm: 2.4,
     travelTime: estimateTravelTime(2.4),
     monthlyPrice: 34.9,
+    price: 34.9,
     currency: "EUR",
     website: "https://www.onair-fitness.fr/clubs/marseille-prado",
+    link: "https://www.onair-fitness.fr/clubs/marseille-prado",
     amenities: ["Cours collectifs live", "Espace cross training", "Sauna"],
     images: [],
     source: { provider: "mock", brand: "On Air" },
@@ -327,8 +345,10 @@ const BASE_MOCK_GYMS: GymLocation[] = [
     distanceKm: 0.8,
     travelTime: estimateTravelTime(0.8),
     monthlyPrice: 19.9,
+    price: 19.9,
     currency: "EUR",
     website: "https://www.neoness.fr/salle-de-sport/paris-chatelet",
+    link: "https://www.neoness.fr/salle-de-sport/paris-chatelet",
     amenities: ["Cardio", "Cross-training", "Studio danse"],
     images: [],
     source: { provider: "mock", brand: "Neoness" },
@@ -346,8 +366,10 @@ const BASE_MOCK_GYMS: GymLocation[] = [
     distanceKm: 0.6,
     travelTime: estimateTravelTime(0.6),
     monthlyPrice: 29.9,
+    price: 29.9,
     currency: "EUR",
     website: "https://www.keepcool.fr/salle-de-sport/toulouse-capitole",
+    link: "https://www.keepcool.fr/salle-de-sport/toulouse-capitole",
     amenities: ["Small group training", "Espace femme", "Coaching inclus"],
     images: [],
     source: { provider: "mock", brand: "Keepcool" },
@@ -365,8 +387,10 @@ const BASE_MOCK_GYMS: GymLocation[] = [
     distanceKm: 1.5,
     travelTime: estimateTravelTime(1.5),
     monthlyPrice: 22.99,
+    price: 22.99,
     currency: "EUR",
     website: "https://www.basic-fit.com/fr-fr/clubs/basic-fit-lille-euralille",
+    link: "https://www.basic-fit.com/fr-fr/clubs/basic-fit-lille-euralille",
     amenities: ["Zone cycle", "Cours virtuels", "Espace musculation"],
     images: [],
     source: { provider: "mock", brand: "Basic-Fit" },
@@ -384,8 +408,10 @@ const BASE_MOCK_GYMS: GymLocation[] = [
     distanceKm: 3.4,
     travelTime: estimateTravelTime(3.4),
     monthlyPrice: 29.95,
+    price: 29.95,
     currency: "EUR",
     website: "https://www.fitnesspark.fr/clubs/bordeaux-lac/",
+    link: "https://www.fitnesspark.fr/clubs/bordeaux-lac/",
     amenities: ["Parking gratuit", "Studio biking", "Zone cross training"],
     images: [],
     source: { provider: "mock", brand: "Fitness Park" },
@@ -403,8 +429,10 @@ const BASE_MOCK_GYMS: GymLocation[] = [
     distanceKm: 4.1,
     travelTime: estimateTravelTime(4.1),
     monthlyPrice: 39.9,
+    price: 39.9,
     currency: "EUR",
     website: "https://www.onair-fitness.fr/clubs/nice-lingostiere",
+    link: "https://www.onair-fitness.fr/clubs/nice-lingostiere",
     amenities: ["Espace premium", "Cours immersive", "Studio cycling"],
     images: [],
     source: { provider: "mock", brand: "On Air" },

@@ -10,8 +10,10 @@ export interface GymLocation {
   distanceKm: number | null;
   travelTime: string | null;
   monthlyPrice: number | null;
+  price: number | null;
   currency: string;
   website: string | null;
+  link: string | null;
   amenities: string[];
   images: string[];
   source: {

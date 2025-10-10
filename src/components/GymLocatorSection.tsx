@@ -237,6 +237,12 @@ export const GymLocatorSection = () => {
         </div>
       ) : null}
 
+      {(isLoading || isFetching) && gyms.length === 0 ? (
+        <div className="rounded-2xl border border-orange-100 bg-orange-50/90 p-4 text-center text-sm font-medium text-orange-700">
+          Chargement des salles…
+        </div>
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {(isLoading || isFetching) && gyms.length === 0
           ? Array.from({ length: limitForDisplay }).map((_, index) => (
@@ -247,7 +253,7 @@ export const GymLocatorSection = () => {
 
       {gyms.length === 0 && !isLoading && !isFetching ? (
         <div className="rounded-xl border border-orange-100 bg-orange-50/80 p-6 text-center text-sm text-orange-700">
-          Aucune salle ne correspond à ces critères. Essayez un autre rayon ou une autre ville.
+          Aucune salle trouvée
         </div>
       ) : null}
 
