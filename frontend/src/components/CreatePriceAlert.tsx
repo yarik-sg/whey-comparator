@@ -57,9 +57,18 @@ export function CreatePriceAlert({ product }: CreatePriceAlertProps) {
       return;
     }
 
+    const resolvedProductId =
+      typeof product.id === "number"
+        ? product.id
+        : Number.parseInt(String(product.id), 10);
+    if (!Number.isFinite(resolvedProductId)) {
+      toast.error("Impossible de créer une alerte pour ce produit.");
+      return;
+    }
+
     await mutateAsync({
       user_email: email.trim(),
-      product_id: product.id,
+      product_id: resolvedProductId,
       target_price: Number(parsedTarget.toFixed(2)),
     });
   };

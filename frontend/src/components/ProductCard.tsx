@@ -64,6 +64,9 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
       <CardFooter className="border-t border-slate-200 pt-4 text-sm text-slate-500">{footer}</CardFooter>
     );
 
+  const canonicalId = product.product_id ?? String(product.id);
+  const resolvedHref = href ?? (canonicalId ? `/products/${encodeURIComponent(canonicalId)}` : undefined);
+
   const productImage = getProductImage(product);
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = productImage && !imageFailed;
@@ -191,9 +194,9 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
     </>
   );
 
-  const cardBody = href ? (
+  const cardBody = resolvedHref ? (
     <Link
-      href={href}
+      href={resolvedHref}
       className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2"
     >
       {bodyContent}

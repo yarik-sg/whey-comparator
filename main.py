@@ -8,7 +8,7 @@ import requests
 from urllib.parse import urlparse, parse_qs, quote
 from functools import lru_cache
 from math import atan2, cos, radians, sin, sqrt
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 app = FastAPI()
 
@@ -289,6 +289,50 @@ def _clone_offers_for_cache(offers: Optional[List[Dict[str, Any]]]) -> List[Dict
         if isinstance(offer, dict):
             cloned.append(clone_deal_payload(offer))
     return cloned
+
+
+def find_product_by_id(identifier: Any) -> Optional[Tuple[str, Dict[str, Any]]]:
+    normalized = _normalize_serp_cache_key(identifier)
+    if normalized:
+        direct_entry = SERP_PRODUCT_CACHE.get(normalized)
+        if isinstance(direct_entry, dict) and direct_entry:
+            return normalized, direct_entry
+
+    if not normalized:
+        return None
+
+    for cache_key, entry in SERP_PRODUCT_CACHE.items():
+        if not isinstance(entry, dict) or not entry:
+            continue
+
+        candidates: List[Any] = []
+        summary = entry.get("summary")
+        if isinstance(summary, dict):
+            candidates.extend(
+                [summary.get("id"), summary.get("product_id"), summary.get("link")]
+            )
+
+        deal = entry.get("deal")
+        if isinstance(deal, dict):
+            candidates.extend([deal.get("productId"), deal.get("id"), deal.get("link")])
+
+        serp_product = entry.get("serp_product")
+        if isinstance(serp_product, dict):
+            product_results = serp_product.get("product_results")
+            if isinstance(product_results, dict):
+                candidates.extend(
+                    [
+                        product_results.get("product_id"),
+                        product_results.get("link"),
+                        product_results.get("product_link"),
+                    ]
+                )
+
+        for candidate in candidates:
+            if _normalize_serp_cache_key(candidate) == normalized:
+                return cache_key, entry
+
+    return None
 
 
 def _update_serp_cache_entry(
@@ -663,7 +707,7 @@ def build_deal_payload(
     rating: Optional[float],
     reviews_count: Optional[int],
     source: str,
-    product_id: Optional[int] = None,
+    product_id: Optional[Union[str, int]] = None,
     expires_at: Optional[str] = None,
     weight_kg: Optional[float] = None,
     price_per_kg: Optional[float] = None,
@@ -684,6 +728,15 @@ def build_deal_payload(
     normalized_image = normalize_image_url(image)
     if normalized_image and looks_like_placeholder_image(normalized_image):
         normalized_image = None
+
+    normalized_product_id: Optional[str] = None
+    if product_id is not None:
+        try:
+            normalized_value = str(product_id).strip()
+        except Exception:
+            normalized_value = ""
+        if normalized_value:
+            normalized_product_id = normalized_value
 
     return {
         "id": identifier,
@@ -710,7 +763,7 @@ def build_deal_payload(
         "bestPrice": False,
         "isBestPrice": False,
         "source": source,
-        "productId": product_id,
+        "productId": normalized_product_id,
         "expiresAt": expires_at,
         "weightKg": weight_kg,
         "pricePerKg": price_per_kg,
@@ -791,11 +844,29 @@ def build_serp_product_summary(
     deal: Dict[str, Any], *, fallback_index: int
 ) -> Dict[str, Any]:
     cloned = clone_deal_payload(deal)
-    identifier = (
+    raw_identifier = (
         cloned.get("productId")
         or cloned.get("id")
         or f"serp-{fallback_index}"
     )
+
+    identifier_str: Optional[str]
+    try:
+        identifier_str = str(raw_identifier).strip()
+    except Exception:
+        identifier_str = None
+
+    if not identifier_str:
+        identifier_str = f"serp-{fallback_index}"
+
+    identifier_value: Union[int, str]
+    if identifier_str.isdigit():
+        try:
+            identifier_value = int(identifier_str)
+        except ValueError:
+            identifier_value = identifier_str
+    else:
+        identifier_value = identifier_str
 
     title = (cloned.get("title") or "Produit").strip() or "Produit"
     vendor = (cloned.get("vendor") or cloned.get("source") or "Marchand").strip() or "Marchand"
@@ -830,7 +901,8 @@ def build_serp_product_summary(
         }
 
     return {
-        "id": identifier,
+        "id": identifier_value,
+        "product_id": identifier_str,
         "name": title,
         "brand": vendor,
         "flavour": None,
@@ -868,17 +940,20 @@ def build_serp_catalogue(
 
     for index, deal in enumerate(deals):
         summary = build_serp_product_summary(deal, fallback_index=index)
-        identifier = str(summary.get("id"))
-        if identifier in seen:
+        cache_identifier = summary.get("product_id") or summary.get("id")
+        normalized_identifier = _normalize_serp_cache_key(cache_identifier)
+        if not normalized_identifier:
             continue
-        seen.add(identifier)
+        if normalized_identifier in seen:
+            continue
+        seen.add(normalized_identifier)
         filters_payload: Dict[str, Any] = {}
         if marque:
             filters_payload["marque"] = marque
         if categorie:
             filters_payload["categorie"] = categorie
         _update_serp_cache_entry(
-            identifier,
+            cache_identifier,
             summary=summary,
             query=q,
             filters=filters_payload or None,
@@ -913,7 +988,15 @@ def collect_serp_deals(
         if categorie and categorie.lower() not in title_lower:
             continue
 
-        product_id = item.get("product_id")
+        raw_product_id = item.get("product_id") or item.get("productId")
+        product_id: Optional[str] = None
+        if raw_product_id is not None:
+            try:
+                candidate = str(raw_product_id).strip()
+            except Exception:
+                candidate = ""
+            if candidate:
+                product_id = candidate
 
         image_candidates: List[Optional[str]] = [
             item.get("thumbnail"),
@@ -942,7 +1025,7 @@ def collect_serp_deals(
 
         prod: Optional[Dict[str, Any]] = None
         if product_id:
-            prod = serpapi_product_offers(str(product_id))
+            prod = serpapi_product_offers(product_id)
             sellers_results = prod.get("sellers_results") or {}
             online_sellers = sellers_results.get("online_sellers")
             offers = online_sellers if isinstance(online_sellers, list) else []
@@ -1039,7 +1122,7 @@ def collect_serp_deals(
             rating=rating_val,
             reviews_count=reviews_count,
             source="Google Shopping",
-            product_id=int(product_id) if product_id else None,
+            product_id=product_id,
             weight_kg=weight_kg,
             price_per_kg=eur_per_kg,
         )
@@ -1116,7 +1199,7 @@ def convert_scraper_offer_to_deal(
         rating=parse_float(offer.get("rating")),
         reviews_count=parse_int(offer.get("reviews")),
         source=f"{source_name.title()} (Scraper)",
-        product_id=int(product_id) if product_id is not None else None,
+        product_id=str(product_id) if product_id is not None else None,
     )
 
 
@@ -1295,6 +1378,21 @@ def serialize_product(product: Dict[str, Any]) -> Dict[str, Any]:
         "category",
     ]
     payload = {key: product.get(key) for key in keys}
+
+    canonical_identifier = product.get("product_id")
+    if canonical_identifier is None:
+        canonical_identifier = product.get("id")
+
+    normalized_product_id: Optional[str] = None
+    if canonical_identifier is not None:
+        try:
+            candidate = str(canonical_identifier).strip()
+        except Exception:
+            candidate = ""
+        if candidate:
+            normalized_product_id = candidate
+
+    payload["product_id"] = normalized_product_id
 
     offers = product.get("offers")
     image_candidates: List[Optional[str]] = [
@@ -1784,13 +1882,11 @@ def list_products(
 def build_cached_serp_product_detail(
     product_identifier: str, *, limit: int
 ) -> Optional[Dict[str, Any]]:
-    cache_key = _normalize_serp_cache_key(product_identifier)
-    if not cache_key:
+    lookup = find_product_by_id(product_identifier)
+    if not lookup:
         return None
 
-    cached = SERP_PRODUCT_CACHE.get(cache_key)
-    if not isinstance(cached, dict) or not cached:
-        return None
+    cache_key, cached = lookup
 
     summary = cached.get("summary")
     if not isinstance(summary, dict):
@@ -1854,6 +1950,9 @@ def build_cached_serp_product_detail(
 
     product_payload = {
         "id": summary.get("id") or product_identifier,
+        "product_id": summary.get("product_id")
+        or summary.get("id")
+        or product_identifier,
         "name": summary.get("name") or best_offer.get("title") or "Produit",
         "brand": summary.get("brand"),
         "flavour": summary.get("flavour"),
@@ -1893,8 +1992,12 @@ def build_cached_serp_product_detail(
 def build_serp_product_detail(
     product_identifier: str, *, limit: int = 10
 ) -> Optional[Dict[str, Any]]:
-    cache_key = _normalize_serp_cache_key(product_identifier)
-    cached_entry = SERP_PRODUCT_CACHE.get(cache_key) if cache_key else None
+    lookup = find_product_by_id(product_identifier)
+    if lookup:
+        cache_key, cached_entry = lookup
+    else:
+        cache_key = _normalize_serp_cache_key(product_identifier)
+        cached_entry = SERP_PRODUCT_CACHE.get(cache_key) if cache_key else None
 
     serp_product: Optional[Dict[str, Any]] = None
     if cached_entry:
@@ -2098,6 +2201,7 @@ def build_serp_product_detail(
 
     product_payload = {
         "id": payload_id,
+        "product_id": str(product_identifier),
         "name": title,
         "brand": brand,
         "flavour": None,

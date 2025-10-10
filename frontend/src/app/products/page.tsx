@@ -19,8 +19,17 @@ import { Input } from "@/components/ui/input";
 
 const DEFAULT_PER_PAGE = 12;
 
-function buildComparisonHref(productIds: number[]): string {
-  const uniqueIds = Array.from(new Set(productIds.map((id) => String(id).trim())));
+function buildComparisonHref(
+  productIds: Array<string | number | null | undefined>,
+): string {
+  const uniqueIds = Array.from(
+    new Set(
+      productIds
+        .map((id) => (id === null || id === undefined ? "" : String(id).trim()))
+        .filter((id) => id.length > 0),
+    ),
+  );
+
   return uniqueIds.length > 0
     ? `/comparison?ids=${encodeURIComponent(uniqueIds.join(","))}`
     : "/comparison";
@@ -282,26 +291,31 @@ export default function ProductsPage() {
               )}
 
               {!isBusy &&
-                products.map((product: ProductSummary) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    href={`/products/${product.id}`}
-                    footer={
-                      <div className="flex items-center justify-between text-xs text-slate-400">
-                        <span>ID #{product.id}</span>
-                        <CompareLinkButton
-                          href={buildComparisonHref([product.id])}
-                          className="inline-flex items-center gap-1 font-semibold text-orange-500 transition hover:text-orange-400"
-                          aria-label={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
-                          title={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
-                        >
-                          Comparer →
-                        </CompareLinkButton>
-                      </div>
-                    }
-                  />
-                ))}
+                products.map((product: ProductSummary) => {
+                  const canonicalId = product.product_id ?? String(product.id);
+                  const productHref = `/products/${encodeURIComponent(canonicalId)}`;
+
+                  return (
+                    <ProductCard
+                      key={canonicalId}
+                      product={product}
+                      href={productHref}
+                      footer={
+                        <div className="flex items-center justify-between text-xs text-slate-400">
+                          <span>ID #{canonicalId}</span>
+                          <CompareLinkButton
+                            href={buildComparisonHref([canonicalId])}
+                            className="inline-flex items-center gap-1 font-semibold text-orange-500 transition hover:text-orange-400"
+                            aria-label={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
+                            title={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
+                          >
+                            Comparer →
+                          </CompareLinkButton>
+                        </div>
+                      }
+                    />
+                  );
+                })}
             </div>
 
             {pagination && pagination.totalPages > 1 && (
