@@ -161,9 +161,10 @@ async function fetchSimilarProducts(
 export default async function ProductDetailPage({
   params,
 }: {
-  params: { productId: string };
+  params: Promise<{ productId: string }>;
 }) {
-  const rawProductId = params.productId?.trim();
+  const { productId: routeProductId } = await params;
+  const rawProductId = routeProductId?.trim();
 
   if (!rawProductId) {
     notFound();
@@ -178,11 +179,15 @@ export default async function ProductDetailPage({
   }
 
   const { product, offers, sources } = data;
+  const canonicalProductId =
+    typeof product.product_id === "string" && product.product_id.trim().length > 0
+      ? product.product_id.trim()
+      : rawProductId;
+  const sectionAnchorId = canonicalProductId ?? String(product.id ?? rawProductId ?? "product");
   const bestOffer = offers.find((offer) => offer.isBestPrice || offer.bestPrice) ?? offers[0];
 
-  const similarProductId =
-    typeof product.id === "number" ? String(product.id) : String(rawProductId);
-  const similarFallbackId = parseNumericId(product.id ?? numericProductId);
+  const similarProductId = canonicalProductId ?? String(rawProductId);
+  const similarFallbackId = parseNumericId(product.product_id ?? product.id ?? numericProductId);
   const similarResponse = await fetchSimilarProducts(similarProductId, similarFallbackId, 4);
   const similarProducts = similarResponse?.similar ?? [];
   const galleryImages = buildGalleryImages(product, offers);
@@ -190,6 +195,7 @@ export default async function ProductDetailPage({
   const reviewsCount = product.reviewsCount ?? bestOffer?.reviewsCount ?? null;
   const hasAverageRating = typeof averageRating === "number" && !Number.isNaN(averageRating);
   const hasReviewsCount = typeof reviewsCount === "number" && !Number.isNaN(reviewsCount);
+  const analyticsProductId = parseNumericId(product.id ?? canonicalProductId);
 
   return (
     <div className="min-h-screen bg-[#0b1320] text-white">
@@ -220,12 +226,12 @@ export default async function ProductDetailPage({
           items={[
             { label: "Accueil", href: "/" },
             { label: "Catalogue", href: "/products" },
-            { label: product.name, href: `#product-${product.id}` },
+            { label: product.name, href: `#product-${sectionAnchorId}` },
           ]}
           className="mb-6 text-gray-300"
         />
 
-        <div id={`product-${product.id}`} className="grid gap-10 lg:grid-cols-[360px,1fr]">
+        <div id={`product-${sectionAnchorId}`} className="grid gap-10 lg:grid-cols-[360px,1fr]">
           <div className="space-y-6">
             <ProductMediaCarousel images={galleryImages} alt={product.name} />
 
@@ -250,7 +256,7 @@ export default async function ProductDetailPage({
                   )}
                 </div>
                 <CompareLinkButton
-                  href={buildComparisonHref(product.id)}
+                  href={buildComparisonHref(canonicalProductId)}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
                   aria-label={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
                   title={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
@@ -299,7 +305,7 @@ export default async function ProductDetailPage({
               </dl>
 
               <div className="space-y-1 text-xs text-gray-400">
-                <p>ID #{product.id}</p>
+                <p>ID #{canonicalProductId}</p>
                 <p>Sources agrégées : {offers.length}</p>
                 <p>Entrées scraper : {sources.scraper.length}</p>
               </div>
@@ -338,8 +344,12 @@ export default async function ProductDetailPage({
 
           <div className="space-y-6">
             <OfferTable offers={offers} caption="Meilleures offres" />
-            <PriceHistoryChart productId={product.id} />
-            <ReviewsSection productId={product.id} />
+            {analyticsProductId !== null && (
+              <PriceHistoryChart productId={analyticsProductId} />
+            )}
+            {analyticsProductId !== null && (
+              <ReviewsSection productId={analyticsProductId} />
+            )}
             <CreatePriceAlert product={product} />
 
             <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-gray-200">
@@ -369,26 +379,32 @@ export default async function ProductDetailPage({
                   </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
-                  {similarProducts.map((similarProduct) => (
-                    <ProductCard
-                      key={similarProduct.id}
-                      product={similarProduct}
-                      href={`/products/${similarProduct.id}`}
-                      footer={
-                        <div className="flex items-center justify-between text-xs text-gray-400">
-                          <span>ID #{similarProduct.id}</span>
-                          <CompareLinkButton
-                            href={buildComparisonHref(product.id, similarProduct.id)}
-                            className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
-                            aria-label={`Comparer ${product.name} avec ${similarProduct.name}`}
-                            title={`Comparer ${product.name} avec ${similarProduct.name}`}
-                          >
-                            Comparer →
-                          </CompareLinkButton>
-                        </div>
-                      }
-                    />
-                  ))}
+                  {similarProducts.map((similarProduct) => {
+                    const similarCanonicalId =
+                      similarProduct.product_id ?? String(similarProduct.id);
+                    const similarHref = `/products/${encodeURIComponent(similarCanonicalId)}`;
+
+                    return (
+                      <ProductCard
+                        key={similarCanonicalId}
+                        product={similarProduct}
+                        href={similarHref}
+                        footer={
+                          <div className="flex items-center justify-between text-xs text-gray-400">
+                            <span>ID #{similarCanonicalId}</span>
+                            <CompareLinkButton
+                              href={buildComparisonHref(canonicalProductId, similarCanonicalId)}
+                              className="inline-flex items-center gap-1 font-semibold text-orange-300 transition hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
+                              aria-label={`Comparer ${product.name} avec ${similarProduct.name}`}
+                              title={`Comparer ${product.name} avec ${similarProduct.name}`}
+                            >
+                              Comparer →
+                            </CompareLinkButton>
+                          </div>
+                        }
+                      />
+                    );
+                  })}
                 </div>
               </section>
             )}

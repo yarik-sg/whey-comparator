@@ -21,7 +21,7 @@ export interface DealItem {
   bestPrice: boolean;
   isBestPrice?: boolean;
   source: string;
-  productId?: number | null;
+  productId?: string | number | null;
   expiresAt?: string | null;
   weightKg?: number | null;
   pricePerKg?: number | null;
@@ -54,7 +54,8 @@ export interface PriceHistoryResponse {
 }
 
 export interface ProductSummary {
-  id: number;
+  id: number | string;
+  product_id?: string | null;
   name: string;
   brand?: string | null;
   flavour?: string | null;

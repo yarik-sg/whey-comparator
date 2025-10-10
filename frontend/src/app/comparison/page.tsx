@@ -77,8 +77,10 @@ function mergeWithFallback(
 
   const presentIds = new Set<number>();
   primary.products.forEach((entry) => {
-    if (typeof entry.product?.id === "number") {
-      presentIds.add(entry.product.id);
+    const rawId = entry.product?.id ?? entry.product?.product_id;
+    const parsed = rawId === undefined ? NaN : Number.parseInt(String(rawId), 10);
+    if (Number.isFinite(parsed)) {
+      presentIds.add(parsed);
     }
   });
 
@@ -88,9 +90,11 @@ function mergeWithFallback(
   }
 
   const missingSet = new Set(missingIds);
-  const supplementalProducts = fallback.products.filter((entry) =>
-    typeof entry.product?.id === "number" && missingSet.has(entry.product.id),
-  );
+  const supplementalProducts = fallback.products.filter((entry) => {
+    const rawId = entry.product?.id ?? entry.product?.product_id;
+    const parsed = rawId === undefined ? NaN : Number.parseInt(String(rawId), 10);
+    return Number.isFinite(parsed) && missingSet.has(parsed);
+  });
 
   if (supplementalProducts.length === 0) {
     return primary;
@@ -103,10 +107,12 @@ function mergeWithFallback(
   });
 
   combinedProducts.sort((a, b) => {
-    const aId = typeof a.product?.id === "number" ? a.product.id : Number.MAX_SAFE_INTEGER;
-    const bId = typeof b.product?.id === "number" ? b.product.id : Number.MAX_SAFE_INTEGER;
-    const aOrder = order.get(aId) ?? Number.MAX_SAFE_INTEGER;
-    const bOrder = order.get(bId) ?? Number.MAX_SAFE_INTEGER;
+    const rawA = a.product?.id ?? a.product?.product_id;
+    const rawB = b.product?.id ?? b.product?.product_id;
+    const aId = rawA === undefined ? NaN : Number.parseInt(String(rawA), 10);
+    const bId = rawB === undefined ? NaN : Number.parseInt(String(rawB), 10);
+    const aOrder = Number.isFinite(aId) ? order.get(aId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
+    const bOrder = Number.isFinite(bId) ? order.get(bId) ?? Number.MAX_SAFE_INTEGER : Number.MAX_SAFE_INTEGER;
     return aOrder - bOrder;
   });
 
@@ -120,7 +126,13 @@ function mergeWithFallback(
   (primary.summary ?? []).forEach(pushOffer);
 
   fallback.summary
-    .filter((offer) => typeof offer.productId === "number" && missingSet.has(offer.productId))
+    .filter((offer) => {
+      if (offer.productId === null || offer.productId === undefined) {
+        return false;
+      }
+      const parsed = Number.parseInt(String(offer.productId), 10);
+      return Number.isFinite(parsed) && missingSet.has(parsed);
+    })
     .forEach(pushOffer);
 
   return {
@@ -295,26 +307,31 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
             <section className="space-y-8">
               <h2 className="text-2xl font-semibold text-slate-900">Détail par produit</h2>
               <div className="grid gap-8 lg:grid-cols-2">
-                {data.products.map(({ product, offers }) => (
-                  <div key={product.id} className="space-y-4">
-                    <ProductCard
-                      product={product}
-                      href={`/products/${product.id}`}
-                      footer={
-                        <div className="flex items-center justify-between text-xs text-slate-400">
-                          <span>ID #{product.id}</span>
-                          <CompareLinkButton
-                            href={`/comparison?ids=${product.id}`}
-                            className="inline-flex items-center gap-1 font-semibold text-orange-500 transition hover:text-orange-400"
-                          >
-                            Comparer individuellement →
-                          </CompareLinkButton>
-                        </div>
-                      }
-                    />
-                    <OfferTable offers={offers} caption="Offres sélectionnées" />
-                  </div>
-                ))}
+                {data.products.map(({ product, offers }) => {
+                  const canonicalId = product.product_id ?? String(product.id);
+                  const productHref = `/products/${encodeURIComponent(canonicalId)}`;
+
+                  return (
+                    <div key={canonicalId} className="space-y-4">
+                      <ProductCard
+                        product={product}
+                        href={productHref}
+                        footer={
+                          <div className="flex items-center justify-between text-xs text-slate-400">
+                            <span>ID #{canonicalId}</span>
+                            <CompareLinkButton
+                              href={`/comparison?ids=${encodeURIComponent(canonicalId)}`}
+                              className="inline-flex items-center gap-1 font-semibold text-orange-500 transition hover:text-orange-400"
+                            >
+                              Comparer individuellement →
+                            </CompareLinkButton>
+                          </div>
+                        }
+                      />
+                      <OfferTable offers={offers} caption="Offres sélectionnées" />
+                    </div>
+                  );
+                })}
               </div>
             </section>
           </div>

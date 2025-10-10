@@ -787,7 +787,7 @@ function buildOffer(rawOffer: RawFallbackOffer, product: RawFallbackProduct): De
     bestPrice: false,
     isBestPrice: false,
     source: rawOffer.source ?? rawOffer.vendor,
-    productId: product.id,
+    productId: String(product.id),
     expiresAt: null,
     weightKg,
     pricePerKg,
@@ -860,6 +860,7 @@ function buildProduct(
 
   return {
     id: product.id,
+    product_id: String(product.id),
     name: product.name,
     brand: product.brand ?? null,
     flavour: product.flavour ?? null,
