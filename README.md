@@ -8,7 +8,7 @@ Comparateur multi-sources pour les compléments alimentaires (whey, créatine, e
 - **Comparateur multi-produits** : page dédiée permettant de juxtaposer plusieurs références, d'afficher un résumé des meilleurs prix et d'accéder rapidement aux marchands (avec pré-sélection automatique si aucun ID n'est fourni).
 - **Page produit enrichie** : fiches détaillées affichant carrousel média, tableau d'offres, historique de prix, avis, flux de collecte et recommandations similaires avec bascule automatique sur les données fallback si l'API principale échoue.
 - **Historique et fallback** : données de secours embarquées lorsque le scraper est indisponible, avec génération d'images réalistes, normalisation automatique des URLs distantes et fusion intelligente des réponses pour le comparateur et les pages produit.
-- **Front moderne** : composants Tailwind réutilisables, mode sombre natif, navigation fluide entre catalogue, promotions et comparateur.
+- **Front moderne** : composants Tailwind réutilisables, palette blanc/orange harmonisée et navigation fluide entre catalogue, promotions et comparateur.
 - **Localisateur de salles de sport** : section d’accueil « Trouvez votre salle de sport » (`frontend/src/components/GymLocatorSection.tsx`) affichant les clubs Basic-Fit, Fitness Park, On Air, Neoness, etc. à proximité, avec filtrage par ville/rayon, géolocalisation, bouton « Voir toutes les salles proches » et fallback mock (`frontend/src/lib/gymLocator.ts`).
 
 ## 🏗️ Architecture du dépôt
@@ -115,6 +115,7 @@ L'application sera disponible sur [http://localhost:3000](http://localhost:3000)
 3. **Tâche 3 – Améliorations continues** : comparaison pré-remplie, meilleur rendu mobile/desktop, correction de l'affichage des images produits, mise à jour de la documentation.
 4. **Tâche 4 – Orchestration Docker** : ajout des images frontend/backend, configuration Compose (DB, Redis, API, worker) et documentation associée.
 5. **Tâche 5 – Fiabilisation pages produit & comparateur** : refonte de la page produit (carrousel, offre vedette, historique, avis, recommandations, flux de données), appels API `/products/{id}/offers|similar|price-history` robustes et fusion des réponses fallback pour la comparaison multi-produits.
+6. **Tâche 6 – Harmonisation visuelle de la fiche produit** : retour à la charte blanche/orange, composants unifiés avec le catalogue et CTA ré-alignés sur la palette principale.
 
 ## 🧪 Tests & Qualité
 

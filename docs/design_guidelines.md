@@ -23,6 +23,14 @@ Ces directives résument les choix graphiques appliqués à la refonte UI (thèm
 - **Cartes** : coins arrondis (`rounded-3xl`/`rounded-2xl`), ombres légères (`shadow-xl shadow-orange-100/60`) et effets de blur pour la profondeur.
 - **Formulaires** : inputs arrondis (`rounded-full`), bordures translucides (`border-orange-200/70`), CTA plein en accent et variantes ghost/outlines.
 
+## Fiche produit
+
+- **Structure** : grille `lg:grid-cols-[360px,1fr]` avec la galerie media sticky sur desktop pour conserver le visuel dans le champ.
+- **Encarts** : sections principales en cartes blanches (`bg-white`) avec bordure `border-slate-200` et ombre douce (`shadow-sm`). Les blocs de métriques utilisent un fond `bg-orange-50/80` pour rappeler l’accent sans basculer sur un thème sombre.
+- **Typographie** : titres `text-3xl`/`text-4xl` en Poppins, métadonnées en `text-xs uppercase` gris `text-slate-400`, CTA orange plein (`bg-orange-500` → `hover:bg-orange-600`).
+- **Liens secondaires** : boutons outline et liens de navigation en orange `text-orange-600` avec hover `text-orange-500` pour rester cohérent avec le reste de l’interface.
+- **Flux de données & similarités** : cartes blanches avec texte `text-slate-600`, accent sur les sous-titres via uppercase/letter-spacing et CTA secondaires (`CompareLinkButton`) aux teintes orange.
+
 ## Iconographie & visuels
 
 - **Icônes** : pack `lucide-react` (stroke 1.5), taille standard `h-5 w-5`.
