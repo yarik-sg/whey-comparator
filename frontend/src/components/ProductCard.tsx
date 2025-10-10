@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Award } from "lucide-react";
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCanonicalProductId } from "@/lib/productIdentifiers";
 import type { ProductSummary } from "@/types/api";
 
 function pickImageUrl(
@@ -64,7 +65,7 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
       <CardFooter className="border-t border-slate-200 pt-4 text-sm text-slate-500">{footer}</CardFooter>
     );
 
-  const canonicalId = product.product_id ?? String(product.id);
+  const canonicalId = getCanonicalProductId(product);
   const resolvedHref = href ?? (canonicalId ? `/products/${encodeURIComponent(canonicalId)}` : undefined);
 
   const productImage = getProductImage(product);

@@ -15,6 +15,12 @@ import {
   getFallbackProductOffers,
   getFallbackSimilarProducts,
 } from "@/lib/fallbackCatalogue";
+import {
+  getCanonicalProductId,
+  normalizeProductIdentifier,
+  parseNumericIdentifier,
+  type ProductIdentifierCandidate,
+} from "@/lib/productIdentifiers";
 import type {
   DealItem,
   ProductOffersResponse,
@@ -29,46 +35,27 @@ const datetimeFormatter = new Intl.DateTimeFormat("fr-FR", {
   minute: "2-digit",
 });
 
-
-function parseNumericId(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (trimmed.length === 0) {
-      return null;
-    }
-
-    const parsed = Number.parseInt(trimmed, 10);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-
-  return null;
-}
-
 function buildComparisonHref(
-  ...productIds: Array<string | number | null | undefined>
+  ...productIds: ProductIdentifierCandidate[]
 ): string {
-  const uniqueIds = Array.from(
-    new Set(
-      productIds
-        .map((id) => {
-          if (typeof id === "number") {
-            return String(id);
-          }
-          if (typeof id === "string") {
-            return id;
-          }
-          return "";
-        })
-        .map((id) => id.trim())
-        .filter((id) => id.length > 0),
-    ),
-  );
+  const queue: ProductIdentifierCandidate[] = [...productIds];
+  const uniqueIds: string[] = [];
+  const seen = new Set<string>();
+
+  while (queue.length > 0) {
+    const candidate = queue.shift();
+
+    if (Array.isArray(candidate)) {
+      queue.unshift(...candidate);
+      continue;
+    }
+
+    const normalized = normalizeProductIdentifier(candidate ?? null);
+    if (normalized && !seen.has(normalized)) {
+      seen.add(normalized);
+      uniqueIds.push(normalized);
+    }
+  }
 
   if (uniqueIds.length === 0) {
     return "/comparison";
@@ -170,7 +157,7 @@ export default async function ProductDetailPage({
     notFound();
   }
 
-  const numericProductId = parseNumericId(rawProductId);
+  const numericProductId = parseNumericIdentifier(rawProductId);
 
   const data = await fetchProductOffers(rawProductId, numericProductId);
 
@@ -180,14 +167,14 @@ export default async function ProductDetailPage({
 
   const { product, offers, sources } = data;
   const canonicalProductId =
-    typeof product.product_id === "string" && product.product_id.trim().length > 0
-      ? product.product_id.trim()
-      : rawProductId;
+    getCanonicalProductId(product, { offers, fallback: rawProductId }) ?? rawProductId;
   const sectionAnchorId = canonicalProductId ?? String(product.id ?? rawProductId ?? "product");
   const bestOffer = offers.find((offer) => offer.isBestPrice || offer.bestPrice) ?? offers[0];
 
   const similarProductId = canonicalProductId ?? String(rawProductId);
-  const similarFallbackId = parseNumericId(product.product_id ?? product.id ?? numericProductId);
+  const similarFallbackId = parseNumericIdentifier(
+    product.product_id ?? product.bestDeal?.productId ?? product.id ?? numericProductId,
+  );
   const similarResponse = await fetchSimilarProducts(similarProductId, similarFallbackId, 4);
   const similarProducts = similarResponse?.similar ?? [];
   const galleryImages = buildGalleryImages(product, offers);
@@ -195,7 +182,7 @@ export default async function ProductDetailPage({
   const reviewsCount = product.reviewsCount ?? bestOffer?.reviewsCount ?? null;
   const hasAverageRating = typeof averageRating === "number" && !Number.isNaN(averageRating);
   const hasReviewsCount = typeof reviewsCount === "number" && !Number.isNaN(reviewsCount);
-  const analyticsProductId = parseNumericId(product.id ?? canonicalProductId);
+  const analyticsProductId = parseNumericIdentifier(product.id ?? canonicalProductId ?? rawProductId);
 
   return (
     <div className="min-h-screen bg-[#0b1320] text-white">
@@ -381,7 +368,7 @@ export default async function ProductDetailPage({
                 <div className="grid gap-4 md:grid-cols-2">
                   {similarProducts.map((similarProduct) => {
                     const similarCanonicalId =
-                      similarProduct.product_id ?? String(similarProduct.id);
+                      getCanonicalProductId(similarProduct) ?? String(similarProduct.id);
                     const similarHref = `/products/${encodeURIComponent(similarCanonicalId)}`;
 
                     return (
