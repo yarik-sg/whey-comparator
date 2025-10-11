@@ -134,7 +134,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
   );
 
   const containerClassName = cn(
-    "space-y-6 rounded-3xl border border-orange-100 bg-white p-8 shadow-lg",
+    "space-y-6 rounded-3xl border border-white/15 bg-white/85 p-8 shadow-glow backdrop-blur dark:border-white/10 dark:bg-slate-900/60",
     className,
   );
 
@@ -166,7 +166,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="alert-email" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="alert-email" className="block text-sm font-semibold text-fitidion-dark dark:text-white">
             Adresse e-mail
           </label>
           <Input
@@ -181,11 +181,11 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
             placeholder="vous@exemple.com"
             aria-invalid={errors.email ? "true" : undefined}
           />
-          {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+          {errors.email && <p className="text-sm text-red-400">{errors.email}</p>}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="alert-product" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="alert-product" className="block text-sm font-semibold text-fitidion-dark dark:text-white">
             Produit ciblé
           </label>
           <Input
@@ -198,11 +198,11 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
             placeholder="Ex. Whey Native Chocolat 1kg"
             aria-invalid={errors.product ? "true" : undefined}
           />
-          {errors.product && <p className="text-sm text-red-500">{errors.product}</p>}
+          {errors.product && <p className="text-sm text-red-400">{errors.product}</p>}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="alert-threshold" className="block text-sm font-semibold text-slate-700">
+          <label htmlFor="alert-threshold" className="block text-sm font-semibold text-fitidion-dark dark:text-white">
             Seuil de prix (€)
           </label>
           <Input
@@ -219,7 +219,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
             aria-invalid={errors.priceThreshold ? "true" : undefined}
           />
           {errors.priceThreshold && (
-            <p className="text-sm text-red-500">{errors.priceThreshold}</p>
+            <p className="text-sm text-red-400">{errors.priceThreshold}</p>
           )}
         </div>
       </div>
@@ -229,8 +229,8 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
           className={cn(
             "rounded-2xl border px-4 py-3 text-sm",
             status.state === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-red-200 bg-red-50 text-red-600",
+              ? "border-emerald-300/40 bg-emerald-500/10 text-emerald-200"
+              : "border-red-300/40 bg-red-500/10 text-red-200",
           )}
         >
           {status.message}
@@ -244,7 +244,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
       >
         {isSubmitting ? "Enregistrement..." : "Créer l'alerte"}
       </Button>
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-500">
         Vous pouvez vous désinscrire à tout moment via le lien présent dans chaque e-mail.
       </p>
     </form>

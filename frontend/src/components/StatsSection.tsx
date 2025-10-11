@@ -41,16 +41,18 @@ const stats: Stat[] = [
 
 export function StatsSection() {
   return (
-    <section className="bg-white py-20">
+    <section className="relative overflow-hidden py-24">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_15%,rgba(255,102,0,0.12),transparent_55%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_85%_10%,rgba(253,220,142,0.12),transparent_60%)]" aria-hidden />
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-fitidion-orange">
             Données de confiance
           </p>
-          <h2 className="mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-bold text-fitidion-dark sm:text-4xl dark:text-white">
             Nos indicateurs clés
           </h2>
-          <p className="mt-4 text-base text-slate-500">
+          <p className="mt-4 text-base text-slate-600 dark:text-slate-300">
             Une plateforme alimentée en continu pour repérer les meilleures affaires et vous guider dans vos achats sportifs.
           </p>
         </div>
@@ -59,21 +61,21 @@ export function StatsSection() {
           {stats.map(({ icon: Icon, value, label, description }) => (
             <Card
               key={label}
-              className="group relative overflow-hidden border-orange-100/60 bg-white/90 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              className="group relative overflow-hidden border-white/15 bg-white/75 p-6 shadow-glass transition hover:-translate-y-1 hover:border-fitidion-orange/40 hover:shadow-fitidion dark:border-white/10 dark:bg-slate-900/60"
             >
               <dt className="flex items-center gap-4">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-500 transition group-hover:bg-orange-200">
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-fitidion-orange/10 text-fitidion-orange transition group-hover:bg-fitidion-orange/20">
                   <Icon className="h-6 w-6" aria-hidden="true" />
                 </span>
                 <span>
-                  <span className="block text-3xl font-bold text-slate-900">{value}</span>
-                  <span className="text-sm font-semibold uppercase tracking-wide text-slate-400">{label}</span>
+                  <span className="block text-3xl font-bold text-fitidion-dark dark:text-white">{value}</span>
+                  <span className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">{label}</span>
                 </span>
               </dt>
-              <dd className="mt-4 text-sm leading-relaxed text-slate-500">
+              <dd className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                 {description}
               </dd>
-              <span className="pointer-events-none absolute inset-x-6 bottom-2 h-1 rounded-full bg-gradient-to-r from-orange-200 via-orange-400 to-orange-200 opacity-0 transition group-hover:opacity-100" />
+              <span className="pointer-events-none absolute inset-x-6 bottom-2 h-1 rounded-full bg-gradient-to-r from-fitidion-orange/30 via-fitidion-gold/50 to-fitidion-orange/30 opacity-0 transition group-hover:opacity-100" />
             </Card>
           ))}
         </dl>
