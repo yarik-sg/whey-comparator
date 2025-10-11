@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { CreatePriceAlert } from "@/components/CreatePriceAlert";
-import { OfferTable } from "@/components/OfferTable";
 import { PriceHistoryChart } from "@/components/PriceHistoryChart";
-import { ProductCard } from "@/components/ProductCard";
 import { ProductMediaCarousel } from "@/components/ProductMediaCarousel";
 import { ReviewsSection } from "@/components/ReviewsSection";
+import { PriceComparison } from "@/components/PriceComparison";
+import { SimilarProducts } from "@/components/SimilarProducts";
 import apiClient, { ApiError } from "@/lib/apiClient";
 import {
   getFallbackProductOffers,
@@ -311,7 +311,7 @@ export default async function ProductDetailPage({
           </div>
 
           <div className="space-y-6">
-            <OfferTable offers={offers} caption="Meilleures offres" />
+            <PriceComparison offers={offers} />
             {analyticsProductId !== null && (
               <PriceHistoryChart productId={analyticsProductId} />
             )}
@@ -340,44 +340,11 @@ export default async function ProductDetailPage({
               </ul>
             </section>
 
-            {similarProducts.length > 0 && (
-              <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <h2 className="text-lg font-semibold text-slate-900">Produits similaires</h2>
-                  <p className="text-xs text-slate-500">
-                    Basés sur la marque, la catégorie et la performance nutritionnelle.
-                  </p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {similarProducts.map((similarProduct) => {
-                    const similarCanonicalId =
-                      getCanonicalProductId(similarProduct) ?? String(similarProduct.id);
-                    const similarHref = `/products/${encodeURIComponent(similarCanonicalId)}`;
-
-                    return (
-                      <ProductCard
-                        key={similarCanonicalId}
-                        product={similarProduct}
-                        href={similarHref}
-                        footer={
-                          <div className="flex items-center justify-between text-xs text-slate-500">
-                            <span>ID #{similarCanonicalId}</span>
-                            <CompareLinkButton
-                              href={buildComparisonHref(canonicalProductId, similarCanonicalId)}
-                              className="inline-flex items-center gap-1 font-semibold text-orange-600 transition hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
-                              aria-label={`Comparer ${product.name} avec ${similarProduct.name}`}
-                              title={`Comparer ${product.name} avec ${similarProduct.name}`}
-                            >
-                              Comparer →
-                            </CompareLinkButton>
-                          </div>
-                        }
-                      />
-                    );
-                  })}
-                </div>
-              </section>
-            )}
+            <SimilarProducts
+              products={similarProducts}
+              currentProductId={canonicalProductId}
+              buildComparisonHref={buildComparisonHref}
+            />
           </div>
         </div>
       </div>

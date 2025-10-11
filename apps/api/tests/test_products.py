@@ -98,10 +98,33 @@ def test_price_history_endpoint(client, db_session):
     response = client.get(f"/products/{product.id}/price-history?period=7d")
     assert response.status_code == 200
     data = response.json()
-    assert data["productId"] == product.id
-    assert len(data["points"]) == 2
-    assert data["statistics"]["lowest"]["amount"] == 28.9
-    assert data["statistics"]["highest"]["amount"] == 31.9
+    assert data["product_id"] == product.id
+    assert len(data["history"]) == 2
+    prices = [point["price"] for point in data["history"]]
+    assert 28.9 in prices and 31.9 in prices
+    assert data["statistics"]["lowest_price"] == 28.9
+    assert data["statistics"]["highest_price"] == 31.9
+    assert data["statistics"]["data_points"] == 2
+
+
+def test_get_product_details(client, db_session):
+    product = Product(
+        name="Detail Test",
+        description="Complete description",
+        brand="Test Brand",
+        category="whey",
+        price=Decimal("19.99"),
+        currency="EUR",
+    )
+    db_session.add(product)
+    db_session.commit()
+
+    response = client.get(f"/products/{product.id}")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["id"] == product.id
+    assert payload["name"] == "Detail Test"
+    assert payload["brand"] == "Test Brand"
 
 
 def test_similar_products_endpoint(client, db_session):
