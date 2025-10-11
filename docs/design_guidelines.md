@@ -1,53 +1,62 @@
-# Design guidelines — Thème Whey Comparator
+# Design guidelines FitIdion
 
-Ces directives résument les choix graphiques appliqués à la refonte UI (thème lumineux, nouvelles sections marketing, comparateur modernisé).
+Ces recommandations encadrent l'identité visuelle FitIdion (palette, typographie, motions,
+composants UI) afin d'assurer une expérience cohérente entre catalogue, comparateur et
+communication marketing.
 
-## Palette & couleurs
+## Palette
 
-- **Fond principal** : `#f8fafc` (`--background`), utilisé pour les pages et les sections neutres.
-- **Texte principal** : `#0f172a` (`--foreground`), garantit une lisibilité élevée sur fond clair.
-- **Accent primaire** : `#f97316` (`--accent`) et sa déclinaison douce `#f59e0b` (`--accent-soft`) pour CTA, badges et highlights.
-- **Dégradés** : sections héro utilisent un gradient `from-orange-50 via-white to-white` complété d'auras `bg-orange-200/30`.
-- **État focus** : anneaux Tailwind `ring-orange-200` / `ring-orange-300` pour cohérence avec l'accent.
+| Usage                 | Couleur                          | Token CSS                  |
+|-----------------------|----------------------------------|----------------------------|
+| Fond clair            | `#F9FAFB`                        | `--fitidion-light`         |
+| Texte principal       | `#111827`                        | `--fitidion-dark`          |
+| Accent primaire       | `#FF6600`                        | `--fitidion-orange`        |
+| Accent secondaire     | `#FDDC8E`                        | `--fitidion-gold`          |
+| Fond sombre           | `#050915`                        | `data-theme="dark"`        |
+
+- Utiliser des gradients combinant orange/or et des halos doux (`bg-fitidion-radial`).
+- Les overlays vitrées appliquent `background: rgba(255,255,255,0.8)` + `backdrop-filter: blur(18px)`.
+- Les cartes « analytics » et CTA utilisent les ombres `shadow-glass` / `shadow-glow` définies dans
+  `globals.css`.
 
 ## Typographie
 
-- **Police de base** : Inter (`--font-inter`), taille confortable (`text-base`), line-height généreuse pour la lecture des paragraphes.
-- **Police display** : Poppins (`--font-poppins`, graisses 400 à 700) pour titres et accroches.
-- **Hiérarchie** : titres en `text-4xl`+ sur desktop, `text-3xl` sur mobile ; sous-titres `text-lg`/`text-xl`, métadonnées `text-xs` uppercase.
+- **Sans principale** : Poppins (via `next/font`) — titres, CTA, badges.
+- **Sans de lecture** : Inter — paragraphes, textes longs.
+- Titles : `text-4xl` sur desktop (Hero), `text-3xl` sur mobile. Sous-titres `text-xl`.
+- Labels & métadonnées : uppercase `tracking-[0.3em]`, `text-xs`.
+- Toujours utiliser `font-semibold` minimum pour les CTA.
 
-## Layout & grille
+## Composants
 
-- **Largeurs** : conteneurs centrés `max-w-5xl` / `max-w-7xl` selon les sections, marges latérales `px-4` → `px-8`.
-- **Sections** : espacement vertical généreux (`py-20` à `py-24`) pour rythmer la landing (Hero, catégories, deals, stats, partenaires, pourquoi nous, alertes prix).
-- **Cartes** : coins arrondis (`rounded-3xl`/`rounded-2xl`), ombres légères (`shadow-xl shadow-orange-100/60`) et effets de blur pour la profondeur.
-- **Formulaires** : inputs arrondis (`rounded-full`), bordures translucides (`border-orange-200/70`), CTA plein en accent et variantes ghost/outlines.
+- **Boutons** : arrondis (`btn-pill`), variantes `primary` (orange plein), `secondary`
+  (orange 10%), `outline` (surfaces vitrées). Ombres `shadow-glow`.
+- **Inputs** : bordures translucides `border-white/50`, focus `ring-fitidion-orange/40`.
+- **Cartes** : `card-surface` + `rounded-3xl`, transitions `hover:shadow-fitidion`.
+- **Badges** : `bg-fitidion-orange/10` + texte orange, uppercase pour les labels.
+- **Mode sombre** : classes Tailwind automatiques (`dark:*`).
 
-## Fiche produit
+## Layout
 
-- **Structure** : grille `lg:grid-cols-[360px,1fr]` avec la galerie media sticky sur desktop pour conserver le visuel dans le champ.
-- **Encarts** : sections principales en cartes blanches (`bg-white`) avec bordure `border-slate-200` et ombre douce (`shadow-sm`). Les blocs de métriques utilisent un fond `bg-orange-50/80` pour rappeler l’accent sans basculer sur un thème sombre.
-- **Typographie** : titres `text-3xl`/`text-4xl` en Poppins, métadonnées en `text-xs uppercase` gris `text-slate-400`, CTA orange plein (`bg-orange-500` → `hover:bg-orange-600`).
-- **Liens secondaires** : boutons outline et liens de navigation en orange `text-orange-600` avec hover `text-orange-500` pour rester cohérent avec le reste de l’interface.
-- **Flux de données & similarités** : cartes blanches avec texte `text-slate-600`, accent sur les sous-titres via uppercase/letter-spacing et CTA secondaires (`CompareLinkButton`) aux teintes orange.
+- Conteneurs centraux `max-w-6xl` (landing) ou `max-w-5xl` (pages listées).
+- Sections majeures : `py-20` à `py-24`, séparées par légers dégradés.
+- Héros : gradient `bg-fitidion-hero`, halos radiaux, call-to-action en duo.
+- Grilles : `md:grid-cols-2` pour les comparaisons, `lg:grid-cols-4` pour les stats.
 
-## Iconographie & visuels
+## Motion & interaction
 
-- **Icônes** : pack `lucide-react` (stroke 1.5), taille standard `h-5 w-5`.
-- **Logos partenaires** : alignement horizontal, teintes neutralisées (`opacity-80`) pour ne pas voler la vedette au contenu.
-- **Graphiques** : `recharts` avec couleurs alignées sur la palette (accent pour la série principale, gris/bleu pour les références).
+- Transitions 200-250ms (`transition-all`), `scale-105` léger sur hover pour cartes.
+- Framer Motion : fade/slide (`initial { opacity: 0, y: 32 }`).
+- Focus visible obligatoire (`focus-visible:ring-2` + `ring-offset-fitidion-light`).
+- Micro-interactions : shimmer sur skeletons, `animate-pulse` en orange clair.
 
-## Motion & interactions
+## Contenu & ton
 
-- **Framer Motion** : fade-in + translate Y (`initial { opacity: 0, y: 32 }`) pour les sections critiques (Hero, stats) afin de donner du rythme.
-- **Hover states** : transitions douces (`transition` Tailwind) sur boutons, cartes et badges (changement de couleur + légère élévation).
-- **Focus visible** : `focus-visible:outline-none` couplé à `focus-visible:ring-2` sur boutons/inputs pour accessibilité.
+- Positionner FitIdion comme copilote intelligent (lexique : « analyse », « suivi », « alerte »).
+- CTA dynamiques (« Lancer FitIdion », « Suivre cette marque », « Activer mon alerte »).
+- Mettre en avant chiffres clés (+900 produits, 70 marques, actualisation 24/7).
+- Pour la section « Pourquoi FitIdion » : 3 ou 4 piliers maximum, chacun structuré en icône +
+  titre court + paragraphe 2 lignes.
 
-## Bonnes pratiques de contenu
-
-- **Messages clés** : insistence sur la proposition de valeur (comparateur intelligent, suivi des prix 24/7, +900 produits).
-- **CTA** : verbes d'action (« Lancer le comparateur », « Voir les promotions », « Activer les alertes ») placés en paires pour orienter l'utilisateur.
-- **Section « Pourquoi nous »** : 3 à 4 piliers maximum, chacun avec icône, titre court, paragraphe concis.
-- **Formulaire d'alertes** : validations claires, feedback via aria-live, possibilité d'expliquer l'avantage (notifications prix personnalisées).
-
-Respecter ces lignes directrices garantit la cohérence du nouveau thème et facilite l'intégration de futures sections.
+Respecter ces principes garantit une identité FitIdion homogène quelle que soit la surface
+(frontend, docs, slides, emails).
