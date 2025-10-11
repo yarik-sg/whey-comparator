@@ -1,66 +1,81 @@
-# Architecture du projet Whey Comparator
+# Architecture FitIdion
 
-Cette documentation décrit la structure complète du dépôt et le rôle de chaque sous-système (backend FastAPI, frontend Next.js, services partagés, infrastructure).
+Cette note décrit la structure actuelle du dépôt FitIdion et la manière dont les différents modules
+coopèrent pour délivrer le comparateur fitness intelligent.
 
-## Vue d'ensemble du dépôt
+## Vue d'ensemble
 
 ```
 whey-comparator/
-├── apps/
-│   └── api/                  # Backend FastAPI (Poetry, Alembic, Celery)
-├── frontend/                 # Interface Next.js 15 (App Router)
-│   ├── Dockerfile            # Image de développement (Turbopack, hot reload)
-│   └── src/                  # Pages, composants, librairies front
-├── services/                 # Clients scrapers & intégrations externes
-├── src/                      # Scripts Python utilitaires (fallback)
-├── docs/                     # Documentation fonctionnelle & technique
-├── docker-compose.yml        # Orchestration locale (API + DB + Redis + frontend)
-├── main.py                   # Entrée API FastAPI simplifiée (mode standalone)
-├── fallback_catalogue.py     # Dataset fallback si scraping indisponible
-└── package.json              # Dépendances Node partagées (scripts utilitaires)
+├── README.md
+├── docs/                      # Guides FitIdion (architecture, design, roadmap)
+├── tailwind.config.ts         # Thème FitIdion partagé (Vite + Next)
+├── frontend/                  # Application Next.js 15 / React 19
+│   ├── package.json           # Dépendances UI (lucide-react, framer-motion…)
+│   ├── src/app/               # Pages App Router, layout FitIdion, globals.css
+│   ├── src/components/        # Sections marketing + primitives UI (buttons, cards…)
+│   ├── src/lib/               # Clients API, hooks TanStack Query, catalogue fallback
+│   └── public/                # Assets (logos à uploader manuellement, manifest placeholders)
+├── apps/api/                  # Backend FastAPI (Poetry, SQLAlchemy, Celery)
+│   ├── app/                   # Routes CRUD, schémas Pydantic, tâches Celery
+│   ├── alembic/               # Migrations base de données
+│   └── tests/                 # Scénarios Pytest/HTTPX
+├── services/                  # Connecteurs scraping & utilitaires (SerpAPI, proxies…)
+├── main.py                    # API FastAPI « lite » pour prototypage rapide
+├── fallback_catalogue.py      # Données de secours FitIdion
+├── docker-compose.yml         # Orchestration locale (Postgres, Redis, API, Frontend)
+└── src/, package.json         # Ancienne POC Vite (toujours disponible pour tests isolés)
 ```
 
-## Backend (`apps/api`)
+## Frontend Next.js
 
-- **`app/main.py`** : configuration FastAPI, CORS, montage des routeurs `products`, `suppliers`, `offers`, healthcheck.
-- **`app/config.py`** : paramètres pydantic (préfixe `API_`), URLs base de données & Celery.
-- **`app/database.py`** : moteur SQLAlchemy, session locale, dépendances pour injection dans les routes.
-- **`app/models.py`** : ORM complet (Product, Supplier, Offer, ScrapeJob) avec mixin de timestamps.
-- **`app/schemas.py`** : schémas Pydantic v2 (CRUD + pagination).
-- **`app/routers/`** : endpoints REST modulaires.
-- **`app/tasks.py` / `app/celery_app.py`** : tâches Celery simulant le scraping avec stockage de logs.
-- **`alembic/`** : migrations de base de données.
-- **`tests/`** : scénarios Pytest/HTTPX (smoke tests, validations).
+- **Design System FitIdion** : `frontend/src/app/globals.css` définit les tokens CSS
+  (gradients, surfaces vitrées, mode sombre). Les composants `ui/` encapsulent les
+  styles (boutons, inputs, cards, checkbox, slider) et intègrent la palette FitIdion.
+- **Layout & theming** : `layout.tsx` charge Inter + Poppins, applique le `ThemeProvider`
+  FitIdion (stockage local + détection système) et ajoute `BrandHeader`, `SiteHeader`, `SiteFooter` remaniés.
+- **Expérience produit** : sections marketing (HeroSection, DealsShowcase, StatsSection,
+  GymLocatorSection…) tirent parti des nouvelles classes FitIdion et du QueryProvider.
+- **API client** : `src/lib/apiClient.ts` et `src/lib/queries.ts` orchestrent l'accès
+  aux endpoints (TanStack Query vendored dans `vendor/`).
 
-## Frontend (`frontend`)
+## Backend FastAPI
 
-- **App Router** : pages dans `src/app/` (landing marketing, comparateur SSR, comparateur express client, catalogue) rendues côté serveur avec React 19 et progressive enhancement.
-- **Composants** : `src/components/` regroupe les sections marketing (HeroSection, DealsShowcase, StatsSection, PartnerLogos, WhyChooseUs, PriceAlertsSection) et primitives dans `components/ui`.
-- **Lib réseau** : `src/lib/apiClient.ts` résout la base API et centralise les appels (TanStack Query vendored dans `vendor/`).
-- **Fallback catalogue** : `src/lib/fallbackCatalogue.ts` fournit des fonctions de secours utilisées par la comparaison et la page produit pour combiner les données locales et distantes (pré-sélection, fusion d'offres, recommandations).
-- **Styles** : `src/app/globals.css` définit les tokens CSS (`--background`, `--accent`, `--font-*`) et Tailwind 4 est importé en tête de fichier.
-- **Dockerfile** : image basée sur Node 20-alpine, `npm ci`, hot reload via `next dev --turbopack` accessible en conteneur.
-- **Public** : assets logos/manifest, favicons.
+- **`apps/api/app`** : expose les routes CRUD (`products`, `offers`, `suppliers`, `price-alerts`),
+  gère la persistence SQLAlchemy, Celery pour l'orchestration scraping et la configuration Pydantic.
+- **`main.py` (racine)** : API d'agrégation temps réel utilisée par le frontend (fusion
+  scrapers + fallback catalogue, calcul des indicateurs, sélection des meilleurs deals).
+- **`fallback_catalogue.py`** : source de vérité de secours synchronisée avec les composants
+  frontend (`src/lib/fallbackCatalogue.ts`).
 
-## Services & scripts partagés
+## Services & données
 
-- **`services/`** : connecteurs vers SerpAPI, MyProtein, normalisation d'offres (utilisés par le backend historique ou scripts).
-- **`fallback_catalogue.py`** : données statiques pour alimenter le comparateur lorsque les scrapers sont hors ligne.
-- **`main.py` (racine)** : expose une version minimaliste de l'API (utile pour prototypage sans Poetry).
-- **`index.html`, `src/` (racine)** : reste d'une POC Vite/Tailwind (peut servir pour des tests isolés de composants).
+- **`services/`** contient les clients scrapers, normalisation des prix et utilitaires
+  de géocodage utilisés par l'API ou les workers Celery.
+- Les logos FitIdion et le favicon sont exclus du dépôt Git ; des placeholders texte sont
+  présents dans `frontend/public/` et `frontend/src/app/` et devront être remplacés via GitHub
+  après merge.
 
-## Orchestration & devops
+## Orchestration
 
-- **`docker-compose.yml`** : services `db` (PostgreSQL), `redis` (broker Celery), `api` (FastAPI avec `--reload`), `worker` (Celery) et `frontend` (Next.js). Les volumes nommés préservent `postgres_data`, `node_modules` et `.next` pour accélérer les redémarrages.
-- Les variables d'environnement (`API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`, `API_DATABASE_URL`, etc.) sont injectées directement dans les conteneurs pour relier l'UI et le backend sans configuration manuelle.
-- **Lancement** : `docker compose up --build` met en route la stack complète avec hot reload côté API et frontend. `docker compose down -v` réinitialise les données.
-- **Développement hybride** : il est toujours possible de lancer `uvicorn main:app --reload` ou `npm run dev` en local si l'on souhaite travailler hors conteneurs.
+- `docker-compose.yml` installe Postgres, Redis, API FastAPI (`uvicorn --reload`), worker Celery
+  et frontend Next.js (`next dev --turbopack`). Les volumes nommés conservent la base, les
+  dépendances npm et le cache `.next` pour accélérer les itérations.
+- Les variables d'environnement (`API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`, `API_DATABASE_URL`,
+  etc.) sont injectées automatiquement.
+- Pour un développement manuel, lancer `uvicorn main:app --reload` et `npm run dev` (frontend) reste
+  possible.
 
-## Flux de données
+## Flux fonctionnel
 
-1. **Collecte** : Scrapers/Celery alimentent la base `offers`, `suppliers`, `products`.
-2. **API** : FastAPI expose les routes CRUD et listes paginées (filtrage, tri) consommées par le frontend.
-3. **Frontend** : Next.js 15 récupère les données via `apiClient` (TanStack Query), hydrate les sections marketing et comparateurs, et délègue les pages critiques (`/comparison`, `/products/[id]`) à des composants serveur capables de basculer automatiquement sur les données fallback.
-4. **Fallback** : en cas de panne scraping, `fallback_catalogue.py` côté API et `src/lib/fallbackCatalogue.ts` côté frontend combinent les jeux de données pour conserver les comparaisons et fiches produit opérationnelles.
+1. **Collecte** : les scrapers alimentent Postgres via Celery (`offers`, `products`, `suppliers`).
+2. **Agrégation** : `main.py` fusionne données live + fallback, calcule les métriques FitIdion
+   (ratio protéines/prix, disponibilité, fiabilité marchands).
+3. **Frontend** : Next.js consomme les endpoints via TanStack Query, rend le comparateur,
+   les fiches produits, les alertes et la page catalogue (composants server + client).
+4. **Alertes** : `apps/api` stocke les alertes, le worker envoie les notifications (mail / webhook).
 
-Cette architecture sépare clairement les responsabilités : FastAPI pour la donnée, Next.js pour l'UI, Celery/Redis pour l'asynchrone et Docker Compose pour l'environnement de développement.
+---
+
+🧠 *FitIdion sépare nettement données, orchestration et expérience utilisateur pour favoriser la
+scalabilité de la plateforme fitness intelligente.*

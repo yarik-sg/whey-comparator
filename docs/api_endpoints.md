@@ -1,137 +1,104 @@
-# API FastAPI — Endpoints disponibles
+# FitIdion API — Référence des endpoints
 
-Cette référence regroupe les routes exposées par l'API Whey Comparator. Deux couches coexistent :
+La plateforme FitIdion expose deux couches complémentaires :
 
-1. **API CRUD historique** (`apps/api/app`) pour la gestion des entités (produits, offres, fournisseurs) — documentée via OpenAPI (Swagger UI sur `/docs`).
-2. **API d'agrégation temps réel** (`main.py`) qui combine les scrapers internes et SerpAPI pour alimenter l'interface Next.js (comparateur, fiches produit, historiques).
+1. **API d'orchestration (FastAPI, dossier `apps/api`)** pour la gestion CRUD des produits,
+   offres, marchands et alertes prix.
+2. **API d'agrégation temps réel (`main.py`)** qui combine scrapers, caches et fallback catalogue
+   afin d'alimenter le frontend Next.js 15 (pages catalogue, comparateur, fiches produit, alertes).
 
-> ℹ️ Avec l'environnement Docker (`docker compose up --build`), l'API est disponible sur [http://localhost:8000](http://localhost:8000). Les exemples ci-dessous supposent cette base URL.
+Toutes les routes sont servies depuis `http://localhost:8000` en environnement de développement.
 
-## 1. Santé & endpoints CRUD (`apps/api/app`)
+## 1. API d'orchestration (`apps/api/app`)
 
 ### Santé
 
-| Méthode | Route | Description |
-| --- | --- | --- |
-| `GET` | `/health` | Vérifie que l'API répond (`{"status": "ok"}`). |
+| Méthode | Route     | Description                              |
+|---------|-----------|------------------------------------------|
+| `GET`   | `/health` | Vérifie l'état de l'API (payload `{status: "ok"}`). |
 
-### Produits (`/products`)
+### Ressources principales
 
-| Méthode | Route | Description |
-| --- | --- | --- |
-| `GET` | `/products` | Liste paginée des produits disponibles. |
-| `POST` | `/products` | Crée un nouveau produit. |
-| `GET` | `/products/{product_id}` | Retourne un produit par identifiant. |
-| `PUT` | `/products/{product_id}` | Met à jour partiellement ou totalement un produit. |
-| `DELETE` | `/products/{product_id}` | Supprime un produit (204 No Content). |
+| Ressource  | Routes CRUD                                                                                             | Notes clés                                            |
+|------------|---------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
+| Produits   | `GET /products`, `POST /products`, `GET /products/{id}`, `PUT /products/{id}`, `DELETE /products/{id}`  | Champs nutritifs, tags, best-offer, timestamps.       |
+| Offres     | `GET /offers`, `POST /offers`, `GET /offers/{id}`, `PUT /offers/{id}`, `DELETE /offers/{id}`            | Filtrage prix, disponibilité, fournisseur, devise.    |
+| Fournisseurs | `GET /suppliers`, `POST /suppliers`, `GET /suppliers/{id}`, `PUT /suppliers/{id}`, `DELETE /suppliers/{id}` | Gestion des marchands & URL d'affiliation.           |
+| Alertes prix | `GET /price-alerts`, `POST /price-alerts`, `PATCH /price-alerts/{id}`, `DELETE /price-alerts/{id}`     | Activation / désactivation, seuils personnalisés.     |
 
-**Paramètres de requête `GET /products`**
-
-- `limit` *(int, 1-100, défaut 10)* : taille de page.
-- `offset` *(int ≥ 0, défaut 0)* : index de départ.
-- `search` *(str)* : filtre sur le nom (ILIKE `%search%`).
-- `sort_by` *("name" | "created_at" | "updated_at", défaut `created_at`)* : colonne de tri.
-- `sort_order` *("asc" | "desc", défaut `desc`)* : ordre de tri.
-
-### Fournisseurs (`/suppliers`)
-
-| Méthode | Route | Description |
-| --- | --- | --- |
-| `GET` | `/suppliers` | Liste paginée des fournisseurs/marchands. |
-| `POST` | `/suppliers` | Ajoute un fournisseur. |
-| `GET` | `/suppliers/{supplier_id}` | Détail d'un fournisseur. |
-| `PUT` | `/suppliers/{supplier_id}` | Met à jour un fournisseur. |
-| `DELETE` | `/suppliers/{supplier_id}` | Supprime un fournisseur (204). |
-
-**Paramètres de requête `GET /suppliers`**
-
-- `limit` *(int, 1-100, défaut 10)*.
-- `offset` *(int ≥ 0, défaut 0)*.
-- `search` *(str)* : filtre sur `name` ou `website`.
-- `sort_by` *("name" | "created_at" | "updated_at", défaut `created_at`).
-- `sort_order` *("asc" | "desc", défaut `desc`).
-
-### Offres (`/offers`)
-
-| Méthode | Route | Description |
-| --- | --- | --- |
-| `GET` | `/offers` | Liste paginée des offres commerciales. |
-| `POST` | `/offers` | Crée une offre pour un produit et un fournisseur. |
-| `GET` | `/offers/{offer_id}` | Retourne une offre par identifiant. |
-| `PUT` | `/offers/{offer_id}` | Met à jour une offre existante. |
-| `DELETE` | `/offers/{offer_id}` | Supprime une offre (204). |
-
-**Paramètres de requête `GET /offers`**
-
-- `limit` *(int, 1-100, défaut 10)*.
-- `offset` *(int ≥ 0, défaut 0)*.
-- `product_id` *(int)* : filtre par produit.
-- `supplier_id` *(int)* : filtre par fournisseur.
-- `min_price` *(float ≥ 0)* : prix minimum.
-- `max_price` *(float ≥ 0)* : prix maximum.
-- `available` *(bool)* : disponibilité exacte (`true` / `false`).
-- `sort_by` *("price" | "created_at" | "updated_at", défaut `created_at`).
-- `sort_order` *("asc" | "desc", défaut `desc`).
-
-### Schémas de réponse
-
-Toutes les routes de liste renvoient des objets `Paginated*` contenant :
+Les payloads sont définis dans `apps/api/app/schemas.py` (Pydantic v2). Toutes les listes renvoient
+le wrapper :
 
 ```json
 {
-  "total": 123,
-  "items": [ ... ]
+  "total": 120,
+  "items": [...],
+  "limit": 10,
+  "offset": 0
 }
 ```
 
-Les champs individuels sont définis dans `app/schemas.py` (Pydantic v2) :
+### Paramètres usuels
 
-- `ProductRead` : `id`, `name`, `description`, `created_at`, `updated_at`.
-- `SupplierRead` : `id`, `name`, `website`, `contact_email`, `created_at`, `updated_at`.
-- `OfferRead` : `id`, `product_id`, `supplier_id`, `price`, `currency`, `url`, `available`, `created_at`, `updated_at`.
+- `limit` *(1-100, défaut 10)* et `offset` *(≥0)* pour la pagination.
+- `search` sur les champs textuels (`name`, `brand`, `supplier`).
+- `sort_by` + `sort_order` (`asc`/`desc`).
+- Filtres spécifiques (`available`, `min_price`, `max_price`, `supplier_id`, etc.).
 
-Référez-vous à la documentation OpenAPI pour les exemples détaillés.
+## 2. API d'agrégation FitIdion (`main.py`)
 
-## 2. Endpoints agrégés (temps réel)
+Cette couche intègre :
 
-Ces routes sont implémentées dans `main.py` et alimentent directement le frontend (pages catalogue, comparateur et fiches produit).
+- récupération SerpAPI + scrapers internes,
+- enrichissement (ratio protéines/prix, notation, disponibilité temps réel),
+- fallback catalogue (`fallback_catalogue.py`) pour résilience offline,
+- fusion intelligente des résultats pour le comparateur multiréférences.
 
-### Catalogue enrichi (`GET /products`)
+### Catalogue enrichi — `GET /products`
 
-- Filtre les produits scrappés et, en cas d'indisponibilité, reconstitue un catalogue via SerpAPI (fallback).
-- Paramètres : `search`, `page`, `per_page` *(1-60)*, `min_price`, `max_price`, `brands` (liste), `min_rating`, `in_stock`, `category`, `sort` (`price_asc` par défaut, aussi `price_desc`, `rating`, `protein_ratio`).
-- Réponse : liste `products` + pagination (`page`, `perPage`, `total`, `totalPages`, `hasPrevious`, `hasNext`).
+Paramètres : `search`, `page` (défaut 1), `per_page` (1-60), `min_price`, `max_price`, `brands[]`,
+`category`, `in_stock`, `sort` (`price_asc`, `price_desc`, `rating`, `protein_ratio`).
 
-【F:main.py†L1323-L1467】
+Réponse : `{ products: ProductCard[], page, perPage, total, totalPages, hasPrevious, hasNext }`.
 
-### Détail produit & offres (`GET /products/{product_id}/offers`)
+### Détail produit — `GET /products/{productId}`
 
-- Agrège les offres issues du scraper (triées, marquées « meilleur prix ») et enrichit avec SerpAPI lorsque nécessaire.
-- Paramètre `limit` *(1-24, défaut 10)* pour borner les offres retournées.
-- En cas d'ID inconnu côté scraper, bascule automatiquement sur les données SerpAPI ou retourne `404`.
+Retourne : fiche enrichie (média, nutrition, description), offres actuelles, meilleure offre,
+produits similaires, historique de prix.
 
-【F:main.py†L1823-L1855】
+Endpoints associés :
 
-### Produits similaires (`GET /products/{product_id}/related`)
+- `GET /products/{id}/offers` — top offres triées (limite 24).
+- `GET /products/{id}/price-history` — données agrégées par jour.
+- `GET /products/{id}/similar` — suggestions par marque/catégorie/ratio.
 
-- Recherche les produits proches (marque, catégorie, ratio nutritionnel) dans les données scrappées.
-- Paramètre `limit` *(1-12, défaut 4)*.
-- Retourne `{ productId, related[] }` ou `404` si la référence n'existe pas.
+### Comparateur multiréférences — `POST /comparison`
 
-【F:main.py†L1858-L1881】
+Payload : `{ products: string[] }` (identifiants FitIdion ou textes libres). L'API résout les items,
+pré-sélectionne les meilleures offres, fusionne fallback + données live et retourne un résumé
+prêt à afficher (scores, métriques nutritionnelles, liens marchands).
 
-### Historique de prix (`GET /products/{product_id}/price-history`)
+### Alertes prix — `POST /price-alerts`
 
-- Agrège les points d'historique (source + prix) et calcule les statistiques `lowest`, `highest`, `average`, `current` sur la période demandée.
-- Paramètre `period` (`7d`, `1m`, `3m`, `6m`, `1y`, `all` — défaut `3m`).
+Payload : `{ email, productId, targetPrice }`. Les alertes sont stockées via l'API CRUD puis le
+backend orchestre l'envoi (worker Celery).
 
-【F:main.py†L1884-L1947】
+## 3. Webhooks & intégrations
 
-### Comparaison multi-produits (`GET /comparison`)
+- `POST /webhooks/products/refresh` : déclenche la synchronisation complète catalogue.
+- `POST /webhooks/offers/refresh` : relance les scrapers pour les offres actives.
+- `POST /webhooks/alerts/process` : traitement batch des alertes en file.
 
-- Accepte une liste d'identifiants (`ids=1,2,3`) et retourne :
-  - `summary[]` : top offres croisées (limité à `limit`, défaut 10) ;
-  - `products[]` : chaque produit avec ses offres agrégées.
-- Valide les identifiants et renvoie `400` si aucun ID exploitable n'est fourni.
+Ces webhooks sont sécurisés via signature HMAC (`X-FitIdion-Signature`). Le secret est défini dans
+`FITIDION_WEBHOOK_SECRET`.
 
-【F:main.py†L1950-L1998】
+## 4. Conventions & monitoring
+
+- Toutes les réponses suivent `application/json; charset=utf-8`.
+- Codes d'erreur standardisés (`400`, `401`, `404`, `422`, `429`, `500`).
+- Tracing via `X-Request-ID` (injecté côté FastAPI et logué par le frontend).
+- Metrics Prometheus activables via l'option `--enable-metrics` (expose `/metrics`).
+
+---
+
+📡 *FitIdion API — bâtie pour l'observabilité et la résilience de la donnée fitness.*

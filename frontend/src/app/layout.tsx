@@ -4,6 +4,8 @@ import "./globals.css";
 import { QueryProvider } from "@/components/QueryProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { BrandHeader } from "@/components/BrandHeader";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
 
 const inter = Inter({
@@ -18,8 +20,33 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Sport Comparator",
-  description: "Compare whey protein offers with live price tracking.",
+  metadataBase: new URL("https://fitidion.io"),
+  title: {
+    default: "FitIdion · Fitness intelligent & comparateur d'offres sport",
+    template: "%s · FitIdion",
+  },
+  description:
+    "FitIdion est la plateforme du fitness intelligent : comparez les compléments, suivez les prix en temps réel et activez des alertes personnalisées.",
+  keywords: [
+    "FitIdion",
+    "comparateur fitness",
+    "prix whey",
+    "suivi prix sport",
+    "alertes nutrition",
+  ],
+  openGraph: {
+    title: "FitIdion · Fitness intelligent & comparateur d'offres sport",
+    description:
+      "La plateforme FitIdion centralise catalogues, promotions et analyses pour optimiser vos achats de compléments et équipements sportifs.",
+    siteName: "FitIdion",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FitIdion · Fitness intelligent",
+    description:
+      "Comparez, suivez et optimisez vos achats sport grâce au design intelligent FitIdion.",
+  },
 };
 
 export default function RootLayout({
@@ -28,16 +55,23 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${poppins.variable} bg-slate-50 font-sans antialiased`}>
-        <QueryProvider>
-          <div className="flex min-h-screen flex-col">
-            <SiteHeader />
-            <main className="flex-1 bg-white">{children}</main>
-            <SiteFooter />
-          </div>
-          <Toaster richColors position="top-right" />
-        </QueryProvider>
+    <html lang="fr" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
+      <body className="min-h-screen bg-transparent font-sans antialiased">
+        <ThemeProvider>
+          <QueryProvider>
+            <div className="flex min-h-screen flex-col">
+              <BrandHeader />
+              <SiteHeader />
+              <main className="flex-1">{children}</main>
+              <SiteFooter />
+            </div>
+            <Toaster
+              richColors
+              position="top-right"
+              toastOptions={{ style: { borderRadius: "9999px", fontFamily: "var(--font-poppins)" } }}
+            />
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

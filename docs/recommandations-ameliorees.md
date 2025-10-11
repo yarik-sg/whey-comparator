@@ -1,63 +1,38 @@
-# Plan d'amélioration Whey Comparator (vs Idealo)
+# Recommandations stratégiques FitIdion
 
-## 1. Corrections des constats initiaux
-Les éléments suivants sont déjà implémentés ou partiellement livrés :
+Objectif : dépasser les comparateurs historiques en combinant intelligence des données,
+expérience utilisateur premium et confiance.
 
-- **Historique de prix complet** : l'API principale expose `/products/{product_id}/price-history` avec agrégation (période, stats) et s'appuie sur le service scraper pour requêter la table `price_history`. 【F:main.py†L201-L228】【F:main.py†L908-L980】【F:services/scraper/src/scraper/database.py†L21-L85】【F:services/scraper/src/scraper/main.py†L64-L87】
-- **Visualisation front** : le composant `PriceHistoryChart` affiche un AreaChart Recharts avec choix de période et indicateurs, utilisé sur la page produit. 【F:frontend/src/components/PriceHistoryChart.tsx†L1-L175】【F:frontend/src/app/products/[productId]/page.tsx†L81-L342】
-- **Filtres et tri avancés** : `/products` accepte prix min/max, marques, note, disponibilité, catégorie et différents tris (prix, note, ratio protéine/€). L'IU propose une sidebar interactive, un dropdown de tri, pagination et compte des résultats. 【F:main.py†L1323-L1467】【F:frontend/src/app/products/page.tsx†L1-L220】【F:frontend/src/components/FilterSidebar.tsx†L1-L197】【F:frontend/src/components/SortDropdown.tsx†L1-L34】
-- **Comparaison multi-produits** : la page `/comparison` synthétise les meilleures offres et le détail produit/offres, réutilise les composants communs et gère les états de chargement/erreur. 【F:frontend/src/app/comparison/page.tsx†L1-L327】
-- **Tableau des offres enrichi** : affichage des frais de port, badge "Meilleur prix", ratio €/kg, disponibilité et CTA externes sont déjà présents. 【F:frontend/src/components/OfferTable.tsx†L1-L136】
-- **Fiche produit complète** : la page `/products/[id]` combine carrousel média, CTA comparaison, offre vedette, historique, avis, flux de données dynamiques et recommandations similaires avec fallback automatique. 【F:frontend/src/app/products/[productId]/page.tsx†L81-L398】
-- **Comparaison résiliente** : `/comparison` fusionne les réponses live avec le fallback local, pré-sélectionne deux produits si aucun identifiant n'est fourni et conserve la synthèse prix. 【F:frontend/src/app/comparison/page.tsx†L69-L327】【F:frontend/src/lib/fallbackCatalogue.ts†L206-L341】
+## 1. Fiabilité & performance
+- **Cache & résilience** : activer Redis pour `/products`, `/comparison`, `/alerts` et conserver le
+  dernier snapshot sain en cas de panne scraping.
+- **Pipelines scraping** : orchestrer la collecte via Celery (priorisation par popularité, monitoring
+  Prometheus, alerts Slack quand un marchand décroche).
+- **Alertes industrialisées** : stocker les seuils dans Postgres, traiter via worker (envoi email/sms),
+  exposer historique des notifications dans `/alerts`.
 
-Ces fondations sont solides : le plan d'action doit donc se concentrer sur les vrais écarts fonctionnels, la robustesse et la finition UI.
+## 2. Expérience FitIdion
+- **Badge dynamique** sur les fiches produit (« -12 % vs 30 jours », « Prix stable ») pour donner du contexte.
+- **Comparateur augmenté** : section « Palmarès FitIdion » (meilleur prix, score nutrition, fiabilité
+  vendeur) + export partageable.
+- **Catalogue mémorisé** : conserver filtres/sélections en localStorage et proposer un bouton « Copier mon setup FitIdion ».
+- **Guides FitIdion** : ajouter sur la landing des guides rapides (formats Whey, usage créatine, etc.) en carrousel.
 
-## 2. Écarts réels et opportunités
+## 3. Data & différenciation
+- **Score FitIdion** : calculer un indicateur synthétique (nutrition, transparence, avis) et l'afficher
+  dans le comparateur + fiches.
+- **Analyse livraison** : stocker frais d'expédition + délais estimés, proposer un graphe comparatif.
+- **Avis agrégés** : combiner avis SerpAPI/Amazon et mettre en avant top positif/négatif.
+- **Flux de données** : afficher clairement l'heure de dernière collecte par source, statut (OK, retard, en
+  échec) et prochain refresh.
 
-### 2.1 Fiabilité & scalabilité backend
-| Problème | Impact | Recommandation |
-| --- | --- | --- |
-| Filtrage/tri réalisés en mémoire après un fetch HTTP vers le scraper | Montée en charge limitée, tri partiel (pas de popularité, de disponibilité cross-fournisseurs). | Déporter les filtres/tri dans le service scraper (SQL) et ne transférer que la page courante ; ajouter champs `popularity`, `lastPriceDrop` pour enrichir le tri. 【F:main.py†L792-L880】 |
-| Absence de cache / fallback si le scraper est indisponible | Sensibilité aux pannes réseau ; SLA fragile. | Ajouter une couche de cache (Redis) côté FastAPI pour les listes/price history, et renvoyer le dernier snapshot valide en cas d'échec. |
-| Alertes prix côté Next.js ne font que logguer (pas de persistance). | Feature marketing non fonctionnelle, impossible d'envoyer des emails. | Exposer un endpoint FastAPI `/alerts` qui écrit en base + déclenche une file (ex : Redis/worker) ; faire pointer la route Next.js vers cette API. 【F:frontend/src/app/api/alerts/route.ts†L1-L52】 |
-| Pas de recalcul automatique de l'historique (uniquement via collecteurs). | Historique potentiellement creux selon les horaires de scraping. | Planifier un job (celery/APScheduler) pour normaliser les données (agrégation quotidienne, déduplication, interpolation pour les jours manquants). |
+## 4. KPI & succès
+- SLA API > 99 % grâce au cache/fallback.
+- Temps de réponse `/products` < 500 ms p95.
+- +20 % de clics vers le comparateur après introduction du palmarès FitIdion.
+- ≥30 % des utilisateurs d’alertes reviennent via un email FitIdion.
+- Adoption du mode sombre > 40 % (cible noctambules / crossfit).
 
-### 2.2 Expérience Produit & UI
-| Manque | Pourquoi c'est important | Proposition |
-| --- | --- | --- |
-| Header produit : pas encore de badge tendance (hausse/baisse vs période sélectionnée). | Les visiteurs veulent savoir si le prix actuel est intéressant sans scroller. | Résumer `statistics` dans le hero (badge "-12% vs 30 jours", tendance flèche). 【F:main.py†L1884-L1947】【F:frontend/src/components/PriceHistoryChart.tsx†L158-L172】 |
-| Comparaison : la synthèse prix reste textuelle. | L'utilisateur doit analyser tableau par tableau pour visualiser le gagnant par critère. | Ajouter une section "Palmarès" (meilleur prix, ratio, note) avec pictogrammes, et coloration conditionnelle dans `OfferTable`. |
-| Page catalogue : pas de sauvegarde des filtres (localStorage) ni d'URL partageable du comparateur. | UX perfectible, friction sur mobile. | Persister les filtres localement, proposer un bouton "Copier l'URL de comparaison" et ajouter un mode liste sur mobile. |
-| Avis utilisateurs : seule l'offre principale remonte rating/count. | Moins riche qu'Idealo qui compile des avis. | Étendre le scraper pour collecter les avis SerpAPI + Amazon et afficher un agrégat + extraits (top positif/négatif). |
+---
 
-### 2.3 Données & différenciation
-- **Indice nutritionnel** : calculer protéines/sucres par dose et synthèse "score performance" pour mieux comparer au-delà du prix. Les attributs existent partiellement via le scraper (`protein_per_serving_g`, `serving_size_g`). 【F:frontend/src/components/ProductCard.tsx†L10-L72】
-- **Analyse des frais de livraison** : stocker `shipping_cost`/`shipping_text` dans la base (déjà prévus côté modèle) mais enrichir l'algorithme pour estimer le coût total (TTC + port) et afficher un graphe comparatif. 【F:services/scraper/src/scraper/database.py†L42-L75】【F:frontend/src/components/OfferTable.tsx†L21-L78】
-- **Transparence des sources** : pousser plus loin l'encart "Flux de données" (statut temps réel, dernière collecte par source) et relier les ID scraper aux jobs d'import. 【F:frontend/src/app/products/[productId]/page.tsx†L345-L360】【F:main.py†L1823-L1947】
-
-## 3. Priorisation recommandée (vision 3 semaines)
-
-1. **Fiabiliser l'infra (Semaine 1)**
-   - Migrer le filtrage/tri dans le scraper (SQL + pagination), mettre en place un cache Redis côté FastAPI.
-   - Créer l'API d'alertes (FastAPI + stockage) et remplacer la route Next.js par un appel serveur → backend.
-   - Ajouter un job cron (APScheduler) dans le scraper pour densifier `price_history` et recalculer les stats quotidiennes.
-
-2. **Accentuer la valeur utilisateur (Semaine 2)**
-   - Ajouter le badge tendance dans le header produit (delta vs période sélectionnée).
-   - Bonifier la comparaison : palmarès visuel, export partageable, compteur d'items comparés.
-   - Introduire la sauvegarde client des filtres catalogue et des comparaisons récentes.
-
-3. **Différenciation / Delight (Semaine 3)**
-   - Centraliser les avis multi-sources + affichage sur carte produit et comparateur.
-   - Implémenter un tableau nutritionnel/score et un graphe comparatif des frais de livraison.
-   - Industrialiser les alertes prix (envoi email via worker) et notifier dans l'IU (toasts + historique des alertes).
-
-## 4. Mesures de succès
-- Taux de disponibilité API > 99 % grâce au cache et au fallback.
-- Temps de réponse `/products` < 500 ms p95 après migration SQL.
-- +20 % de clics sur comparateur suite à la mise en avant des gagnants.
-- ≥ 30 % des pages produit avec recommandations similaires cliquées.
-- Conversion des alertes : > 25 % des utilisateurs qui créent une alerte reviennent via email.
-
-Ce plan capitalise sur ce qui est déjà en place tout en comblant les vrais écarts fonctionnels face à Idealo.
+🎯 *FitIdion doit être perçu comme un copilote fitness fiable, inspirant et obsédé par la donnée.*
