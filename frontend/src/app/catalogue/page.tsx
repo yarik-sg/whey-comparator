@@ -310,8 +310,8 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
   const imageUrl = buildDisplayImageUrl(deal.image) || "/placeholder.png";
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden border-white/15 p-0 shadow-glass transition hover:-translate-y-1 hover:border-fitidion-orange/40 hover:shadow-fitidion dark:border-white/10">
-      <div className="relative h-48 w-full overflow-hidden bg-white/10">
+    <Card className="flex h-full flex-col overflow-hidden border-secondary/60 p-0 shadow-glass transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-fitidion dark:border-primary/30">
+      <div className="relative h-48 w-full overflow-hidden bg-accent">
         <img
           src={imageUrl}
           alt={deal.title}
@@ -320,7 +320,7 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
           decoding="async"
         />
         {discount && discount > 0 && (
-          <div className="absolute right-4 top-4 rounded-full bg-fitidion-orange px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
+          <div className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
             -{discount}%
           </div>
         )}
@@ -333,45 +333,45 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
 
       <div className="flex flex-1 flex-col gap-4 p-6">
         <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-[0.3em] text-fitidion-orange/80">
+          <div className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/80">
             {deal.source}
           </div>
-          <h3 className="text-lg font-semibold text-fitidion-dark dark:text-white">{deal.title}</h3>
-          <p className="text-sm text-slate-600 dark:text-slate-300">{deal.vendor}</p>
+          <h3 className="text-lg font-semibold text-dark dark:text-white">{deal.title}</h3>
+          <p className="text-sm text-muted dark:text-muted/70">{deal.vendor}</p>
         </div>
 
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-bold text-fitidion-dark dark:text-white">{formattedPrice}</span>
-          {referencePrice && <span className="text-sm text-slate-400 dark:text-slate-500 line-through">{referencePrice}</span>}
+          <span className="text-3xl font-bold text-dark dark:text-white">{formattedPrice}</span>
+          {referencePrice && <span className="text-sm text-muted/80 dark:text-muted line-through">{referencePrice}</span>}
         </div>
 
-        <div className="text-sm text-slate-600 dark:text-slate-300" aria-label={rating ? `Note ${rating.toFixed(1)} sur 5${reviews ? ` basée sur ${reviews.toLocaleString("fr-FR")} avis` : ""}` : undefined}>
+        <div className="text-sm text-muted dark:text-muted/70" aria-label={rating ? `Note ${rating.toFixed(1)} sur 5${reviews ? ` basée sur ${reviews.toLocaleString("fr-FR")} avis` : ""}` : undefined}>
           {rating ? (
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 text-fitidion-dark dark:text-white">
-                <Star className="h-4 w-4 fill-fitidion-orange text-fitidion-orange" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1 text-dark dark:text-white">
+                <Star className="h-4 w-4 fill-primary text-primary" aria-hidden="true" />
                 <span className="font-semibold">{rating.toFixed(1)}</span>
               </span>
               {reviews && (
-                <span className="text-xs text-slate-400 dark:text-slate-500">({reviews.toLocaleString("fr-FR")} avis)</span>
+                <span className="text-xs text-muted/80 dark:text-muted">({reviews.toLocaleString("fr-FR")} avis)</span>
               )}
             </div>
           ) : (
-            <span className="text-xs text-slate-400 dark:text-slate-500">Avis en cours de collecte</span>
+            <span className="text-xs text-muted/80 dark:text-muted">Avis en cours de collecte</span>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-300">
+        <div className="flex flex-wrap gap-2 text-xs text-muted dark:text-muted/70">
           {highlights.map((highlight) => (
             <span
               key={`${deal.id}-highlight-${highlight}`}
-              className="inline-flex items-center rounded-full bg-fitidion-orange/10 px-3 py-1 font-semibold text-fitidion-orange"
+              className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary"
             >
               {highlight}
             </span>
           ))}
           {deal.shippingText && (
-            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-slate-600 dark:text-slate-300">
+            <span className="inline-flex items-center rounded-full bg-accent px-3 py-1 text-muted dark:text-muted/70">
               {deal.shippingText}
             </span>
           )}
@@ -385,7 +385,7 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
               </a>
             </Button>
           ) : (
-            <p className="text-sm text-slate-400 dark:text-slate-500">Offre en cours d&apos;actualisation.</p>
+            <p className="text-sm text-muted/80 dark:text-muted">Offre en cours d&apos;actualisation.</p>
           )}
         </div>
       </div>
@@ -598,8 +598,8 @@ export default function PromosPage() {
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div className="space-y-4">
-              <h1 className="text-3xl font-bold text-fitidion-dark sm:text-4xl dark:text-white">Promos du moment</h1>
-              <p className="max-w-2xl text-base text-slate-600 dark:text-slate-300">
+              <h1 className="text-3xl font-bold text-dark sm:text-4xl dark:text-white">Promos du moment</h1>
+              <p className="max-w-2xl text-base text-muted dark:text-muted/70">
                 Découvrez, pour chaque univers clé (whey, créatine, BCAA, accessoires…), nos six meilleures offres
                 du moment. Nous priorisons les remises immédiates, les gros formats avantageux et les prix au kilo
                 les plus bas pour vous aider à économiser.
@@ -610,7 +610,7 @@ export default function PromosPage() {
                 {isLoading ? "Actualisation en cours…" : "Rafraîchir les offres"}
               </Button>
               {lastUpdatedLabel && (
-                <p className="text-sm text-slate-500 dark:text-slate-400">Dernière mise à jour à {lastUpdatedLabel}</p>
+                <p className="text-sm text-muted dark:text-muted/80">Dernière mise à jour à {lastUpdatedLabel}</p>
               )}
             </div>
           </div>
@@ -620,11 +620,11 @@ export default function PromosPage() {
               <a
                 key={item.id}
                 href={item.href}
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-fitidion-orange transition hover:border-white/40 hover:bg-white/20"
+                className="inline-flex items-center gap-2 rounded-full border border-secondary/60 bg-accent px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-secondary/60"
               >
                 <span>{item.label}</span>
                 {typeof item.count === "number" && (
-                  <span className="text-xs text-fitidion-orange/80">{item.count}</span>
+                  <span className="text-xs text-primary/80">{item.count}</span>
                 )}
               </a>
             ))}
@@ -637,17 +637,17 @@ export default function PromosPage() {
           <section key={category.id} id={`promos-${category.id}`} className="space-y-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div className="space-y-1">
-                <h2 className="text-2xl font-semibold text-fitidion-dark dark:text-white">{category.label}</h2>
-                <p className="text-sm text-slate-600 dark:text-slate-300">{category.description}</p>
+                <h2 className="text-2xl font-semibold text-dark dark:text-white">{category.label}</h2>
+                <p className="text-sm text-muted dark:text-muted/70">{category.description}</p>
                 {category.usingFallback && (
-                  <p className="text-xs font-medium text-fitidion-orange">
+                  <p className="text-xs font-medium text-primary">
                     Offres de démonstration affichées lorsque les données temps réel sont indisponibles.
                   </p>
                 )}
               </div>
               <Link
                 href={`/comparateur?q=${encodeURIComponent(category.query)}`}
-                className="text-sm font-semibold text-fitidion-orange transition hover:text-fitidion-gold"
+                className="text-sm font-semibold text-primary transition hover:text-secondary"
               >
                 Voir toutes les offres →
               </Link>
@@ -665,7 +665,7 @@ export default function PromosPage() {
                 {Array.from({ length: PROMOS_PER_CATEGORY }).map((_, index) => (
                   <div
                     key={`skeleton-${category.id}-${index}`}
-                    className="h-[420px] animate-pulse rounded-3xl border border-white/15 bg-white/10"
+                    className="h-[420px] animate-pulse rounded-3xl border border-secondary/60 bg-accent"
                     aria-hidden
                   />
                 ))}
@@ -677,13 +677,13 @@ export default function PromosPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-3xl border border-white/15 bg-white/15 p-6 text-sm text-slate-600 dark:text-slate-300">
+              <div className="rounded-3xl border border-secondary/60 bg-accent/80 p-6 text-sm text-muted dark:text-muted/70">
                 <p>Aucune promotion active n&apos;a été détectée pour cette catégorie.</p>
                 <p className="mt-2">
                   Lancez une recherche dédiée sur le comparateur pour suivre les prochaines offres :
                   <Link
                     href={`/comparateur?q=${encodeURIComponent(category.query)}`}
-                    className="ml-1 font-semibold text-fitidion-orange hover:text-fitidion-gold"
+                    className="ml-1 font-semibold text-primary hover:text-secondary"
                   >
                     ouvrir le comparateur
                   </Link>

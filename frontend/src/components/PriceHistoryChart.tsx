@@ -81,18 +81,18 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
       ? "text-emerald-500"
       : statistics?.trend === "baisse"
         ? "text-red-500"
-        : "text-slate-500";
+        : "text-muted";
 
   return (
-    <section className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="space-y-6 rounded-2xl border border-secondary/60 bg-white p-6 shadow-sm">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3 text-slate-700">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-500">
+        <div className="flex items-center gap-3 text-muted">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/60 text-primary">
             <Calendar className="h-5 w-5" aria-hidden />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">Historique des prix</h2>
-            <p className="text-sm text-slate-500">
+            <h2 className="text-xl font-semibold text-dark">Historique des prix</h2>
+            <p className="text-sm text-muted">
               Suivi de l&apos;évolution du meilleur tarif détecté sur les places de marché partenaires.
             </p>
           </div>
@@ -105,10 +105,10 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
                 key={option.value}
                 type="button"
                 onClick={() => setPeriod(option.value)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ${
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                   isActive
-                    ? "bg-orange-500 text-white shadow"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    ? "bg-primary text-white shadow"
+                    : "bg-accent/70 text-muted hover:bg-accent/60"
                 }`}
               >
                 {option.label}
@@ -129,12 +129,12 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
       )}
 
       {statistics && (
-        <div className="flex flex-wrap gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="flex flex-wrap gap-4 rounded-2xl border border-secondary/60 bg-accent p-4 text-sm text-muted">
           <div className="flex flex-1 min-w-[140px] items-center gap-2">
             <TrendIcon className={`h-5 w-5 ${trendColor}`} aria-hidden />
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-400">Tendance</p>
-              <p className="font-semibold text-slate-900">
+              <p className="text-xs uppercase tracking-wide text-muted/80">Tendance</p>
+              <p className="font-semibold text-dark">
                 {statistics.trend === "stable"
                   ? "Stable"
                   : statistics.trend === "hausse"
@@ -167,15 +167,15 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
               value: statistics.average_price,
             }].map(({ label, value }) => (
               <div key={label}>
-                <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
-                <p className="text-base font-semibold text-slate-900">{formatter.format(value)}</p>
+                <p className="text-xs uppercase tracking-wide text-muted/80">{label}</p>
+                <p className="text-base font-semibold text-dark">{formatter.format(value)}</p>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {isLoading && <div className="h-64 animate-pulse rounded-xl bg-slate-100" aria-hidden />}
+      {isLoading && <div className="h-64 animate-pulse rounded-xl bg-accent/70" aria-hidden />}
 
       {!isLoading && hasHistory && (
         <div className="h-64">
@@ -205,9 +205,9 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
                     price: number;
                   };
                   return (
-                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-lg">
-                      <p className="font-semibold text-slate-900">{point.tooltip}</p>
-                      <p className="text-xs text-slate-500">{formatter.format(point.price)}</p>
+                    <div className="rounded-xl border border-secondary/60 bg-white px-4 py-3 text-sm text-muted shadow-lg">
+                      <p className="font-semibold text-dark">{point.tooltip}</p>
+                      <p className="text-xs text-muted">{formatter.format(point.price)}</p>
                     </div>
                   );
                 }}
@@ -219,7 +219,7 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
       )}
 
       {!isLoading && !hasHistory && (
-        <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-secondary/60 p-6 text-center text-sm text-muted">
           Historique de prix non disponible pour cette période.
         </div>
       )}

@@ -128,29 +128,29 @@ export default function Comparateur() {
 
   return (
     <div className="space-y-16 pb-20">
-      <section className="bg-orange-50/80 py-12">
+      <section className="bg-accent py-12">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-primary">
                 Comparateur en temps réel
               </p>
-              <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+              <h1 className="text-3xl font-bold text-dark sm:text-4xl">
                 Affinez votre recherche de compléments
               </h1>
-              <p className="max-w-2xl text-base text-slate-600">
+              <p className="max-w-2xl text-base text-muted">
                 Connecté à SerpAPI et à notre base interne, le comparateur détecte en quelques secondes les meilleures
                 offres whey, BCAA, créatine et plus encore. Renseignez une référence précise pour analyser prix, frais de
                 port et disponibilité.
               </p>
             </div>
-            <Card className="w-full max-w-md border-orange-100 bg-white/80 backdrop-blur">
+            <Card className="w-full max-w-md border-secondary/60 bg-white/80 backdrop-blur">
               <form className="space-y-4" onSubmit={handleSearchSubmit}>
-                <label htmlFor="search" className="text-sm font-medium text-slate-600">
+                <label htmlFor="search" className="text-sm font-medium text-muted">
                   Produit ou référence à comparer
                 </label>
                 <div className="relative">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-orange-400" />
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary/60" />
                   <Input
                     id="search"
                     name="search"
@@ -171,10 +171,10 @@ export default function Comparateur() {
       </section>
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 space-y-10">
-        <Card className="border-slate-200">
+        <Card className="border-secondary/60">
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-semibold text-slate-900">Filtres rapides</h2>
-            <p className="text-sm text-slate-500">
+            <h2 className="text-xl font-semibold text-dark">Filtres rapides</h2>
+            <p className="text-sm text-muted">
               Combinez marque, catégorie et budget pour épurer les offres affichées ci-dessous.
             </p>
           </div>
@@ -206,8 +206,8 @@ export default function Comparateur() {
               aria-label="Prix maximum"
             />
           </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-            <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-600">
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted">
+            <div className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 font-semibold text-primary">
               <Store className="h-4 w-4" />
               Sources multi-marchands vérifiées
             </div>
@@ -221,8 +221,8 @@ export default function Comparateur() {
         <section className="space-y-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900">Résultats</h2>
-              <p className="text-sm text-slate-500">
+              <h2 className="text-2xl font-semibold text-dark">Résultats</h2>
+              <p className="text-sm text-muted">
                 {loading
                   ? "Analyse des offres en cours…"
                   : `${produitsFiltres.length.toLocaleString("fr-FR")} produits correspondants`}
@@ -242,13 +242,13 @@ export default function Comparateur() {
               {Array.from({ length: 8 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-80 animate-pulse rounded-3xl border border-slate-200 bg-slate-100"
+                  className="h-80 animate-pulse rounded-3xl border border-secondary/60 bg-accent/70"
                   aria-hidden
                 />
               ))}
             </div>
           ) : produitsFiltres.length === 0 ? (
-            <div className="rounded-3xl border border-orange-100 bg-orange-50 p-8 text-center text-sm text-orange-600">
+            <div className="rounded-3xl border border-secondary/60 bg-accent p-8 text-center text-sm text-primary">
               Aucun résultat ne correspond aux filtres sélectionnés. Essayez d&apos;élargir votre recherche.
             </div>
           ) : (
@@ -261,9 +261,9 @@ export default function Comparateur() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 24 }}
                     transition={{ duration: 0.25, delay: index * 0.04 }}
-                    className="group flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-orange-200 hover:shadow-lg"
+                    className="group flex h-full flex-col rounded-3xl border border-secondary/60 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
                   >
-                    <div className="relative flex items-center justify-center rounded-2xl bg-slate-50 p-6">
+                    <div className="relative flex items-center justify-center rounded-2xl bg-accent p-6">
                       {/* eslint-disable-next-line @next/next/no-img-element -- remote images */}
                       <img
                         src={buildDisplayImageUrl(p.image) || "/placeholder.png"}
@@ -275,8 +275,8 @@ export default function Comparateur() {
                     </div>
                     <div className="mt-4 space-y-3">
                       <div className="space-y-1">
-                        <p className="text-xs uppercase tracking-wide text-orange-500">{p.vendor ?? "Marchand"}</p>
-                        <h3 className="line-clamp-2 text-lg font-semibold text-slate-900">{p.title}</h3>
+                        <p className="text-xs uppercase tracking-wide text-primary">{p.vendor ?? "Marchand"}</p>
+                        <h3 className="line-clamp-2 text-lg font-semibold text-dark">{p.title}</h3>
                       </div>
                       {(p.isBestPrice || p.bestPrice) && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -285,16 +285,16 @@ export default function Comparateur() {
                         </span>
                       )}
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <span className="text-2xl font-bold text-slate-900">{formatPriceValue(p.price)}</span>
-                        <span className="text-sm text-slate-500">Total : {formatPriceValue(p.totalPrice ?? p.price)}</span>
+                        <span className="text-2xl font-bold text-dark">{formatPriceValue(p.price)}</span>
+                        <span className="text-sm text-muted">Total : {formatPriceValue(p.totalPrice ?? p.price)}</span>
                       </div>
                       {typeof p.pricePerKg === "number" && (
-                        <p className="text-sm text-slate-500">≈ {p.pricePerKg.toFixed(2)} €/kg</p>
+                        <p className="text-sm text-muted">≈ {p.pricePerKg.toFixed(2)} €/kg</p>
                       )}
-                      <p className="text-xs text-slate-500">{formatShipping(p)}</p>
-                      <p className="flex items-center gap-2 text-xs text-slate-500">
+                      <p className="text-xs text-muted">{formatShipping(p)}</p>
+                      <p className="flex items-center gap-2 text-xs text-muted">
                         <CheckCircle2
-                          className={`h-4 w-4 ${p.inStock ? "text-emerald-500" : "text-slate-400"}`}
+                          className={`h-4 w-4 ${p.inStock ? "text-emerald-500" : "text-muted/80"}`}
                           aria-hidden
                         />
                         <span>
@@ -303,7 +303,7 @@ export default function Comparateur() {
                             : p.stockStatus ?? (p.inStock ? "Disponible" : "Vérifier le stock")}
                         </span>
                       </p>
-                      <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                      <span className="inline-flex items-center rounded-full bg-accent/70 px-3 py-1 text-xs font-medium text-muted">
                         {p.source}
                       </span>
                     </div>
@@ -313,13 +313,13 @@ export default function Comparateur() {
                           href={p.link}
                           target="_blank"
                           rel="noopener noreferrer nofollow"
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-orange-200 px-4 py-2 text-sm font-semibold text-orange-600 transition hover:border-orange-300 hover:text-orange-500"
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary/30 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/40 hover:text-primary"
                         >
                           Voir l&apos;offre
                           <ExternalLink className="h-4 w-4" aria-hidden />
                         </a>
                       ) : (
-                        <span className="inline-flex w-full items-center justify-center rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-400">
+                        <span className="inline-flex w-full items-center justify-center rounded-full bg-accent/70 px-4 py-2 text-sm font-medium text-muted/80">
                           Lien indisponible
                         </span>
                       )}

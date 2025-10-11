@@ -4,10 +4,10 @@ import Link from "next/link";
 
 export function BrandHeader() {
   return (
-    <div className="hidden w-full bg-gradient-to-r from-fitidion-orange/90 via-fitidion-orange to-fitidion-gold/90 text-sm text-white shadow-glow sm:block">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2 sm:px-6">
+    <div className="hidden w-full bg-gradient-to-r from-primary via-primary to-secondary/80 text-sm text-white shadow-glow sm:block">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:flex-nowrap sm:px-6">
         <p className="font-medium tracking-tight">
-          FitIdion · La plateforme du fitness intelligent pour suivre, comparer et optimiser vos achats sport.
+          FitIdion — Plateforme du Fitness Intelligent pour comparer, suivre et optimiser vos achats sport.
         </p>
         <Link
           href="/catalogue"

@@ -144,13 +144,13 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
         <div className="space-y-6">
           {[0, 1, 2].map((index) => (
             <div key={index} className="space-y-2">
-              <div className="h-4 w-40 rounded-full bg-slate-200" />
-              <div className="h-10 w-full rounded-xl bg-slate-100" />
+              <div className="h-4 w-40 rounded-full bg-accent/60" />
+              <div className="h-10 w-full rounded-xl bg-accent/70" />
             </div>
           ))}
         </div>
 
-        <div className="mt-6 h-11 w-full rounded-full bg-slate-200" />
+        <div className="mt-6 h-11 w-full rounded-full bg-accent/60" />
       </div>
     );
   }
@@ -166,7 +166,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="alert-email" className="block text-sm font-semibold text-fitidion-dark dark:text-white">
+          <label htmlFor="alert-email" className="block text-sm font-semibold text-dark dark:text-white">
             Adresse e-mail
           </label>
           <Input
@@ -185,7 +185,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="alert-product" className="block text-sm font-semibold text-fitidion-dark dark:text-white">
+          <label htmlFor="alert-product" className="block text-sm font-semibold text-dark dark:text-white">
             Produit ciblé
           </label>
           <Input
@@ -202,7 +202,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="alert-threshold" className="block text-sm font-semibold text-fitidion-dark dark:text-white">
+          <label htmlFor="alert-threshold" className="block text-sm font-semibold text-dark dark:text-white">
             Seuil de prix (€)
           </label>
           <Input
@@ -244,7 +244,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
       >
         {isSubmitting ? "Enregistrement..." : "Créer l'alerte"}
       </Button>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted">
         Vous pouvez vous désinscrire à tout moment via le lien présent dans chaque e-mail.
       </p>
     </form>

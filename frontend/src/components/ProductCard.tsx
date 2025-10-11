@@ -62,7 +62,7 @@ function formatQuantity(value?: number | null, unit?: string) {
 export function ProductCard({ product, href, footer }: ProductCardProps) {
   const footerNode =
     footer && (
-      <CardFooter className="border-t border-slate-200 pt-4 text-sm text-slate-500">{footer}</CardFooter>
+      <CardFooter className="border-t border-secondary/60 pt-4 text-sm text-muted">{footer}</CardFooter>
     );
 
   const canonicalId = getCanonicalProductId(product);
@@ -92,7 +92,7 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
   const bodyContent = (
     <>
       <CardHeader className="space-y-4">
-        <div className="relative overflow-hidden rounded-3xl bg-slate-50">
+        <div className="relative overflow-hidden rounded-3xl bg-accent">
           {isBestPrice && (
             <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
               <Award className="h-3.5 w-3.5" aria-hidden />
@@ -115,7 +115,7 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
                 onError={() => setImageFailed(true)}
               />
             ) : (
-              <span className="flex flex-col items-center gap-2 text-sm text-slate-400">
+              <span className="flex flex-col items-center gap-2 text-sm text-muted/80">
                 <span aria-hidden className="text-2xl">
                   📦
                 </span>
@@ -123,51 +123,51 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
               </span>
             )}
           </div>
-          <div className="absolute left-4 top-4 inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-orange-500 shadow">
+          <div className="absolute left-4 top-4 inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-primary shadow">
             {product.brand ?? "Produit"}
           </div>
         </div>
         <div className="space-y-3">
-          <CardTitle className="text-lg font-semibold text-slate-900">{product.name}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-dark">{product.name}</CardTitle>
           {product.flavour && (
-            <p className="text-sm text-slate-500">Saveur : {product.flavour}</p>
+            <p className="text-sm text-muted">Saveur : {product.flavour}</p>
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 text-sm text-slate-600">
-        <div className="grid gap-4 rounded-3xl border border-orange-100 bg-orange-50/60 p-4 text-slate-700">
+      <CardContent className="space-y-4 text-sm text-muted">
+        <div className="grid gap-4 rounded-3xl border border-secondary/60 bg-accent p-4 text-muted">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-orange-500/80">Meilleur prix</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary/80">Meilleur prix</p>
               <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-slate-900">{formattedBestPrice}</p>
+                <p className="text-2xl font-bold text-dark">{formattedBestPrice}</p>
                 {originalPriceFormatted && (
-                  <span className="text-sm text-slate-400 line-through">{originalPriceFormatted}</span>
+                  <span className="text-sm text-muted/80 line-through">{originalPriceFormatted}</span>
                 )}
               </div>
             </div>
-            <div className="text-right text-xs text-slate-500">
+            <div className="text-right text-xs text-muted">
               <p>{product.bestVendor ?? "Vendeur"}</p>
               {product.inStock !== undefined && product.inStock !== null && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                <p className="mt-1 flex items-center gap-1 text-xs text-muted">
                   <span aria-hidden>{product.inStock ? "🟢" : "🔴"}</span>
-                  <span className="text-slate-500">{product.inStock ? "En stock" : "Rupture"}</span>
+                  <span className="text-muted">{product.inStock ? "En stock" : "Rupture"}</span>
                 </p>
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-xs text-slate-500">
+          <div className="grid grid-cols-2 gap-3 text-xs text-muted">
             <div>
-              <span className="block uppercase tracking-wide text-[11px] text-slate-400">Protéines/€</span>
-              <span className="text-base font-semibold text-slate-900">
+              <span className="block uppercase tracking-wide text-[11px] text-muted/80">Protéines/€</span>
+              <span className="text-base font-semibold text-dark">
                 {typeof product.proteinPerEuro === "number"
                   ? `${product.proteinPerEuro.toFixed(2)} g`
                   : "—"}
               </span>
             </div>
             <div>
-              <span className="block uppercase tracking-wide text-[11px] text-slate-400">Note</span>
-              <span className="text-base font-semibold text-slate-900">
+              <span className="block uppercase tracking-wide text-[11px] text-muted/80">Note</span>
+              <span className="text-base font-semibold text-dark">
                 {typeof product.rating === "number" ? `${product.rating.toFixed(1)} ★` : "—"}
               </span>
             </div>
@@ -175,18 +175,18 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
         </div>
         <dl className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <dt className="text-xs uppercase tracking-wide text-slate-400">
+            <dt className="text-xs uppercase tracking-wide text-muted/80">
               Protéines / dose
             </dt>
-            <dd className="font-semibold text-slate-900">
+            <dd className="font-semibold text-dark">
               {formatQuantity(product.protein_per_serving_g, "g")}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wide text-slate-400">
+            <dt className="text-xs uppercase tracking-wide text-muted/80">
               Taille de portion
             </dt>
-            <dd className="font-semibold text-slate-900">
+            <dd className="font-semibold text-dark">
               {formatQuantity(product.serving_size_g, "g")}
             </dd>
           </div>
@@ -198,7 +198,7 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
   const cardBody = resolvedHref ? (
     <Link
       href={resolvedHref}
-      className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2"
+      className="flex flex-1 flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
     >
       {bodyContent}
     </Link>
@@ -208,7 +208,7 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
 
   return (
     <article className="h-full">
-      <Card className="flex h-full flex-col justify-between border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+      <Card className="flex h-full flex-col justify-between border-secondary/60 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
         {cardBody}
         {footerNode}
       </Card>

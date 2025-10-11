@@ -43,17 +43,17 @@ export function Slider({
     "pointer-events-none absolute inset-x-0 h-0 w-full appearance-none focus:outline-none",
     "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4",
     "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white",
-    "[&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-slate-300",
+    "[&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-secondary/60",
     "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4",
     "[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white",
-    "[&::-moz-range-thumb]:shadow [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-slate-300",
+    "[&::-moz-range-thumb]:shadow [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-secondary/60",
   );
 
   return (
     <div className={cn("relative flex h-10 items-center", disabled && "opacity-60", className)}>
       <div className="absolute left-0 right-0 h-1 rounded-full bg-white/30 dark:bg-white/10" />
       <div
-        className="absolute h-1 rounded-full bg-fitidion-orange shadow-glow"
+        className="absolute h-1 rounded-full bg-primary shadow-glow"
         style={{ left: `${startPercent}%`, width: `${Math.max(endPercent - startPercent, 0)}%` }}
       />
       <input

@@ -20,7 +20,7 @@ export function ThemeToggle() {
         variant="ghost"
         size="icon"
         aria-label="Basculer le thème"
-        className="rounded-full border border-transparent text-muted hover:border-fitidion-orange/30 hover:bg-fitidion-orange/10"
+        className="rounded-full border border-transparent text-muted hover:border-primary/30 hover:bg-accent"
       >
         <SunMedium className="h-4 w-4" aria-hidden="true" />
       </Button>
@@ -36,7 +36,7 @@ export function ThemeToggle() {
       size="icon"
       onClick={toggleTheme}
       aria-label={isDark ? "Activer le thème clair" : "Activer le thème sombre"}
-      className="rounded-full border border-transparent text-muted transition hover:border-fitidion-orange/30 hover:bg-fitidion-orange/10"
+      className="rounded-full border border-transparent text-muted transition hover:border-primary/30 hover:bg-accent"
     >
       {isDark ? (
         <SunMedium className="h-4 w-4" aria-hidden="true" />
