@@ -28,7 +28,8 @@ const pillars = [
 
 export function WhyChooseUsSection() {
   return (
-    <section className="bg-white py-20">
+    <section className="relative overflow-hidden py-24">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_10%_0%,rgba(255,102,0,0.1),transparent_60%)]" aria-hidden />
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -37,13 +38,13 @@ export function WhyChooseUsSection() {
           transition={{ duration: 0.5 }}
           className="mx-auto max-w-3xl text-center"
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-fitidion-orange">
             Pourquoi nous choisir ?
           </p>
-          <h2 className="mt-4 text-3xl font-bold text-slate-900 sm:text-4xl">
+          <h2 className="mt-4 text-3xl font-bold text-fitidion-dark sm:text-4xl dark:text-white">
             Une proposition de valeur taillée pour les sportifs exigeants
           </h2>
-          <p className="mt-5 text-base text-slate-500">
+          <p className="mt-5 text-base text-slate-600 dark:text-slate-300">
             Notre équipe combine technologie, expertise nutritionnelle et accompagnement personnalisé pour faire de la
             comparaison un vrai coach avant achat.
           </p>
@@ -58,12 +59,12 @@ export function WhyChooseUsSection() {
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.5 }}
             >
-              <Card className="group h-full border-orange-100 bg-white/95 p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-                <span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-100 text-orange-500">
+              <Card className="group h-full border-white/15 bg-white/80 p-8 shadow-glass transition hover:-translate-y-1 hover:border-fitidion-orange/40 hover:shadow-fitidion dark:border-white/10 dark:bg-slate-900/60">
+                <span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-fitidion-orange/10 text-fitidion-orange">
                   <Icon className="h-7 w-7" aria-hidden="true" />
                 </span>
-                <h3 className="mt-6 text-xl font-semibold text-slate-900">{title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-500">{description}</p>
+                <h3 className="mt-6 text-xl font-semibold text-fitidion-dark dark:text-white">{title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{description}</p>
               </Card>
             </motion.div>
           ))}
