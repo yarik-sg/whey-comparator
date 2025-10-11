@@ -157,3 +157,15 @@ def check_price_alerts() -> None:
             print(f"{triggered} price alert(s) triggered")
     finally:
         session.close()
+
+
+def save_daily_prices() -> None:
+    """Persist daily price snapshots synchronously (for APScheduler)."""
+
+    record_daily_price_snapshot.run()
+
+
+def check_alerts() -> None:
+    """Evaluate price alerts synchronously (for APScheduler)."""
+
+    check_price_alerts.run()

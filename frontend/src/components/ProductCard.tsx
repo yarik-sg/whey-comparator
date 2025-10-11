@@ -96,7 +96,7 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
           {isBestPrice && (
             <div className="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
               <Award className="h-3.5 w-3.5" aria-hidden />
-              <span>Meilleur prix</span>
+              <span aria-label="Meilleur prix">🏆 Meilleur prix</span>
             </div>
           )}
           {discountValue !== null && (
