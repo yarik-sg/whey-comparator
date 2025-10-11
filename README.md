@@ -1,83 +1,85 @@
-# 🧬 Whey Comparator
+# ⚡️ FitIdion — La plateforme du fitness intelligent
 
-Comparateur multi-sources pour les compléments alimentaires (whey, créatine, etc.). Le projet regroupe une API **FastAPI** qui agrège des offres SerpAPI/scraper et une interface **Next.js 15** (React 19) optimisée pour consulter, comparer et analyser les prix.
+FitIdion est la nouvelle identité de Whey Comparator. La plateforme combine une API de collecte de prix,
+un comparateur Next.js 15 (React 19) et une documentation produit unifiée pour aider les sportifs à
+identifier les meilleures offres de compléments, équipements et abonnements. L'expérience a été
+rethinkée pour refléter le langage visuel FitIdion : palette orange & or, typographie Poppins et
+interfaces lumineuses/dynamiques avec bascule automatique clair/sombre.
 
-## ✨ Fonctionnalités clés
+## ✨ Points forts
 
-- **Catalogue unifié** : liste des produits enrichie (prix, disponibilité, notation, rapport protéines/€) avec sélection automatique de la meilleure offre.
-- **Comparateur multi-produits** : page dédiée permettant de juxtaposer plusieurs références, d'afficher un résumé des meilleurs prix et d'accéder rapidement aux marchands (avec pré-sélection automatique si aucun ID n'est fourni).
-- **Page produit enrichie** : fiches détaillées affichant carrousel média, tableau d'offres, historique de prix, avis, flux de collecte et recommandations similaires avec bascule automatique sur les données fallback si l'API principale échoue.
-- **Historique et fallback** : données de secours embarquées lorsque le scraper est indisponible, avec génération d'images réalistes, normalisation automatique des URLs distantes et fusion intelligente des réponses pour le comparateur et les pages produit.
-- **Front moderne** : composants Tailwind réutilisables, palette blanc/orange harmonisée et navigation fluide entre catalogue, promotions et comparateur.
-- **Localisateur de salles de sport** : section d’accueil « Trouvez votre salle de sport » (`frontend/src/components/GymLocatorSection.tsx`) affichant les clubs Basic-Fit, Fitness Park, On Air, Neoness, etc. à proximité, avec filtrage par ville/rayon, géolocalisation, bouton « Voir toutes les salles proches » et fallback mock (`frontend/src/lib/gymLocator.ts`).
+- **Catalogue enrichi FitIdion** : agrégation multi-marchands, scores nutritionnels et filtres intelligents
+  (marque, forme, rapport protéines/prix) avec fallback local lorsque le scraping échoue.
+- **Comparateur en temps réel** : juxtaposition de produits, surlignage automatique du meilleur deal et
+  historique des prix synchronisé avec les alertes.
+- **Alertes FitIdion** : interface dédiée pour activer/mettre en pause les notifications de baisse de prix
+  avec onboarding simplifié et suivi par e-mail.
+- **Dashboard visuel** : sections « Pourquoi FitIdion », « Gym Locator » et « Insights » aux cartes vitrées,
+  gradients FitIdion et ombres douces pour un rendu premium.
+- **Système de design unifié** : Tailwind CSS 4, composants boutons/inputs/checkbox/slider optimisés pour
+  la palette FitIdion et un ThemeProvider maison avec stockage local du mode sombre.
 
-## 🏗️ Architecture du dépôt
+## 🏗️ Structure du dépôt
 
 ```
 whey-comparator/
-├── main.py                  # API FastAPI (agrégation, normalisation, comparaison)
-├── fallback_catalogue.py    # Données de secours utilisées par l'API
-├── services/                # Intégrations externes et utilitaires scraping
-├── frontend/                # Application Next.js 14 (app router)
-│   ├── Dockerfile           # Image de développement Next.js (Turbopack)
-│   ├── src/app/             # Pages (catalogue, comparaison, produits…)
-│   ├── src/components/      # UI (ProductCard, OfferTable, etc.)
-│   └── src/lib/             # Client HTTP, helpers
-├── apps/api/                # API complète avec Poetry, SQLAlchemy, Celery
-├── docs/                    # Documentation annexe
-└── docker-compose.yml       # Orchestration locale API + frontend + services
+├── README.md                 # Ce document (identité FitIdion)
+├── docs/                     # Guides produit, design system, roadmap FitIdion
+├── frontend/                 # Application Next.js 15 (React 19)
+│   ├── src/app/              # Pages App Router + layout FitIdion
+│   ├── src/components/       # Composants UI thématisés FitIdion
+│   └── src/lib/              # Clients API, helpers, fallback catalogue
+├── apps/api/                 # API FastAPI complète (Poetry, SQLAlchemy, Celery)
+├── services/                 # Scrapers & intégrations externes
+├── tailwind.config.ts        # Palette FitIdion partagée (Vite + Next)
+└── docker-compose.yml        # Orchestration locale (Postgres, Redis, API, Front)
 ```
 
-## 🚀 Mise en route
+## 🚀 Démarrage rapide
 
-### Option 1 · Docker Compose (recommandé)
+### Option 1 — Docker Compose (recommandé)
 
-1. Assurez-vous d'avoir Docker et Docker Compose installés.
-2. Lancez l'ensemble des services :
+1. Installer Docker + Docker Compose.
+2. Lancer la stack complète :
 
    ```bash
    docker compose up --build
    ```
 
-   Cette commande démarre PostgreSQL, Redis, l'API FastAPI (avec rechargement), le worker Celery et le frontend Next.js (hot reload). Les volumes nommés conservent la base de données et les dépendances Node.
+   Cette commande provisionne Postgres, Redis, l'API FastAPI, le worker Celery et le frontend Next.js
+   FitIdion (Turbopack). Les volumes conservent base de données et dépendances.
 
-3. Accédez aux services :
-   - API : [http://localhost:8000](http://localhost:8000) (`/docs` pour Swagger).
-   - Frontend : [http://localhost:3000](http://localhost:3000).
+3. Accéder aux services :
+   - Frontend FitIdion : [http://localhost:3000](http://localhost:3000)
+   - API agrégation : [http://localhost:8000](http://localhost:8000) (`/docs` pour Swagger)
 
-4. Arrêt et nettoyage :
+4. Arrêt / reset :
 
    ```bash
    docker compose down
-   # Pour réinitialiser complètement (DB + dépendances)
-   docker compose down -v
+   docker compose down -v  # purge volumes
    ```
 
-Les variables nécessaires (`API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`, etc.) sont injectées automatiquement par `docker-compose.yml` pour relier l'interface à l'API.
+Les variables (`API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`, etc.) sont injectées automatiquement par
+`docker-compose.yml` pour relier le frontend FitIdion à l'API.
 
-### Option 2 · Lancer les services manuellement
+### Option 2 — Lancer les services manuellement
 
-#### Prérequis
-
-- Python 3.11+
-- Node.js 18+
-- npm 9+ ou pnpm/yarn (adapter les commandes si besoin)
-
-#### Lancer l'API FastAPI (mode standalone)
+#### API FastAPI
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # sous Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-Variables utiles :
+Variables utiles :
 
-- `SERPAPI_KEY` : clé API SerpAPI (une valeur de développement est fournie par défaut).
-- `SCRAPER_BASE_URL` : URL du service scraper (défaut `http://localhost:8001`).
+- `SERPAPI_KEY` : clé SerpAPI (valeur de dev fournie).
+- `SCRAPER_BASE_URL` : URL du service scraper (`http://localhost:8001` par défaut).
 
-#### Lancer le backend complet (apps/api)
+#### Backend complet (apps/api)
 
 ```bash
 cd apps/api
@@ -85,9 +87,7 @@ poetry install
 poetry run uvicorn app.main:app --reload
 ```
 
-Les variables `API_DATABASE_URL`, `API_CELERY_BROKER_URL` et `API_CELERY_RESULT_BACKEND` acceptent les mêmes valeurs que dans `docker-compose.yml`.
-
-#### Lancer le frontend Next.js
+#### Frontend FitIdion (Next.js 15)
 
 ```bash
 cd frontend
@@ -95,34 +95,36 @@ npm install
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run dev
 ```
 
-L'application sera disponible sur [http://localhost:3000](http://localhost:3000). Pour lier le backend conteneurisé, définissez `API_BASE_URL=http://api:8000` (ou utilisez le proxy `/api/proxy`).
+Le thème FitIdion est injecté globalement (gradients, mode sombre, typographie Poppins). Pour lier le
+backend conteneurisé, utilisez `API_BASE_URL=http://api:8000`.
 
 ### Scripts utiles
 
-| Commande                       | Description                                                |
-|--------------------------------|------------------------------------------------------------|
-| `docker compose up --build`    | Démarre la stack complète (DB, Redis, API, worker, front). |
-| `docker compose logs -f api`   | Suit les logs de l'API FastAPI conteneurisée.              |
-| `npm run lint`                 | Analyse TypeScript/ESLint.                                |
-| `npm run build`                | Génère la version production de l'interface.              |
-| `npm run preview`              | Sert l'app Next.js buildée.                               |
-| `uvicorn main:app --reload`    | Démarre l'API standalone avec rechargement à chaud.       |
+| Commande                         | Description                                                    |
+|---------------------------------|----------------------------------------------------------------|
+| `docker compose up --build`     | Démarre la stack complète FitIdion.                            |
+| `docker compose logs -f api`    | Suit les logs FastAPI.                                         |
+| `npm run lint`                  | Exécute ESLint (config partagée, sans conflit Next flat config).|
+| `npm run build`                 | Build production du frontend FitIdion.                         |
+| `npm run preview`               | Prévisualisation Vite (app historique).                        |
+| `uvicorn main:app --reload`     | API FastAPI standalone avec rechargement.                      |
 
-## 🔍 Historique des actions réalisées
+## 📘 Documentation FitIdion
 
-1. **Tâche 1 – Fondations backend** : création de l'API FastAPI, du catalogue de secours et des routines d'agrégation (normalisation des prix, calcul des indicateurs, sélection du meilleur deal).
-2. **Tâche 2 – Interface Next.js** : mise en place de l'app Next 14, pages catalogue/produits/comparateur, composants principaux (ProductCard, OfferTable, SiteFooter) et intégration du client HTTP.
-3. **Tâche 3 – Améliorations continues** : comparaison pré-remplie, meilleur rendu mobile/desktop, correction de l'affichage des images produits, mise à jour de la documentation.
-4. **Tâche 4 – Orchestration Docker** : ajout des images frontend/backend, configuration Compose (DB, Redis, API, worker) et documentation associée.
-5. **Tâche 5 – Fiabilisation pages produit & comparateur** : refonte de la page produit (carrousel, offre vedette, historique, avis, recommandations, flux de données), appels API `/products/{id}/offers|similar|price-history` robustes et fusion des réponses fallback pour la comparaison multi-produits.
-6. **Tâche 6 – Harmonisation visuelle de la fiche produit** : retour à la charte blanche/orange, composants unifiés avec le catalogue et CTA ré-alignés sur la palette principale.
+Les dossiers `docs/` et `frontend/public/README_Branding.txt` détaillent :
 
-## 🧪 Tests & Qualité
+- la charte FitIdion (palette, typographies, composants UI),
+- le parcours utilisateur (comparateur, alertes, catalogue),
+- la roadmap produit et les intégrations prévues (nouveaux marchands, IA pricing),
+- les guidelines éditoriales (ton FitIdion, voix de marque).
 
-- ESLint et TypeScript garantissent la cohérence du frontend (`npm run lint`).
-- L'API s'accompagne de validations runtime et de données de fallback pour un comportement prévisible même sans services externes.
-- Docker Compose facilite le lancement d'un environnement complet pour tester l'intégration bout en bout.
+## 🧪 Qualité & tests
+
+- **ESLint / TypeScript** : `npm run lint` au niveau racine et dans `frontend/` exploite les nouvelles
+  configurations `.eslintrc.js` (séparation Vite / Next).
+- **Tests API** : `pytest` dans `apps/api/tests` (exemples fournis pour la couche FastAPI).
+- **CI/CD** : workflows à compléter (lint + tests) avant déploiement automatique.
 
 ---
 
-💡 Besoin d'intégrer de nouvelles sources ou d'étendre les métriques ? Ajoutez simplement un service dans `services/` et exposez-le via l'API : le frontend consommera automatiquement les champs normalisés.
+✨ *FitIdion — Augmentez votre impact sportif avec des décisions guidées par la donnée.*

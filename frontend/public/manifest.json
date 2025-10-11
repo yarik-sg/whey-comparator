@@ -1,0 +1,16 @@
+{
+  "short_name": "FitIdion",
+  "name": "FitIdion Platform",
+  "icons": [
+    {
+      "src": "# TODO: Upload logo file manually via GitHub after merge",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#FF6600",
+  "background_color": "#111827",
+  "description": "Manifest placeholder — remplacer les icônes après merge."
+}

@@ -7,7 +7,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn, type ClassValue } from "@/lib/utils";
 
 const baseStyles =
-  "inline-flex items-center justify-center rounded-full font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-full font-semibold tracking-tight transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60";
 
 export type ButtonVariant =
   | "primary"
@@ -19,20 +19,20 @@ export type ButtonSize = "default" | "sm" | "lg" | "icon";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-orange-500 text-white hover:bg-orange-400 focus-visible:ring-orange-400 focus-visible:ring-offset-white shadow-sm",
+    "bg-fitidion-orange text-white shadow-glow hover:bg-fitidion-orange/90 focus-visible:ring-fitidion-orange focus-visible:ring-offset-fitidion-light",
   secondary:
-    "bg-orange-100 text-orange-700 hover:bg-orange-200 focus-visible:ring-orange-200 focus-visible:ring-offset-white",
+    "bg-fitidion-orange/10 text-fitidion-orange hover:bg-fitidion-orange/20 focus-visible:ring-fitidion-orange/40 focus-visible:ring-offset-fitidion-light",
   ghost:
-    "bg-transparent text-slate-600 hover:bg-slate-100 focus-visible:ring-orange-200 focus-visible:ring-offset-white",
+    "bg-transparent text-muted hover:bg-fitidion-orange/10 focus-visible:ring-fitidion-orange/40 focus-visible:ring-offset-fitidion-light",
   outline:
-    "border border-slate-200 bg-white text-slate-700 hover:bg-orange-50 focus-visible:ring-orange-200 focus-visible:ring-offset-white",
+    "border border-white/40 bg-white/40 text-fitidion-dark shadow-sm backdrop-blur hover:border-fitidion-orange/40 hover:bg-fitidion-orange/10 focus-visible:ring-fitidion-orange/40 focus-visible:ring-offset-fitidion-light dark:border-white/10 dark:bg-white/10 dark:text-slate-100",
 };
 
 const sizes: Record<ButtonSize, string> = {
-  default: "h-12 px-6 text-sm", // default
-  sm: "h-10 px-4 text-sm",
+  default: "h-12 px-6 text-sm",
+  sm: "h-10 px-4 text-xs uppercase tracking-[0.3em]",
   lg: "h-14 px-8 text-base",
-  icon: "h-10 w-10", // square
+  icon: "h-10 w-10",
 };
 
 export function buttonClassName({

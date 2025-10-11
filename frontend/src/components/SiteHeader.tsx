@@ -3,17 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Dumbbell, Menu, X } from "lucide-react";
+import { Flame, Menu, Sparkles, X } from "lucide-react";
 
 import { Button, buttonClassName } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navItems = [
-  { label: "Accueil", href: "/" },
-  { label: "Produits", href: "/products" },
-  { label: "Comparateur", href: "/comparison" },
-  { label: "Promos du moment", href: "/catalogue" },
-  { label: "Mes alertes", href: "/alerts" },
+  { label: "Plateforme", href: "/" },
+  { label: "Comparateur", href: "/comparateur" },
+  { label: "Catalogue", href: "/catalogue" },
+  { label: "Analyses", href: "/products" },
+  { label: "Alertes", href: "/alerts" },
 ];
 
 export function SiteHeader() {
@@ -24,22 +25,25 @@ export function SiteHeader() {
   const closeMenu = () => setOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
+    <header className="sticky top-0 z-50 border-b border-white/20 bg-white/80 shadow-sm backdrop-blur-xl transition dark:border-white/10 dark:bg-slate-900/70">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <Link
           href="/"
-          className="flex items-center gap-2 text-lg font-semibold text-slate-900"
+          className="group flex items-center gap-3 text-lg font-semibold text-slate-900 transition hover:text-fitidion-orange dark:text-white"
           onClick={closeMenu}
         >
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white shadow-sm">
-            <Dumbbell className="h-5 w-5" aria-hidden="true" />
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-fitidion-orange via-fitidion-orange to-fitidion-gold text-white shadow-glow transition group-hover:shadow-fitidion">
+            <Flame className="h-5 w-5" aria-hidden="true" />
           </span>
-          <span className="text-base font-semibold sm:text-lg">
-            Sport Comparator
+          <span className="flex flex-col text-base font-semibold leading-tight sm:text-lg">
+            FitIdion
+            <span className="text-xs font-medium uppercase tracking-[0.3em] text-muted">
+              Fitness intelligent
+            </span>
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-2 text-sm font-medium text-slate-600 md:flex">
+        <nav className="hidden items-center gap-2 text-sm font-medium text-muted md:flex">
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
             return (
@@ -49,8 +53,8 @@ export function SiteHeader() {
                 className={cn(
                   "rounded-full px-4 py-2 transition",
                   isActive
-                    ? "bg-orange-100 text-orange-600"
-                    : "hover:bg-slate-100",
+                    ? "bg-fitidion-orange/10 text-fitidion-orange"
+                    : "hover:bg-fitidion-orange/5 hover:text-fitidion-orange",
                 )}
               >
                 {item.label}
@@ -60,11 +64,18 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <div className="hidden md:flex">
+            <ThemeToggle />
+          </div>
           <Link
-            href="/comparison"
-            className={`${buttonClassName({ size: "sm" })} hidden shadow-md md:inline-flex`}
+            href="/comparateur"
+            className={cn(
+              buttonClassName({ size: "sm" }),
+              "hidden rounded-full bg-fitidion-orange px-6 text-white shadow-glow transition hover:bg-fitidion-orange/90 md:inline-flex",
+            )}
           >
-            Comparer maintenant
+            <Sparkles className="mr-2 h-4 w-4" aria-hidden="true" />
+            Lancer FitIdion
           </Link>
           <Button
             variant="ghost"
@@ -83,9 +94,13 @@ export function SiteHeader() {
       {open && (
         <nav
           id="mobile-navigation"
-          className="border-t border-slate-200 bg-white px-4 py-4 md:hidden"
+          className="border-t border-white/30 bg-white/90 px-4 py-4 backdrop-blur md:hidden dark:border-white/10 dark:bg-slate-900/90"
         >
-          <ul className="flex flex-col gap-2 text-sm font-medium text-slate-600">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted">Thème</p>
+            <ThemeToggle />
+          </div>
+          <ul className="flex flex-col gap-2 text-sm font-medium text-muted">
             {navItems.map((item) => {
               const isActive = pathname === item.href || pathname?.startsWith(`${item.href}/`);
               return (
@@ -95,7 +110,9 @@ export function SiteHeader() {
                     onClick={closeMenu}
                     className={cn(
                       "flex items-center justify-between rounded-2xl px-4 py-3 transition",
-                      isActive ? "bg-orange-50 text-orange-600" : "hover:bg-slate-100",
+                      isActive
+                        ? "bg-fitidion-orange/10 text-fitidion-orange"
+                        : "hover:bg-fitidion-orange/5 hover:text-fitidion-orange",
                     )}
                   >
                     <span>{item.label}</span>

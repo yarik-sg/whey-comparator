@@ -1,27 +1,30 @@
-# Roadmap & prochaines intégrations
+# Roadmap FitIdion
 
-Cette liste priorise les évolutions à livrer après la refonte du thème et des sections marketing.
+## 1. Données & intelligence produit
+- Intégrer les scrapers partenaires (Basic-Fit, Amazon, MyProtein) avec normalisation auto.
+- Ajouter le score FitIdion (ratio protéines/prix, label clean, avis moyenne pondérée).
+- Synchroniser les alertes prix avec une plateforme d’emailing (Resend/Brevo) + préférences utilisateur.
 
-## Intégrations données & scraping
+## 2. Expérience utilisateur
+- Sauvegarde de comparaisons et alertes dans un compte FitIdion (SSO léger ou magic link).
+- Modules « Témoignages » et « Guides FitIdion » sur la landing, animés avec Framer Motion.
+- Version mobile optimisée du Gym Locator (swipe cards, carte Mapbox, actions rapides).
 
-- Connecter les scrapers réels (SerpAPI, APIs marchands propriétaires) au pipeline Celery pour remplacer la simulation actuelle.
-- Enrichir les offres avec les informations nutritionnelles (profil acides aminés, labels bio) pour alimenter les fiches produits.
-- Ajouter un calcul automatique du coût par portion et du score protéine/€ pour soutenir les analyses comparatives.
+## 3. Observabilité & fiabilité
+- Tests end-to-end (Playwright) couvrant comparateur, alertes et catalogue.
+- Instrumentation OpenTelemetry (API + frontend) + export Sentry / Prometheus.
+- Tableau de bord de scraping (temps moyen, taux de succès, anomalies par marchand).
 
-## Expérience utilisateur
+## 4. Livraison continue
+- Pipeline CI/CD : lint + tests + build + publication images Docker FitIdion.
+- Préparation d’un environnement staging (Docker Compose prod-like ou Kubernetes) avec seeds.
+- Templates PR/Issues alignés sur la charte FitIdion (résumé, tests, capture UI).
 
-- Synchroniser le formulaire d'alertes prix avec un service d'e-mailing (Resend/Brevo) et permettre la gestion des préférences.
-- Sauvegarder les comparaisons favorites côté client (localStorage + partage par URL) et prévoir une authentification légère.
-- Étendre les sections marketing avec des témoignages utilisateurs et un module de FAQ dynamique.
+## 5. Assets brand
+- Remplacer les placeholders texte `FitIdionLogoDark.txt`, `FitIdionLogoLight.txt` et `favicon.txt`
+  par les fichiers binaires correspondants (`.svg` / `.ico`) directement depuis GitHub une fois la PR fusionnée.
+- Mettre à jour `frontend/public/manifest.json` avec les chemins d’icônes finaux après l’upload.
 
-## Fiabilité & observabilité
+---
 
-- Couvrir l'API FastAPI de tests end-to-end (HTTPX) incluant les scénarios d'erreurs et validations.
-- Instrumenter l'API et le frontend avec une solution d'observabilité (OpenTelemetry + exporter Jaeger / Sentry pour le front).
-- Mettre en place des métriques de scraping (temps moyen, taux de succès) affichées dans le back-office futur.
-
-## Livraison & automatisation
-
-- Finaliser un pipeline CI/CD : lint + tests + build, publication des images Docker (backend/front) sur un registre partagé.
-- Ajouter des templates d'issue/PR décrivant les conventions de design et de code.
-- Préparer un environnement de staging (Docker Compose ou Kubernetes) pour valider les nouvelles intégrations avant production.
+🗺️ *L’objectif : faire de FitIdion le copilote fitness de référence en combinant data, design et automation.*
