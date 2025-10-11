@@ -38,7 +38,7 @@ export function ReviewsSection({ productId, className }: ReviewsSectionProps) {
           <div className="rounded-2xl bg-white/10 px-4 py-3 text-right">
             <p className="text-3xl font-semibold text-white">
               {data.averageRating ? data.averageRating.toFixed(1) : "—"}
-              <span className="ml-1 text-base text-orange-300">★</span>
+              <span className="ml-1 text-base text-primary/70">★</span>
             </p>
             <p className="text-xs text-gray-300">
               {data.reviewsCount.toLocaleString("fr-FR")} avis • {data.sources} source{data.sources > 1 ? "s" : ""}
@@ -68,7 +68,7 @@ export function ReviewsSection({ productId, className }: ReviewsSectionProps) {
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full rounded-full bg-orange-400"
+                    className="h-full rounded-full bg-primary/80"
                     style={{ width: formatPercentage(bucket.percentage) }}
                   />
                 </div>
@@ -84,9 +84,9 @@ export function ReviewsSection({ productId, className }: ReviewsSectionProps) {
                   className="flex h-full flex-col rounded-2xl bg-white/10 p-4 text-sm text-gray-200"
                 >
                   <header className="space-y-1">
-                    <p className="text-xs uppercase tracking-wide text-orange-300">{highlight.source}</p>
+                    <p className="text-xs uppercase tracking-wide text-primary/70">{highlight.source}</p>
                     <h3 className="text-base font-semibold text-white">{highlight.title}</h3>
-                    <p className="text-sm font-semibold text-orange-300">{highlight.rating.toFixed(1)} ★</p>
+                    <p className="text-sm font-semibold text-primary/70">{highlight.rating.toFixed(1)} ★</p>
                   </header>
                   <p className="mt-3 flex-1 text-sm text-gray-200">{highlight.summary}</p>
                   {highlight.url && (
@@ -94,7 +94,7 @@ export function ReviewsSection({ productId, className }: ReviewsSectionProps) {
                       href={highlight.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-orange-300 transition hover:text-orange-200"
+                      className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-primary/70 transition hover:text-primary/60"
                     >
                       Lire la source →
                     </a>

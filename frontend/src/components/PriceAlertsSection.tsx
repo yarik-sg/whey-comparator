@@ -25,27 +25,27 @@ export function PriceAlertsSection({ onExploreCatalogue, catalogueHref = "/produ
             transition={{ duration: 0.5 }}
             className="space-y-6"
           >
-            <div className="inline-flex items-center gap-2 rounded-full bg-fitidion-orange/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-fitidion-orange">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
               Ne ratez plus la bonne affaire
             </div>
-            <h2 className="text-3xl font-bold text-fitidion-dark sm:text-4xl dark:text-white">
+            <h2 className="text-3xl font-bold text-dark sm:text-4xl dark:text-white">
               Activez vos alertes personnalisées
             </h2>
-            <p className="text-base leading-relaxed text-slate-600 dark:text-slate-300">
+            <p className="text-base leading-relaxed text-muted dark:text-muted/70">
               Configurez vos alertes prix pour être notifié dès qu’un vendeur casse les prix ou qu’un nouveau marchand
               référence votre protéine favorite. Notre robot analyse chaque variation et vous prévient en priorité.
             </p>
-            <ul className="space-y-3 text-slate-600 dark:text-slate-300">
+            <ul className="space-y-3 text-muted dark:text-muted/70">
               <li className="flex items-start gap-3">
-                <span className="mt-1 text-fitidion-orange">✓</span>
+                <span className="mt-1 text-primary">✓</span>
                 Notifications instantanées ou résumés hebdomadaires selon votre préférence.
               </li>
               <li className="flex items-start gap-3">
-                <span className="mt-1 text-fitidion-orange">✓</span>
+                <span className="mt-1 text-primary">✓</span>
                 Historique de prix sur 90 jours et suivi du meilleur rapport qualité/prix.
               </li>
               <li className="flex items-start gap-3">
-                <span className="mt-1 text-fitidion-orange">✓</span>
+                <span className="mt-1 text-primary">✓</span>
                 Suggestions intelligentes basées sur vos recherches et votre objectif sportif.
               </li>
             </ul>
@@ -54,7 +54,7 @@ export function PriceAlertsSection({ onExploreCatalogue, catalogueHref = "/produ
                 <Button
                   variant="outline"
                   size="lg"
-                  className="rounded-full border-white/20 text-fitidion-orange hover:border-white/40 hover:bg-white/10"
+                  className="rounded-full border-white/20 text-primary hover:border-white/40 hover:bg-white/10"
                   onClick={onExploreCatalogue}
                 >
                   Explorer le catalogue
@@ -65,7 +65,7 @@ export function PriceAlertsSection({ onExploreCatalogue, catalogueHref = "/produ
                   className={buttonClassName({
                     variant: "outline",
                     size: "lg",
-                    className: "rounded-full border-white/20 text-fitidion-orange hover:border-white/40 hover:bg-white/10",
+                    className: "rounded-full border-white/20 text-primary hover:border-white/40 hover:bg-white/10",
                   })}
                 >
                   Explorer le catalogue

@@ -43,11 +43,11 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
   );
 
   return (
-    <section className="relative overflow-hidden bg-fitidion-hero pb-28 pt-24 text-white">
+    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_10%_20%,rgba(255,102,0,0.85),rgba(255,232,209,0.85))] pb-28 pt-24 text-white">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.22),transparent_60%)]" aria-hidden />
         <div className="absolute -left-32 top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" aria-hidden />
-        <div className="absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-fitidion-gold/40 blur-[120px]" aria-hidden />
+        <div className="absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-secondary/40 blur-[120px]" aria-hidden />
       </div>
 
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-6">
@@ -62,7 +62,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           </span>
 
           <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-            Trouvez la <span className="text-fitidion-gold">meilleure whey</span>,<br className="hidden sm:inline" /> au meilleur prix.
+            Trouvez la <span className="text-secondary">meilleure whey</span>,<br className="hidden sm:inline" /> au meilleur prix.
           </h1>
 
           <p className="mx-auto max-w-3xl text-lg leading-relaxed text-white/80">

@@ -118,7 +118,7 @@ export function CreatePriceAlert({ product }: CreatePriceAlertProps) {
             </p>
           )}
         </div>
-        <Button type="submit" className="w-full rounded-full bg-orange-500 text-white hover:bg-orange-600" disabled={isPending}>
+        <Button type="submit" className="w-full rounded-full bg-primary text-white hover:bg-primary/90" disabled={isPending}>
           {isPending ? "Création en cours…" : "Créer l'alerte"}
         </Button>
       </form>
