@@ -43,11 +43,14 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
   );
 
   return (
-    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_10%_20%,rgba(255,102,0,0.85),rgba(255,232,209,0.85))] pb-28 pt-24 text-white">
+    <section className="relative overflow-hidden bg-gradient-to-b from-secondary via-background to-background pb-28 pt-24 text-text dark:from-dark dark:via-[#14213d] dark:to-[#0f172a]">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.22),transparent_60%)]" aria-hidden />
-        <div className="absolute -left-32 top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" aria-hidden />
-        <div className="absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-secondary/40 blur-[120px]" aria-hidden />
+        <div
+          className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(255,102,0,0.18),transparent_62%),radial-gradient(circle_at_82%_12%,rgba(255,232,209,0.55),transparent_65%)] dark:bg-[radial-gradient(circle_at_18%_22%,rgba(255,148,77,0.18),transparent_60%),radial-gradient(circle_at_82%_10%,rgba(30,41,59,0.75),transparent_68%)]"
+          aria-hidden
+        />
+        <div className="absolute -left-32 top-24 h-72 w-72 rounded-full bg-primary/20 blur-3xl dark:bg-primary/30" aria-hidden />
+        <div className="absolute -right-20 bottom-0 h-96 w-96 rounded-full bg-secondary/80 blur-[140px] dark:bg-accent/80" aria-hidden />
       </div>
 
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 text-center sm:px-6">
@@ -57,21 +60,21 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           transition={{ duration: 0.6 }}
           className="w-full space-y-10"
         >
-          <span className="inline-flex items-center justify-center rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/80 shadow-lg shadow-fitidion-orange/10 ring-1 ring-white/20 backdrop-blur">
+          <span className="inline-flex items-center justify-center rounded-full bg-primary/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary shadow-sm ring-1 ring-primary/20 backdrop-blur">
             Comparateur intelligent
           </span>
 
-          <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-            Trouvez la <span className="text-secondary">meilleure whey</span>,<br className="hidden sm:inline" /> au meilleur prix.
+          <h1 className="text-4xl font-semibold leading-tight text-dark dark:text-text sm:text-5xl lg:text-6xl">
+            Trouvez la <span className="text-primary">meilleure whey</span>,<br className="hidden sm:inline" /> au meilleur prix.
           </h1>
 
-          <p className="mx-auto max-w-3xl text-lg leading-relaxed text-white/80">
+          <p className="mx-auto max-w-3xl text-lg leading-relaxed text-text/80 dark:text-text/70">
             Comparez des centaines de compléments et optimisez vos achats fitness grâce à notre comparateur intelligent.
             Profitez d&apos;un suivi continu des prix pour dénicher l&apos;offre idéale.
           </p>
 
           <form onSubmit={handleSubmit} className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-            <div className="flex flex-col gap-3 rounded-full border border-white/20 bg-white/10 p-2 shadow-glow backdrop-blur-xl sm:flex-row sm:items-center sm:p-2.5">
+            <div className="flex flex-col gap-3 rounded-full border border-primary/20 bg-accent/80 p-2 shadow-glass backdrop-blur-sm sm:flex-row sm:items-center sm:p-2.5 dark:border-primary/30 dark:bg-accent/50">
               <label htmlFor="hero-search" className="sr-only">
                 Recherche de compléments
               </label>
@@ -83,7 +86,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Ex : Whey isolat, Optimum Nutrition, créatine monohydrate"
                 aria-describedby="popular-searches"
-                className="h-14 rounded-full border-white/20 bg-transparent px-6 text-base text-white placeholder:text-white/60 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                className="h-14 rounded-full border-transparent bg-white text-base text-dark placeholder:text-dark/50 focus-visible:border-primary focus-visible:ring-primary/10 dark:bg-background dark:text-text dark:placeholder:text-text/60"
               />
               <Button type="submit" size="lg" className="w-full rounded-full sm:w-auto">
                 <Search className="mr-2 h-5 w-5" aria-hidden="true" />
@@ -93,9 +96,9 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
 
             <div
               id="popular-searches"
-              className="flex flex-wrap items-center justify-center gap-2 text-sm text-white/70"
+              className="flex flex-wrap items-center justify-center gap-2 text-sm text-dark/70 dark:text-text/70"
             >
-              <span className="mr-1 text-xs font-semibold uppercase tracking-widest text-white/70">
+              <span className="mr-1 text-xs font-semibold uppercase tracking-widest text-primary">
                 Recherches populaires
               </span>
               {popularSearches.map((suggestion) => (
@@ -106,7 +109,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
                     setSearchQuery(suggestion);
                     handleSearch(suggestion);
                   }}
-                  className="rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white/80 shadow-lg shadow-fitidion-orange/10 transition hover:border-white/40 hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  className="rounded-full border border-primary/20 bg-accent px-4 py-1.5 text-sm font-medium text-dark/80 shadow-sm transition hover:border-primary/40 hover:bg-secondary hover:text-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-primary/30 dark:bg-accent/60 dark:text-text/80 dark:hover:bg-accent"
                   aria-label={`Rechercher ${suggestion}`}
                 >
                   {suggestion}
@@ -115,19 +118,19 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
             </div>
           </form>
 
-          <p className="text-sm font-medium text-white/70">
+          <p className="text-sm font-medium text-dark/70 dark:text-text/70">
             +900 produits comparés • 70 marques suivies • mises à jour 24/7
           </p>
 
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button size="lg" onClick={onStartComparison} className="rounded-full px-8 shadow-glow">
+            <Button size="lg" onClick={onStartComparison} className="rounded-full px-8">
               Lancer le comparateur
             </Button>
             <Button
               size="lg"
-              variant="secondary"
+              variant="outline"
               onClick={onViewDeals}
-              className="rounded-full border border-white/20 bg-white/0 text-white hover:border-white/40 hover:bg-white/10"
+              className="rounded-full px-8 shadow-sm"
             >
               Voir les promotions
               <ArrowRight className="ml-2 h-5 w-5" aria-hidden="true" />

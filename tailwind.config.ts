@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './index.html',
     './src/**/*.{ts,tsx,md,mdx}',
@@ -10,85 +11,28 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#FFF5EB',
-          100: '#FFE4CC',
-          200: '#FFC999',
-          300: '#FFAD66',
-          400: '#FF8800',
-          500: '#FF6600',
-          600: '#E65C00',
-          700: '#C85100',
-          800: '#A74600',
-          900: '#7A3600',
-        },
-        secondary: {
-          50: '#FFF9EB',
-          100: '#FFF3D7',
-          200: '#FEE7AF',
-          300: '#FDDC8E',
-          400: '#F0C56B',
-          500: '#DCA44A',
-        },
-        neutral: {
-          50: '#F5F5F7',
-          100: '#E4E4E8',
-          200: '#CFCFD6',
-          300: '#B1B1BA',
-          400: '#8F8F99',
-          500: '#6F6F77',
-          600: '#4B4B4B',
-          700: '#343438',
-          800: '#26262A',
-          900: '#1B1B1F',
-        },
-        accent: {
-          50: '#E6FFF3',
-          100: '#C5FDE0',
-          200: '#93F7C4',
-          300: '#5EEEA7',
-          400: '#37DE8A',
-          500: '#2ECC71',
-          600: '#24A85C',
-          700: '#1C8348',
-          800: '#155F35',
-          900: '#0E3D22',
-        },
-        alert: {
-          50: '#FFEDEA',
-          100: '#FFD1C9',
-          200: '#FFADA1',
-          300: '#FF8677',
-          400: '#F16050',
-          500: '#E74C3C',
-          600: '#C53A2D',
-          700: '#A22B20',
-          800: '#7D1E15',
-          900: '#56130D',
-        },
-        gold: {
-          50: '#FFF9F0',
-          100: '#FFEED6',
-          200: '#FEE2B2',
-          300: '#FDD08E',
-          400: '#F0B969',
-          500: '#D89A40',
-        },
+        primary: 'rgb(var(--primary-rgb) / <alpha-value>)',
+        secondary: 'rgb(var(--secondary-rgb) / <alpha-value>)',
+        accent: 'rgb(var(--accent-rgb) / <alpha-value>)',
+        dark: 'rgb(var(--dark-rgb) / <alpha-value>)',
+        text: 'rgb(var(--text-rgb) / <alpha-value>)',
+        background: 'rgb(var(--background-rgb) / <alpha-value>)',
+        'fitidion-orange': 'rgb(var(--primary-rgb) / <alpha-value>)',
+        'fitidion-dark': 'rgb(var(--dark-rgb) / <alpha-value>)',
+        'fitidion-light': 'rgb(var(--background-rgb) / <alpha-value>)',
+        'fitidion-gold': 'rgb(253 220 142 / <alpha-value>)',
       },
       fontFamily: {
-        sans: ['"Poppins"', 'var(--font-poppins)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
-        display: ['"Poppins"', 'var(--font-poppins)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['Poppins', 'Inter', 'sans-serif'],
       },
       boxShadow: {
-        aurora: '0 24px 60px -24px rgba(27, 27, 31, 0.35)',
-        'aurora-soft': '0 16px 40px -20px rgba(255, 102, 0, 0.25)',
+        glow: '0 24px 60px -24px rgba(255, 102, 0, 0.35)',
+        'glow-soft': '0 18px 45px -24px rgba(27, 27, 31, 0.25)',
+        fitidion: '0 20px 55px -28px rgba(255, 102, 0, 0.25)',
       },
       backgroundImage: {
-        'flame-gradient': 'linear-gradient(120deg, #FF6600 0%, #FF8800 100%)',
-        'radiant-radial':
-          'radial-gradient(circle at 20% 20%, rgba(255, 102, 0, 0.18), transparent 55%), radial-gradient(circle at 80% 0%, rgba(253, 220, 142, 0.22), transparent 60%)',
-        'midnight-glow':
-          'linear-gradient(135deg, rgba(27, 27, 31, 0.98) 0%, rgba(27, 27, 31, 0.94) 55%, rgba(255, 102, 0, 0.28) 100%)',
+        'fitidion-radial':
+          'radial-gradient(circle at 20% 20%, rgba(255, 102, 0, 0.18), transparent 55%), radial-gradient(circle at 80% 0%, rgba(255, 232, 209, 0.3), transparent 60%)',
       },
       borderRadius: {
         '3xl': '1.75rem',

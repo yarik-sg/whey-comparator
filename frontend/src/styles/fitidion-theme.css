@@ -1,36 +1,46 @@
 :root {
   color-scheme: light;
-  --fit-primary: #ff6600;
-  --fit-secondary: #ffe8d1;
-  --fit-accent: #fff5eb;
-  --fit-dark: #1b1b1f;
-  --fit-text: #222222;
-  --fit-background: #ffffff;
-  --fit-muted: #5f6368;
-  --fit-surface: #fffaf3;
-  --fit-ring: rgba(255, 102, 0, 0.35);
-  --fit-shadow: 0 24px 60px -24px rgba(27, 27, 31, 0.25);
-  --fit-shadow-soft: 0 16px 40px -24px rgba(255, 102, 0, 0.22);
-  --fit-font: "Poppins", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --background: var(--fit-background);
-  --foreground: var(--fit-text);
-  --surface: var(--fit-surface);
-  --muted: var(--fit-muted);
+  --primary: #ff6600;
+  --secondary: #ffe8d1;
+  --accent: #fff5eb;
+  --dark: #1b1b1f;
+  --text: #222222;
+  --text-secondary: #55585f;
+  --background: #ffffff;
+  --primary-rgb: 255 102 0;
+  --secondary-rgb: 255 232 209;
+  --accent-rgb: 255 245 235;
+  --dark-rgb: 27 27 31;
+  --text-rgb: 34 34 34;
+  --background-rgb: 255 255 255;
+  --card: #ffffff;
+  --border-soft: rgba(255, 102, 0, 0.15);
+  --shadow-soft: 0 25px 70px -30px rgba(27, 27, 31, 0.18);
+  --shadow-strong: 0 30px 80px -40px rgba(27, 27, 31, 0.28);
+  --ring: rgba(255, 102, 0, 0.28);
+  --font-sans: 'Poppins', 'Inter', sans-serif;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --fit-background: #0f0f12;
-  --fit-surface: #1f1f24;
-  --fit-text: #f7f7f8;
-  --fit-muted: #c2c2c6;
-  --fit-ring: rgba(255, 232, 209, 0.4);
-  --fit-shadow: 0 28px 80px -40px rgba(0, 0, 0, 0.7);
-  --fit-shadow-soft: 0 20px 45px -28px rgba(255, 102, 0, 0.35);
-  --background: var(--fit-background);
-  --foreground: var(--fit-text);
-  --surface: var(--fit-surface);
-  --muted: var(--fit-muted);
+  --background: #0f172a;
+  --card: #1e293b;
+  --primary: #ff944d;
+  --secondary: #1e293b;
+  --accent: #334155;
+  --dark: #0f172a;
+  --text: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --primary-rgb: 255 148 77;
+  --secondary-rgb: 30 41 59;
+  --accent-rgb: 51 65 85;
+  --dark-rgb: 15 23 42;
+  --text-rgb: 241 245 249;
+  --background-rgb: 15 23 42;
+  --border-soft: rgba(255, 148, 77, 0.25);
+  --shadow-soft: 0 28px 80px -40px rgba(15, 23, 42, 0.7);
+  --shadow-strong: 0 35px 90px -45px rgba(15, 23, 42, 0.85);
+  --ring: rgba(255, 148, 77, 0.35);
 }
 
 * {
@@ -39,9 +49,9 @@
 
 body {
   min-height: 100vh;
-  background-color: var(--fit-background);
-  color: var(--fit-text);
-  font-family: var(--fit-font);
+  background-color: var(--background);
+  color: var(--text);
+  font-family: var(--font-sans);
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -53,8 +63,8 @@ h3,
 h4,
 h5,
 h6 {
-  color: var(--fit-dark);
-  font-family: var(--fit-font);
+  color: var(--dark);
+  font-family: var(--font-sans);
   letter-spacing: -0.02em;
 }
 
@@ -64,63 +74,51 @@ h6 {
 [data-theme="dark"] h4,
 [data-theme="dark"] h5,
 [data-theme="dark"] h6 {
-  color: var(--fit-text);
+  color: var(--text);
 }
 
-button {
-  font-family: var(--fit-font);
-  border-radius: 9999px;
-  transition: all 0.2s ease;
-}
-
-button:focus-visible {
-  outline: 2px solid var(--fit-ring);
-  outline-offset: 2px;
-}
-
-[data-theme="dark"] a,
 a {
   color: inherit;
   text-decoration: none;
 }
 
 a:hover {
-  color: var(--fit-primary);
+  color: var(--primary);
 }
 
 ::selection {
-  background-color: rgba(255, 102, 0, 0.18);
-  color: var(--fit-dark);
+  background-color: rgba(255, 102, 0, 0.16);
+  color: var(--dark);
 }
 
 [data-theme="dark"] ::selection {
-  background-color: rgba(255, 232, 209, 0.45);
-  color: #101014;
+  background-color: rgba(255, 148, 77, 0.45);
+  color: #0b1221;
 }
 
 .shadow-glass {
-  box-shadow: var(--fit-shadow);
+  box-shadow: var(--shadow-soft);
 }
 
 .shadow-glow {
-  box-shadow: var(--fit-shadow-soft);
+  box-shadow: var(--shadow-strong);
 }
 
 .card-surface {
-  background-color: var(--fit-surface);
-  border: 1px solid rgba(255, 102, 0, 0.12);
-  backdrop-filter: blur(12px);
+  background-color: var(--card);
+  border: 1px solid var(--border-soft);
+  backdrop-filter: blur(18px);
 }
 
 [data-theme="dark"] .card-surface {
-  background-color: rgba(31, 31, 36, 0.85);
-  border: 1px solid rgba(255, 232, 209, 0.15);
+  background-color: rgba(30, 41, 59, 0.86);
+  border-color: rgba(255, 148, 77, 0.22);
 }
 
 .text-muted {
-  color: var(--fit-muted);
+  color: var(--text-secondary);
 }
 
 [data-theme="dark"] .text-muted {
-  color: var(--fit-muted);
+  color: var(--text-secondary);
 }

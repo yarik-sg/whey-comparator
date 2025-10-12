@@ -20,33 +20,9 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://fitidion.io"),
-  title: {
-    default: "FitIdion · Fitness intelligent & comparateur d'offres sport",
-    template: "%s · FitIdion",
-  },
-  description:
-    "FitIdion est la plateforme du fitness intelligent : comparez les compléments, suivez les prix en temps réel et activez des alertes personnalisées.",
-  keywords: [
-    "FitIdion",
-    "comparateur fitness",
-    "prix whey",
-    "suivi prix sport",
-    "alertes nutrition",
-  ],
-  openGraph: {
-    title: "FitIdion · Fitness intelligent & comparateur d'offres sport",
-    description:
-      "La plateforme FitIdion centralise catalogues, promotions et analyses pour optimiser vos achats de compléments et équipements sportifs.",
-    siteName: "FitIdion",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "FitIdion · Fitness intelligent",
-    description:
-      "Comparez, suivez et optimisez vos achats sport grâce au design intelligent FitIdion.",
-  },
+  title: "FitIdion — La plateforme du Fitness Intelligent",
+  description: "Comparez les meilleures offres fitness, produits et salles de sport en un clic.",
+  themeColor: "#FF6600",
 };
 
 export default function RootLayout({
