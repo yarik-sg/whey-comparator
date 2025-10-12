@@ -310,8 +310,8 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
   const imageUrl = buildDisplayImageUrl(deal.image) || "/placeholder.png";
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden border-orange-100 p-0 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-      <div className="relative h-48 w-full overflow-hidden bg-orange-50">
+    <Card className="flex h-full flex-col overflow-hidden border-secondary/60 p-0 shadow-glass transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-fitidion dark:border-primary/30">
+      <div className="relative h-48 w-full overflow-hidden bg-accent">
         <img
           src={imageUrl}
           alt={deal.title}
@@ -320,7 +320,7 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
           decoding="async"
         />
         {discount && discount > 0 && (
-          <div className="absolute right-4 top-4 rounded-full bg-orange-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
+          <div className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
             -{discount}%
           </div>
         )}
@@ -333,45 +333,45 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
 
       <div className="flex flex-1 flex-col gap-4 p-6">
         <div className="space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">
+          <div className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/80">
             {deal.source}
           </div>
-          <h3 className="text-lg font-semibold text-slate-900">{deal.title}</h3>
-          <p className="text-sm text-slate-500">{deal.vendor}</p>
+          <h3 className="text-lg font-semibold text-dark dark:text-white">{deal.title}</h3>
+          <p className="text-sm text-muted dark:text-muted/70">{deal.vendor}</p>
         </div>
 
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-bold text-emerald-600">{formattedPrice}</span>
-          {referencePrice && <span className="text-sm text-slate-400 line-through">{referencePrice}</span>}
+          <span className="text-3xl font-bold text-dark dark:text-white">{formattedPrice}</span>
+          {referencePrice && <span className="text-sm text-muted/80 dark:text-muted line-through">{referencePrice}</span>}
         </div>
 
-        <div className="text-sm text-slate-500" aria-label={rating ? `Note ${rating.toFixed(1)} sur 5${reviews ? ` basée sur ${reviews.toLocaleString("fr-FR")} avis` : ""}` : undefined}>
+        <div className="text-sm text-muted dark:text-muted/70" aria-label={rating ? `Note ${rating.toFixed(1)} sur 5${reviews ? ` basée sur ${reviews.toLocaleString("fr-FR")} avis` : ""}` : undefined}>
           {rating ? (
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 text-slate-700">
-                <Star className="h-4 w-4 fill-orange-400 text-orange-400" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1 text-dark dark:text-white">
+                <Star className="h-4 w-4 fill-primary text-primary" aria-hidden="true" />
                 <span className="font-semibold">{rating.toFixed(1)}</span>
               </span>
               {reviews && (
-                <span className="text-xs text-slate-400">({reviews.toLocaleString("fr-FR")} avis)</span>
+                <span className="text-xs text-muted/80 dark:text-muted">({reviews.toLocaleString("fr-FR")} avis)</span>
               )}
             </div>
           ) : (
-            <span className="text-xs text-slate-400">Avis en cours de collecte</span>
+            <span className="text-xs text-muted/80 dark:text-muted">Avis en cours de collecte</span>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+        <div className="flex flex-wrap gap-2 text-xs text-muted dark:text-muted/70">
           {highlights.map((highlight) => (
             <span
               key={`${deal.id}-highlight-${highlight}`}
-              className="inline-flex items-center rounded-full bg-orange-50 px-3 py-1 font-semibold text-orange-500"
+              className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary"
             >
               {highlight}
             </span>
           ))}
           {deal.shippingText && (
-            <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-slate-500">
+            <span className="inline-flex items-center rounded-full bg-accent px-3 py-1 text-muted dark:text-muted/70">
               {deal.shippingText}
             </span>
           )}
@@ -385,7 +385,7 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
               </a>
             </Button>
           ) : (
-            <p className="text-sm text-slate-400">Offre en cours d&apos;actualisation.</p>
+            <p className="text-sm text-muted/80 dark:text-muted">Offre en cours d&apos;actualisation.</p>
           )}
         </div>
       </div>
@@ -591,13 +591,15 @@ export default function PromosPage() {
   const isLoading = categories.some((category) => category.status === "loading");
 
   return (
-    <div className="space-y-16 pb-20">
-      <section className="bg-orange-50/80 py-12">
+    <div className="space-y-16 bg-[var(--background)] pb-20 text-[var(--foreground)]">
+      <section className="relative overflow-hidden py-16">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_0%,rgba(255,102,0,0.14),transparent_60%)]" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_80%_20%,rgba(253,220,142,0.12),transparent_55%)]" aria-hidden />
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div className="space-y-4">
-              <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">Promos du moment</h1>
-              <p className="max-w-2xl text-base text-slate-600">
+              <h1 className="text-3xl font-bold text-dark sm:text-4xl dark:text-white">Promos du moment</h1>
+              <p className="max-w-2xl text-base text-muted dark:text-muted/70">
                 Découvrez, pour chaque univers clé (whey, créatine, BCAA, accessoires…), nos six meilleures offres
                 du moment. Nous priorisons les remises immédiates, les gros formats avantageux et les prix au kilo
                 les plus bas pour vous aider à économiser.
@@ -608,7 +610,7 @@ export default function PromosPage() {
                 {isLoading ? "Actualisation en cours…" : "Rafraîchir les offres"}
               </Button>
               {lastUpdatedLabel && (
-                <p className="text-sm text-slate-500">Dernière mise à jour à {lastUpdatedLabel}</p>
+                <p className="text-sm text-muted dark:text-muted/80">Dernière mise à jour à {lastUpdatedLabel}</p>
               )}
             </div>
           </div>
@@ -618,11 +620,11 @@ export default function PromosPage() {
               <a
                 key={item.id}
                 href={item.href}
-                className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-medium text-orange-600 transition hover:border-orange-300 hover:text-orange-500"
+                className="inline-flex items-center gap-2 rounded-full border border-secondary/60 bg-accent px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-secondary/60"
               >
                 <span>{item.label}</span>
                 {typeof item.count === "number" && (
-                  <span className="text-xs text-orange-400">{item.count}</span>
+                  <span className="text-xs text-primary/80">{item.count}</span>
                 )}
               </a>
             ))}
@@ -635,26 +637,26 @@ export default function PromosPage() {
           <section key={category.id} id={`promos-${category.id}`} className="space-y-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div className="space-y-1">
-                <h2 className="text-2xl font-semibold text-slate-900">{category.label}</h2>
-                <p className="text-sm text-slate-500">{category.description}</p>
+                <h2 className="text-2xl font-semibold text-dark dark:text-white">{category.label}</h2>
+                <p className="text-sm text-muted dark:text-muted/70">{category.description}</p>
                 {category.usingFallback && (
-                  <p className="text-xs font-medium text-orange-500">
+                  <p className="text-xs font-medium text-primary">
                     Offres de démonstration affichées lorsque les données temps réel sont indisponibles.
                   </p>
                 )}
               </div>
               <Link
                 href={`/comparateur?q=${encodeURIComponent(category.query)}`}
-                className="text-sm font-semibold text-orange-500 transition hover:text-orange-400"
+                className="text-sm font-semibold text-primary transition hover:text-secondary"
               >
                 Voir toutes les offres →
               </Link>
             </div>
 
             {category.status === "error" ? (
-              <div className="space-y-3 rounded-3xl border border-red-100 bg-red-50 p-6 text-sm text-red-600">
+              <div className="space-y-3 rounded-3xl border border-red-300/40 bg-red-500/10 p-6 text-sm text-red-200">
                 <p>{category.error ?? "Impossible de charger les promotions pour le moment."}</p>
-                <Button onClick={loadPromos} className="rounded-full bg-red-500 text-white hover:bg-red-600">
+                <Button onClick={loadPromos} className="rounded-full">
                   Réessayer
                 </Button>
               </div>
@@ -663,7 +665,7 @@ export default function PromosPage() {
                 {Array.from({ length: PROMOS_PER_CATEGORY }).map((_, index) => (
                   <div
                     key={`skeleton-${category.id}-${index}`}
-                    className="h-[420px] animate-pulse rounded-3xl border border-orange-100 bg-white"
+                    className="h-[420px] animate-pulse rounded-3xl border border-secondary/60 bg-accent"
                     aria-hidden
                   />
                 ))}
@@ -675,13 +677,13 @@ export default function PromosPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+              <div className="rounded-3xl border border-secondary/60 bg-accent/80 p-6 text-sm text-muted dark:text-muted/70">
                 <p>Aucune promotion active n&apos;a été détectée pour cette catégorie.</p>
                 <p className="mt-2">
                   Lancez une recherche dédiée sur le comparateur pour suivre les prochaines offres :
                   <Link
                     href={`/comparateur?q=${encodeURIComponent(category.query)}`}
-                    className="ml-1 font-semibold text-orange-500 hover:text-orange-400"
+                    className="ml-1 font-semibold text-primary hover:text-secondary"
                   >
                     ouvrir le comparateur
                   </Link>

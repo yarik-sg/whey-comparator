@@ -31,7 +31,7 @@ export function SimilarProducts({
   return (
     <section
       className={cn(
-        "space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm",
+        "space-y-4 rounded-3xl border border-secondary/60 bg-white p-6 shadow-sm",
         className,
       )}
       aria-labelledby="similar-products-heading"
@@ -40,13 +40,13 @@ export function SimilarProducts({
         <div>
           <h2
             id="similar-products-heading"
-            className="text-lg font-semibold text-slate-900"
+            className="text-lg font-semibold text-dark"
           >
             {title}
           </h2>
-          <p className="text-sm text-slate-500">{description}</p>
+          <p className="text-sm text-muted">{description}</p>
         </div>
-        <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-orange-600">
+        <span className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
           <span aria-hidden>🧮</span>
           <span>Score affinité</span>
         </span>
@@ -68,11 +68,11 @@ export function SimilarProducts({
               product={product}
               href={href}
               footer={
-                <div className="flex items-center justify-between text-xs text-slate-500">
+                <div className="flex items-center justify-between text-xs text-muted">
                   <span>ID #{canonicalId}</span>
                   <CompareLinkButton
                     href={comparisonHref}
-                    className="inline-flex items-center gap-1 font-semibold text-orange-600 transition hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
+                    className="inline-flex items-center gap-1 font-semibold text-primary transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     aria-label={`Comparer avec ${product.name}`}
                     title={`Comparer avec ${product.name}`}
                   >

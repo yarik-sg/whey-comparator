@@ -66,38 +66,38 @@ function renderRating(offer: DealItem) {
         : "Avis externes";
 
     return (
-      <div className="flex flex-col text-xs text-slate-500">
-        <span className="font-semibold text-slate-900">{rating} ★</span>
+      <div className="flex flex-col text-xs text-muted">
+        <span className="font-semibold text-dark">{rating} ★</span>
         <span>{reviews}</span>
       </div>
     );
   }
 
-  return <span className="text-xs text-slate-400">—</span>;
+  return <span className="text-xs text-muted/80">—</span>;
 }
 
 export function OfferTable({ offers, caption }: OfferTableProps) {
   if (offers.length === 0) {
     return (
-      <p className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+      <p className="rounded-3xl border border-secondary/60 bg-accent p-6 text-sm text-muted">
         Aucune offre disponible pour le moment.
       </p>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-3xl border border-secondary/60 bg-white shadow-sm">
       {caption && (
-        <div className="border-b border-slate-200 bg-orange-50 px-4 py-3 text-sm font-semibold text-orange-600">
+        <div className="border-b border-secondary/60 bg-accent px-4 py-3 text-sm font-semibold text-primary">
           {caption}
         </div>
       )}
 
       <div className="hidden md:block">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm text-slate-600">
+          <table className="min-w-full text-left text-sm text-muted">
             {caption && <caption className="sr-only">{caption}</caption>}
-            <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <thead className="bg-accent text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th scope="col" className="px-4 py-3 font-semibold">
                   Vendeur
@@ -131,60 +131,60 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
                 return (
                   <tr
                     key={offer.id}
-                    className={`border-t border-slate-200 transition ${
-                      highlight ? "bg-orange-50" : "hover:bg-slate-50"
+                    className={`border-t border-secondary/60 transition ${
+                      highlight ? "bg-accent" : "hover:bg-accent"
                     }`}
                   >
-                    <th scope="row" className="px-4 py-4 font-semibold text-slate-900">
+                    <th scope="row" className="px-4 py-4 font-semibold text-dark">
                       <div className="flex flex-col gap-1">
                         <span className="flex items-center gap-2">
                           {offer.vendor}
                           {highlight && (
-                            <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-600">
+                            <span className="inline-flex items-center rounded-full bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
                               Meilleur prix
                             </span>
                           )}
                         </span>
-                        {offer.title && <span className="text-xs text-slate-400">{offer.title}</span>}
+                        {offer.title && <span className="text-xs text-muted/80">{offer.title}</span>}
                       </div>
                     </th>
                     <td className="px-4 py-4">
                       <div className="flex flex-col">
-                        <span className="font-semibold text-slate-900">{formatPrice(offer.price)}</span>
+                        <span className="font-semibold text-dark">{formatPrice(offer.price)}</span>
                         {typeof offer.pricePerKg === "number" && (
-                          <span className="text-xs text-slate-400">{offer.pricePerKg.toFixed(2)} €/kg</span>
+                          <span className="text-xs text-muted/80">{offer.pricePerKg.toFixed(2)} €/kg</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-slate-500">{formatShipping(offer)}</td>
-                    <td className="px-4 py-4 font-semibold text-slate-900">
+                    <td className="px-4 py-4 text-muted">{formatShipping(offer)}</td>
+                    <td className="px-4 py-4 font-semibold text-dark">
                       {formatPrice(offer.totalPrice ?? offer.price)}
                     </td>
-                    <td className="px-4 py-4 text-slate-500">
+                    <td className="px-4 py-4 text-muted">
                       {(() => {
                         const availability = getAvailability(offer);
                         return (
                           <span className="inline-flex items-center gap-2" aria-label={availability.label}>
                             <span aria-hidden>{availability.icon}</span>
-                            <span className="text-xs text-slate-500">{availability.label}</span>
+                            <span className="text-xs text-muted">{availability.label}</span>
                           </span>
                         );
                       })()}
                     </td>
                     <td className="px-4 py-4">{renderRating(offer)}</td>
-                    <td className="px-4 py-4 text-slate-500">{offer.source}</td>
+                    <td className="px-4 py-4 text-muted">{offer.source}</td>
                     <td className="px-4 py-4">
                       {offer.link ? (
                         <a
                           href={offer.link}
                           target="_blank"
                           rel="noopener noreferrer nofollow"
-                          className="inline-flex items-center gap-2 rounded-full border border-orange-200 px-3 py-1 text-xs font-semibold text-orange-600 transition hover:border-orange-300 hover:text-orange-500"
+                          className="inline-flex items-center gap-2 rounded-full border border-primary/30 px-3 py-1 text-xs font-semibold text-primary transition hover:border-primary/40 hover:text-primary"
                         >
                           Consulter →
                         </a>
                       ) : (
-                        <span className="text-xs text-slate-400">Lien indisponible</span>
+                        <span className="text-xs text-muted/80">Lien indisponible</span>
                       )}
                     </td>
                   </tr>
@@ -204,53 +204,53 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
               key={offer.id}
               className={`rounded-2xl border p-4 shadow-sm transition ${
                 highlight
-                  ? "border-orange-200 bg-orange-50"
-                  : "border-slate-200 bg-white hover:border-orange-200"
+                  ? "border-primary/30 bg-accent"
+                  : "border-secondary/60 bg-white hover:border-primary/30"
               }`}
             >
               <header className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="flex items-center gap-2 text-base font-semibold text-slate-900">
+                  <p className="flex items-center gap-2 text-base font-semibold text-dark">
                     {offer.vendor}
                     {highlight && (
-                      <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-600">
+                      <span className="inline-flex items-center rounded-full bg-secondary/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
                         Meilleur prix
                       </span>
                     )}
                   </p>
-                  {offer.title && <p className="mt-1 text-xs text-slate-400">{offer.title}</p>}
+                  {offer.title && <p className="mt-1 text-xs text-muted/80">{offer.title}</p>}
                 </div>
-                {offer.source && <span className="text-xs text-slate-400">{offer.source}</span>}
+                {offer.source && <span className="text-xs text-muted/80">{offer.source}</span>}
               </header>
 
-              <dl className="mt-4 space-y-2 text-sm text-slate-600">
+              <dl className="mt-4 space-y-2 text-sm text-muted">
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Prix</dt>
-                  <dd className="font-semibold text-slate-900">{formatPrice(offer.price)}</dd>
+                  <dt className="text-muted">Prix</dt>
+                  <dd className="font-semibold text-dark">{formatPrice(offer.price)}</dd>
                 </div>
                 {typeof offer.pricePerKg === "number" && (
                   <div className="flex justify-between">
-                    <dt className="text-slate-500">€/kg</dt>
+                    <dt className="text-muted">€/kg</dt>
                     <dd>{offer.pricePerKg.toFixed(2)}</dd>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Livraison</dt>
+                  <dt className="text-muted">Livraison</dt>
                   <dd>{formatShipping(offer)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Total</dt>
-                  <dd className="font-semibold text-slate-900">{formatPrice(offer.totalPrice ?? offer.price)}</dd>
+                  <dt className="text-muted">Total</dt>
+                  <dd className="font-semibold text-dark">{formatPrice(offer.totalPrice ?? offer.price)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Disponibilité</dt>
-                  <dd className="inline-flex items-center gap-2 text-slate-600" aria-label={availability.label}>
+                  <dt className="text-muted">Disponibilité</dt>
+                  <dd className="inline-flex items-center gap-2 text-muted" aria-label={availability.label}>
                     <span aria-hidden>{availability.icon}</span>
                     <span className="text-xs">{availability.label}</span>
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Avis</dt>
+                  <dt className="text-muted">Avis</dt>
                   <dd>{renderRating(offer)}</dd>
                 </div>
               </dl>
@@ -261,12 +261,12 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
                     href={offer.link}
                     target="_blank"
                     rel="noopener noreferrer nofollow"
-                    className="inline-flex w-full items-center justify-center rounded-full border border-orange-200 px-3 py-2 text-sm font-semibold text-orange-600 transition hover:border-orange-300 hover:text-orange-500"
+                    className="inline-flex w-full items-center justify-center rounded-full border border-primary/30 px-3 py-2 text-sm font-semibold text-primary transition hover:border-primary/40 hover:text-primary"
                   >
                     Consulter l&apos;offre →
                   </a>
                 ) : (
-                  <span className="text-xs text-slate-400">Lien indisponible</span>
+                  <span className="text-xs text-muted/80">Lien indisponible</span>
                 )}
               </footer>
             </article>

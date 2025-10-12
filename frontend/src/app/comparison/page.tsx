@@ -282,22 +282,22 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
 
   return (
     <div className="space-y-16 pb-20">
-      <section className="bg-orange-50/80 py-12">
+      <section className="bg-accent py-12">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-primary">
             Comparaison détaillée
           </p>
           <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">{comparisonTitle}</h1>
-              <p className="mt-3 max-w-2xl text-base text-slate-600">
+              <h1 className="text-3xl font-bold text-dark sm:text-4xl">{comparisonTitle}</h1>
+              <p className="mt-3 max-w-2xl text-base text-muted">
                 Analysez les meilleures offres en croisant SerpAPI et notre base interne. Comparez les prix affichés, les notes
                 et le rapport protéines/prix pour prendre la meilleure décision.
               </p>
             </div>
             <Link
               href="/products"
-              className="inline-flex items-center justify-center rounded-full border border-orange-200 bg-white px-5 py-3 text-sm font-semibold text-orange-600 transition hover:border-orange-300 hover:text-orange-500"
+              className="inline-flex items-center justify-center rounded-full border border-primary/30 bg-white px-5 py-3 text-sm font-semibold text-primary transition hover:border-primary/40 hover:text-primary"
             >
               Ajouter des produits
             </Link>
@@ -307,7 +307,7 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         {!trimmedIds && fallbackIds.length === 0 && (
-          <p className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
+          <p className="rounded-3xl border border-secondary/60 bg-accent p-8 text-center text-muted">
             Sélectionnez des produits via le catalogue pour lancer une comparaison.
           </p>
         )}
@@ -321,9 +321,9 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
         {data && (
           <div className="space-y-12">
             {usedFallback && (
-              <div className="rounded-3xl border border-orange-100 bg-orange-50 p-6 text-sm text-slate-600">
-                <p className="font-semibold text-orange-600">Sélection automatique</p>
-                <p className="mt-2 text-slate-600">
+              <div className="rounded-3xl border border-secondary/60 bg-accent p-6 text-sm text-muted">
+                <p className="font-semibold text-primary">Sélection automatique</p>
+                <p className="mt-2 text-muted">
                   Nous avons préchargé la comparaison avec&nbsp;
                   {defaultProducts
                     .map((product) => product.name)
@@ -335,12 +335,12 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
             )}
 
             <section className="space-y-4">
-              <h2 className="text-2xl font-semibold text-slate-900">Synthèse prix</h2>
+              <h2 className="text-2xl font-semibold text-dark">Synthèse prix</h2>
               <OfferTable offers={data.summary} caption="Offres les plus compétitives" />
             </section>
 
             <section className="space-y-8">
-              <h2 className="text-2xl font-semibold text-slate-900">Détail par produit</h2>
+              <h2 className="text-2xl font-semibold text-dark">Détail par produit</h2>
               <div className="grid gap-8 lg:grid-cols-2">
                 {data.products.map(({ product, offers }, index) => {
                   const canonicalId =
@@ -353,11 +353,11 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
                         product={product}
                         href={productHref}
                         footer={
-                          <div className="flex items-center justify-between text-xs text-slate-400">
+                          <div className="flex items-center justify-between text-xs text-muted/80">
                             <span>ID #{canonicalId}</span>
                             <CompareLinkButton
                               href={buildComparisonHref(canonicalId)}
-                              className="inline-flex items-center gap-1 font-semibold text-orange-500 transition hover:text-orange-400"
+                              className="inline-flex items-center gap-1 font-semibold text-primary transition hover:text-primary/80"
                             >
                               Comparer individuellement →
                             </CompareLinkButton>

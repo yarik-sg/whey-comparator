@@ -1,0 +1,126 @@
+:root {
+  color-scheme: light;
+  --fit-primary: #ff6600;
+  --fit-secondary: #ffe8d1;
+  --fit-accent: #fff5eb;
+  --fit-dark: #1b1b1f;
+  --fit-text: #222222;
+  --fit-background: #ffffff;
+  --fit-muted: #5f6368;
+  --fit-surface: #fffaf3;
+  --fit-ring: rgba(255, 102, 0, 0.35);
+  --fit-shadow: 0 24px 60px -24px rgba(27, 27, 31, 0.25);
+  --fit-shadow-soft: 0 16px 40px -24px rgba(255, 102, 0, 0.22);
+  --fit-font: "Poppins", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --background: var(--fit-background);
+  --foreground: var(--fit-text);
+  --surface: var(--fit-surface);
+  --muted: var(--fit-muted);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --fit-background: #0f0f12;
+  --fit-surface: #1f1f24;
+  --fit-text: #f7f7f8;
+  --fit-muted: #c2c2c6;
+  --fit-ring: rgba(255, 232, 209, 0.4);
+  --fit-shadow: 0 28px 80px -40px rgba(0, 0, 0, 0.7);
+  --fit-shadow-soft: 0 20px 45px -28px rgba(255, 102, 0, 0.35);
+  --background: var(--fit-background);
+  --foreground: var(--fit-text);
+  --surface: var(--fit-surface);
+  --muted: var(--fit-muted);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--fit-background);
+  color: var(--fit-text);
+  font-family: var(--fit-font);
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--fit-dark);
+  font-family: var(--fit-font);
+  letter-spacing: -0.02em;
+}
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: var(--fit-text);
+}
+
+button {
+  font-family: var(--fit-font);
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--fit-ring);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] a,
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--fit-primary);
+}
+
+::selection {
+  background-color: rgba(255, 102, 0, 0.18);
+  color: var(--fit-dark);
+}
+
+[data-theme="dark"] ::selection {
+  background-color: rgba(255, 232, 209, 0.45);
+  color: #101014;
+}
+
+.shadow-glass {
+  box-shadow: var(--fit-shadow);
+}
+
+.shadow-glow {
+  box-shadow: var(--fit-shadow-soft);
+}
+
+.card-surface {
+  background-color: var(--fit-surface);
+  border: 1px solid rgba(255, 102, 0, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] .card-surface {
+  background-color: rgba(31, 31, 36, 0.85);
+  border: 1px solid rgba(255, 232, 209, 0.15);
+}
+
+.text-muted {
+  color: var(--fit-muted);
+}
+
+[data-theme="dark"] .text-muted {
+  color: var(--fit-muted);
+}

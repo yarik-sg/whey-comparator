@@ -121,7 +121,7 @@ function DealCard({
       viewport={{ once: true, amount: 0.2 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Card className="group flex h-full flex-col overflow-hidden border-orange-100 bg-white/95 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+      <Card className="group flex h-full flex-col overflow-hidden border-white/15 bg-white/80 shadow-glass transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-fitidion dark:border-white/10 dark:bg-slate-900/60">
         <CardHeader className="space-y-4">
           <div className="relative overflow-hidden rounded-3xl">
             <img
@@ -132,7 +132,7 @@ function DealCard({
               decoding="async"
             />
             {discountPercentage && (
-              <div className="absolute right-4 top-4 rounded-full bg-orange-500 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
+              <div className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
                 -{discountPercentage}%
               </div>
             )}
@@ -142,24 +142,24 @@ function DealCard({
               </div>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted dark:text-muted/70">
             {deal.weightKg && <span>{deal.weightKg.toLocaleString("fr-FR")} kg</span>}
             {deal.pricePerKg && <span>{deal.pricePerKg.toFixed(2)} €/kg</span>}
             {countdown && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-orange-500">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-primary">
                 ⏱️ {countdown}
               </span>
             )}
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-slate-900">{deal.title}</h3>
-            <p className="mt-1 text-sm text-slate-500">{deal.vendor}</p>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{deal.source}</p>
+            <h3 className="text-xl font-semibold text-dark dark:text-white">{deal.title}</h3>
+            <p className="mt-1 text-sm text-muted dark:text-muted/70">{deal.vendor}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/80">{deal.source}</p>
           </div>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col justify-between space-y-6">
           <div
-            className="flex flex-wrap items-center gap-2 text-sm text-slate-600"
+            className="flex flex-wrap items-center gap-2 text-sm text-muted dark:text-muted/70"
             aria-label={
               ratingValue
                 ? `Note ${ratingValue.toFixed(1)} sur 5${
@@ -177,33 +177,31 @@ function DealCard({
                     return (
                       <Star
                         key={`${deal.id}-star-${starIndex}`}
-                        className={`h-4 w-4 ${isFilled ? "fill-orange-400 text-orange-400" : "text-slate-200"}`}
+                        className={`h-4 w-4 ${isFilled ? "fill-primary text-primary" : "text-white/30 dark:text-muted"}`}
                         aria-hidden="true"
                       />
                     );
                   })}
                 </div>
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-dark dark:text-white">
                   {ratingValue.toFixed(1)}
                 </span>
                 {reviewCount && (
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-muted/80 dark:text-muted">
                     ({reviewCount.toLocaleString("fr-FR")} avis)
                   </span>
                 )}
               </>
             ) : (
-              <span className="text-xs text-slate-400">Avis à venir</span>
+              <span className="text-xs text-muted/80 dark:text-muted">Avis à venir</span>
             )}
           </div>
           <div>
             <div className="flex items-end gap-2">
-              <p className="text-3xl font-bold text-emerald-600">{formattedPrice}</p>
-              {referencePrice && (
-                <span className="text-sm text-slate-400 line-through">{referencePrice}</span>
-              )}
+              <p className="text-3xl font-bold text-dark dark:text-white">{formattedPrice}</p>
+              {referencePrice && <span className="text-sm text-muted/80 dark:text-muted line-through">{referencePrice}</span>}
             </div>
-            {deal.shippingText && <p className="text-xs text-slate-400">{deal.shippingText}</p>}
+            {deal.shippingText && <p className="text-xs text-muted/80 dark:text-muted">{deal.shippingText}</p>}
           </div>
           {deal.link ? (
             <Button asChild className="w-full rounded-full">
@@ -212,7 +210,7 @@ function DealCard({
               </a>
             </Button>
           ) : (
-            <p className="text-sm text-slate-400">Offre en cours d&apos;actualisation.</p>
+            <p className="text-sm text-muted/80 dark:text-muted">Offre en cours d&apos;actualisation.</p>
           )}
         </CardContent>
       </Card>
@@ -283,27 +281,29 @@ export function DealsShowcase() {
   const hasDeals = deals.length > 0;
 
   return (
-    <section id="promotions" className="bg-[#f9fafb] py-20">
+    <section id="promotions" className="relative overflow-hidden py-24">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_10%_0%,rgba(255,102,0,0.18),transparent_55%)]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_90%_10%,rgba(253,220,142,0.14),transparent_58%)]" aria-hidden />
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+            <h2 className="text-3xl font-bold text-dark sm:text-4xl dark:text-white">
               Promos du moment
             </h2>
-            <p className="text-base text-slate-500">
+            <p className="text-base text-muted dark:text-muted/70">
               Offres vérifiées et mises à jour plusieurs fois par jour auprès de nos partenaires.
             </p>
           </div>
         </div>
 
         {usingFallback && (
-          <p className="mt-2 text-sm text-orange-500">
+          <p className="mt-2 text-sm font-medium text-primary">
             Offres de démonstration affichées lorsque les promotions temps réel sont indisponibles.
           </p>
         )}
 
         {state === "error" && (
-          <p className="mt-8 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
+          <p className="mt-8 rounded-3xl border border-red-200/60 bg-red-500/10 p-5 text-sm text-red-200">
             Impossible de charger les promotions. Réessayez plus tard.
           </p>
         )}
@@ -313,7 +313,7 @@ export function DealsShowcase() {
             ? Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={`skeleton-${index}`}
-                  className="h-[420px] animate-pulse rounded-3xl border border-orange-100 bg-white"
+                  className="h-[420px] animate-pulse rounded-3xl border border-white/20 bg-white/10"
                   aria-hidden
                 />
               ))
@@ -327,7 +327,7 @@ export function DealsShowcase() {
                 />
               ))
             : (
-                <p className="col-span-full rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-500">
+                <p className="col-span-full rounded-3xl border border-white/20 bg-white/10 p-8 text-center text-muted dark:text-muted/70">
                   Aucune promotion disponible pour le moment.
                 </p>
               )}

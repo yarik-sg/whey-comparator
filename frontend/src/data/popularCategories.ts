@@ -13,7 +13,7 @@ export const popularCategories: PopularCategory[] = [
     label: "Whey protéine",
     query: "whey protein",
     icon: "💪",
-    iconColor: "text-orange-300",
+    iconColor: "text-primary/70",
     description: "Les best-sellers pour optimiser la récupération musculaire.",
   },
   {

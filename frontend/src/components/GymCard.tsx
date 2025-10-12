@@ -28,7 +28,7 @@ const IconBadge = ({
   className?: string;
 }) => (
   <span
-    className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-500 shadow-sm ${className ?? ""}`}
+    className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent text-primary shadow-sm ${className ?? ""}`}
   >
     {children}
   </span>
@@ -72,21 +72,21 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
   const topAmenities = useMemo(() => amenities.slice(0, 3), [amenities]);
 
   return (
-    <article className="group flex h-full flex-col justify-between rounded-3xl border border-orange-100 bg-white/95 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+    <article className="group flex h-full flex-col justify-between rounded-3xl border border-secondary/60 bg-white/95 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <IconBadge>
             <MapPin className="h-5 w-5" aria-hidden="true" />
           </IconBadge>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-orange-500">{brand}</p>
-            <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">{brand}</p>
+            <h3 className="text-lg font-semibold text-dark">{name}</h3>
           </div>
         </div>
 
-        <div className="space-y-2 text-sm text-slate-600">
+        <div className="space-y-2 text-sm text-muted">
           <p className="flex items-start gap-2">
-            <MapPin className="mt-0.5 h-4 w-4 text-orange-400" aria-hidden="true" />
+            <MapPin className="mt-0.5 h-4 w-4 text-primary/80" aria-hidden="true" />
             <span>
               {address}
               <br />
@@ -95,7 +95,7 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
           </p>
           {formattedDistance ? (
             <p className="flex items-center gap-2">
-              <Clock3 className="h-4 w-4 text-orange-400" aria-hidden="true" />
+              <Clock3 className="h-4 w-4 text-primary/80" aria-hidden="true" />
               <span>
                 {formattedDistance}
                 {travelTime ? ` · ${travelTime}` : ""}
@@ -109,7 +109,7 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
             {topAmenities.map((amenity) => (
               <li
                 key={amenity}
-                className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600"
+                className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-primary"
               >
                 {amenity}
               </li>
@@ -118,10 +118,10 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
         ) : null}
       </div>
 
-      <footer className="mt-6 border-t border-orange-100 pt-4">
+      <footer className="mt-6 border-t border-secondary/60 pt-4">
         <div className="flex items-center justify-between text-sm">
-          <span className="inline-flex items-center gap-2 font-semibold text-slate-800">
-            <PiggyBank className="h-4 w-4 text-orange-500" aria-hidden="true" />
+          <span className="inline-flex items-center gap-2 font-semibold text-dark">
+            <PiggyBank className="h-4 w-4 text-primary" aria-hidden="true" />
             {formattedPrice}
           </span>
           {website ? (
@@ -129,7 +129,7 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
               href={website}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-orange-500 transition hover:text-orange-600"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition hover:text-primary"
             >
               Voir le site
               <ExternalLink className="h-4 w-4" aria-hidden="true" />

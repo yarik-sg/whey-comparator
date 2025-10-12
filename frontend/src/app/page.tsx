@@ -35,7 +35,7 @@ export default function Home() {
   }, [router]);
 
   return (
-    <div className="bg-white text-slate-900">
+    <div className="bg-background text-text">
       <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
       <PopularCategories onSelectCategory={handleSelectCategory} />
       <DealsShowcase />

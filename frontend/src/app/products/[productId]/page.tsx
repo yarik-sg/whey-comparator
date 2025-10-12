@@ -192,7 +192,7 @@ export default async function ProductDetailPage({
             { label: "Catalogue", href: "/products" },
             { label: product.name, href: `#product-${sectionAnchorId}` },
           ]}
-          className="text-sm text-slate-500"
+          className="text-sm text-muted"
         />
 
         <div id={`product-${sectionAnchorId}`} className="grid gap-10 lg:grid-cols-[360px,1fr]">
@@ -203,17 +203,17 @@ export default async function ProductDetailPage({
               className="lg:sticky lg:top-28"
             />
 
-            <section className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="space-y-6 rounded-3xl border border-secondary/60 bg-white p-6 shadow-sm">
               <div className="flex flex-col gap-4">
                 <Link
                   href="/products"
-                  className="text-xs font-semibold uppercase tracking-wide text-orange-600 transition hover:text-orange-500"
+                  className="text-xs font-semibold uppercase tracking-wide text-primary transition hover:text-primary"
                 >
                   ← Retour au catalogue
                 </Link>
                 <div className="flex flex-col gap-2">
-                  <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">{product.name}</h1>
-                  {product.brand && <p className="text-sm text-slate-500">{product.brand}</p>}
+                  <h1 className="text-3xl font-bold text-dark sm:text-4xl">{product.name}</h1>
+                  {product.brand && <p className="text-sm text-muted">{product.brand}</p>}
                   {hasAverageRating && (
                     <p className="text-sm font-semibold text-emerald-600">
                       {averageRating.toFixed(1)} ★
@@ -225,7 +225,7 @@ export default async function ProductDetailPage({
                 </div>
                 <CompareLinkButton
                   href={buildComparisonHref(canonicalProductId)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   aria-label={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
                   title={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
                 >
@@ -233,37 +233,37 @@ export default async function ProductDetailPage({
                 </CompareLinkButton>
               </div>
 
-              <dl className="grid gap-4 rounded-2xl border border-orange-100 bg-orange-50/80 p-4 text-sm text-slate-600">
+              <dl className="grid gap-4 rounded-2xl border border-secondary/60 bg-accent p-4 text-sm text-muted">
                 <div>
-                  <dt className="text-xs uppercase tracking-wide text-orange-500/80">Prix constaté</dt>
-                  <dd className="text-lg font-semibold text-slate-900">{product.bestPrice?.formatted ?? "—"}</dd>
+                  <dt className="text-xs uppercase tracking-wide text-primary/80">Prix constaté</dt>
+                  <dd className="text-lg font-semibold text-dark">{product.bestPrice?.formatted ?? "—"}</dd>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
+                <div className="grid grid-cols-2 gap-4 text-xs text-muted">
                   <div>
-                    <p className="uppercase tracking-wide text-[11px] text-slate-400">€/kg</p>
-                    <p className="text-base font-semibold text-slate-900">
+                    <p className="uppercase tracking-wide text-[11px] text-muted/80">€/kg</p>
+                    <p className="text-base font-semibold text-dark">
                       {typeof product.pricePerKg === "number"
                         ? `${product.pricePerKg.toFixed(2)} €`
                         : "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="uppercase tracking-wide text-[11px] text-slate-400">Protéines / €</p>
-                    <p className="text-base font-semibold text-slate-900">
+                    <p className="uppercase tracking-wide text-[11px] text-muted/80">Protéines / €</p>
+                    <p className="text-base font-semibold text-dark">
                       {typeof product.proteinPerEuro === "number"
                         ? product.proteinPerEuro.toFixed(2)
                         : "—"}
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
+                <div className="grid grid-cols-2 gap-4 text-xs text-muted">
                   <div>
-                    <p className="uppercase tracking-wide text-[11px] text-slate-400">Offres actives</p>
-                    <p className="text-base font-semibold text-slate-900">{offers.length}</p>
+                    <p className="uppercase tracking-wide text-[11px] text-muted/80">Offres actives</p>
+                    <p className="text-base font-semibold text-dark">{offers.length}</p>
                   </div>
                   <div>
-                    <p className="uppercase tracking-wide text-[11px] text-slate-400">Disponibilité</p>
-                    <p className="text-base font-semibold text-slate-900">
+                    <p className="uppercase tracking-wide text-[11px] text-muted/80">Disponibilité</p>
+                    <p className="text-base font-semibold text-dark">
                       {product.inStock === true
                         ? "En stock"
                         : product.stockStatus ?? "À vérifier"}
@@ -272,7 +272,7 @@ export default async function ProductDetailPage({
                 </div>
               </dl>
 
-              <div className="space-y-1 text-xs text-slate-400">
+              <div className="space-y-1 text-xs text-muted/80">
                 <p>ID #{canonicalProductId}</p>
                 <p>Sources agrégées : {offers.length}</p>
                 <p>Entrées scraper : {sources.scraper.length}</p>
@@ -280,17 +280,17 @@ export default async function ProductDetailPage({
             </section>
 
             {bestOffer && (
-              <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-                <h2 className="text-lg font-semibold text-slate-900">Offre mise en avant</h2>
-                <div className="space-y-2 rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
-                  <p className="text-sm font-semibold text-slate-900">
+              <section className="space-y-4 rounded-3xl border border-secondary/60 bg-white p-6 text-sm text-muted shadow-sm">
+                <h2 className="text-lg font-semibold text-dark">Offre mise en avant</h2>
+                <div className="space-y-2 rounded-2xl border border-secondary/60 bg-accent p-4">
+                  <p className="text-sm font-semibold text-dark">
                     {bestOffer.vendor} · {bestOffer.price.formatted}
                     {bestOffer.shippingText ? ` (${bestOffer.shippingText})` : ""}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted">
                     Total TTC : {bestOffer.totalPrice?.formatted ?? bestOffer.price.formatted}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted">
                     {bestOffer.stockStatus
                       ? `Disponibilité : ${bestOffer.stockStatus}`
                       : bestOffer.inStock
@@ -302,7 +302,7 @@ export default async function ProductDetailPage({
                   href={bestOffer.link ?? undefined}
                   target={bestOffer.link ? "_blank" : undefined}
                   rel={bestOffer.link ? "noopener noreferrer" : undefined}
-                  className="inline-flex w-full items-center justify-center rounded-full border border-orange-200 px-4 py-2 text-xs font-semibold text-orange-600 transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-primary/30 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40 hover:bg-accent hover:text-primary"
                 >
                   Consulter l&apos;offre chez {bestOffer.vendor} →
                 </a>
@@ -320,16 +320,16 @@ export default async function ProductDetailPage({
             )}
             <CreatePriceAlert product={product} />
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
-              <h2 className="text-lg font-semibold text-slate-900">Flux de données</h2>
-              <p className="mt-2 text-slate-600">
+            <section className="rounded-3xl border border-secondary/60 bg-white p-6 text-sm text-muted shadow-sm">
+              <h2 className="text-lg font-semibold text-dark">Flux de données</h2>
+              <p className="mt-2 text-muted">
                 Ces offres combinent les résultats SerpAPI/Google Shopping et nos collecteurs internes (Amazon, MyProtein…). Les
                 données sont rafraîchies quotidiennement et stockées dans PostgreSQL.
               </p>
-              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted/80">
                 Dernières sources collectées :
               </p>
-              <ul className="mt-2 space-y-1 text-xs text-slate-500">
+              <ul className="mt-2 space-y-1 text-xs text-muted">
                 {sources.scraper.slice(0, 5).map((offer) => (
                   <li key={offer.id}>
                     {offer.source} — {offer.price.toLocaleString("fr-FR", { maximumFractionDigits: 2 })} {offer.currency}
