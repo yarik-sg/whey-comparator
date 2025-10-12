@@ -44,9 +44,10 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
   );
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-secondary/40 via-background to-background text-text dark:bg-dark">
+    <section className="relative overflow-hidden bg-gradient-to-b from-[#FFEFE3] via-[#FFF8F2] to-background text-text transition-colors dark:bg-dark">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(255,132,82,0.28),transparent_55%),radial-gradient(circle_at_90%_12%,rgba(255,214,183,0.45),transparent_62%)] dark:bg-[radial-gradient(circle_at_18%_22%,rgba(255,148,77,0.12),transparent_60%),radial-gradient(circle_at_85%_10%,rgba(17,24,39,0.65),transparent_68%)]" aria-hidden />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(255,170,120,0.22),transparent_55%),radial-gradient(circle_at_85%_10%,rgba(255,214,183,0.45),transparent_70%)] opacity-90 dark:bg-[radial-gradient(circle_at_18%_22%,rgba(255,148,77,0.12),transparent_60%),radial-gradient(circle_at_85%_10%,rgba(17,24,39,0.65),transparent_68%)]" aria-hidden />
+        <div className="absolute inset-x-0 top-[-25%] h-[65%] rounded-[50%] bg-gradient-to-b from-[#FFE0C8]/80 via-[#FFF2E6]/40 to-transparent blur-3xl" aria-hidden />
         <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-primary/25 blur-3xl dark:bg-primary/30" aria-hidden />
         <div className="absolute -right-24 bottom-10 h-96 w-96 rounded-full bg-secondary/70 blur-[140px] dark:bg-accent/50" aria-hidden />
       </div>
