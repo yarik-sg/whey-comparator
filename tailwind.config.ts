@@ -10,29 +10,69 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        fitidion: {
-          orange: '#FF6600',
-          gold: '#FDDC8E',
-          dark: '#111827',
-          light: '#F9FAFB',
-        },
-        orange: {
-          50: '#FFF2E6',
-          100: '#FFE0CC',
-          200: '#FFC399',
-          300: '#FFA066',
-          400: '#FF7C33',
+        primary: {
+          50: '#FFF5EB',
+          100: '#FFE4CC',
+          200: '#FFC999',
+          300: '#FFAD66',
+          400: '#FF8800',
           500: '#FF6600',
-          600: '#DB5200',
-          700: '#B74200',
-          800: '#8F3300',
-          900: '#662200',
+          600: '#E65C00',
+          700: '#C85100',
+          800: '#A74600',
+          900: '#7A3600',
         },
-        brand: {
-          primary: '#FF6600',
-          secondary: '#FDDC8E',
-          accent: '#F97316',
-          midnight: '#0B1120',
+        secondary: {
+          50: '#FFF9EB',
+          100: '#FFF3D7',
+          200: '#FEE7AF',
+          300: '#FDDC8E',
+          400: '#F0C56B',
+          500: '#DCA44A',
+        },
+        neutral: {
+          50: '#F5F5F7',
+          100: '#E4E4E8',
+          200: '#CFCFD6',
+          300: '#B1B1BA',
+          400: '#8F8F99',
+          500: '#6F6F77',
+          600: '#4B4B4B',
+          700: '#343438',
+          800: '#26262A',
+          900: '#1B1B1F',
+        },
+        accent: {
+          50: '#E6FFF3',
+          100: '#C5FDE0',
+          200: '#93F7C4',
+          300: '#5EEEA7',
+          400: '#37DE8A',
+          500: '#2ECC71',
+          600: '#24A85C',
+          700: '#1C8348',
+          800: '#155F35',
+          900: '#0E3D22',
+        },
+        alert: {
+          50: '#FFEDEA',
+          100: '#FFD1C9',
+          200: '#FFADA1',
+          300: '#FF8677',
+          400: '#F16050',
+          500: '#E74C3C',
+          600: '#C53A2D',
+          700: '#A22B20',
+          800: '#7D1E15',
+          900: '#56130D',
+        },
+        gold: {
+          50: '#FFF9F0',
+          100: '#FFEED6',
+          200: '#FEE2B2',
+          300: '#FDD08E',
+          400: '#F0B969',
+          500: '#D89A40',
         },
       },
       fontFamily: {
@@ -40,34 +80,18 @@ const config: Config = {
         display: ['"Poppins"', 'var(--font-poppins)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        fitidion: '0 24px 60px -24px rgba(17, 24, 39, 0.35)',
-        'fitidion-soft': '0 12px 30px -12px rgba(253, 220, 142, 0.35)',
+        aurora: '0 24px 60px -24px rgba(27, 27, 31, 0.35)',
+        'aurora-soft': '0 16px 40px -20px rgba(255, 102, 0, 0.25)',
       },
       backgroundImage: {
-        'fitidion-radial':
-          'radial-gradient(circle at 20% 20%, rgba(255, 102, 0, 0.18), transparent 55%), radial-gradient(circle at 80% 0%, rgba(253, 220, 142, 0.18), transparent 60%)',
-        'fitidion-hero':
-          'linear-gradient(135deg, rgba(15, 24, 39, 0.95) 0%, rgba(255, 102, 0, 0.88) 55%, rgba(253, 220, 142, 0.85) 100%)',
+        'flame-gradient': 'linear-gradient(120deg, #FF6600 0%, #FF8800 100%)',
+        'radiant-radial':
+          'radial-gradient(circle at 20% 20%, rgba(255, 102, 0, 0.18), transparent 55%), radial-gradient(circle at 80% 0%, rgba(253, 220, 142, 0.22), transparent 60%)',
+        'midnight-glow':
+          'linear-gradient(135deg, rgba(27, 27, 31, 0.98) 0%, rgba(27, 27, 31, 0.94) 55%, rgba(255, 102, 0, 0.28) 100%)',
       },
       borderRadius: {
         '3xl': '1.75rem',
-      },
-      fontFamily: {
-        sans: ['"Poppins"', 'var(--font-poppins)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
-        display: ['"Poppins"', 'var(--font-poppins)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
-      },
-      boxShadow: {
-        fitidion: "0 24px 60px -24px rgba(27, 27, 31, 0.25)",
-        "fitidion-soft": "0 12px 30px -12px rgba(255, 102, 0, 0.18)",
-      },
-      backgroundImage: {
-        "fitidion-radial":
-          "radial-gradient(circle at 20% 20%, rgba(255, 102, 0, 0.18), transparent 55%), radial-gradient(circle at 80% 0%, rgba(255, 232, 209, 0.22), transparent 60%)",
-        "fitidion-hero":
-          "linear-gradient(135deg, rgba(27, 27, 31, 0.96) 0%, rgba(255, 102, 0, 0.92) 55%, rgba(255, 232, 209, 0.9) 100%)",
-      },
-      borderRadius: {
-        "3xl": "1.75rem",
       },
     },
   },

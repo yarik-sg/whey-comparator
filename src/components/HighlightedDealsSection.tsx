@@ -45,9 +45,9 @@ const resolveTotalPriceLabel = (deal: Deal) => {
 export const HighlightedDealsSection = ({ deals, isLoading }: HighlightedDealsSectionProps) => {
   if (isLoading) {
     return (
-      <section className="grid gap-4 rounded-2xl bg-white/80 p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-4 rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 shadow-aurora-soft sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, index) => (
-          <div key={index} className="h-48 animate-pulse rounded-xl bg-slate-200" />
+          <div key={index} className="h-48 animate-pulse rounded-xl bg-neutral-800/60" />
         ))}
       </section>
     );
@@ -58,10 +58,10 @@ export const HighlightedDealsSection = ({ deals, isLoading }: HighlightedDealsSe
   }
 
   return (
-    <section className="space-y-6 rounded-2xl bg-white/80 p-6 shadow-sm">
+    <section className="space-y-6 rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 shadow-aurora-soft">
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold text-slate-900">Offres à ne pas manquer</h2>
-        <p className="text-sm text-slate-500">
+        <h2 className="text-lg font-semibold text-white">Offres à ne pas manquer</h2>
+        <p className="text-sm text-neutral-300">
           Sélection des meilleures opportunités identifiées sur nos sources partenaires.
         </p>
       </div>
@@ -72,7 +72,7 @@ export const HighlightedDealsSection = ({ deals, isLoading }: HighlightedDealsSe
           return (
             <article
               key={deal.id}
-              className="flex h-full flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="flex h-full flex-col justify-between rounded-xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-inner transition hover:border-secondary-300/60 hover:bg-neutral-900/80"
             >
               <div className="space-y-3">
                 <ProductImage
@@ -82,21 +82,21 @@ export const HighlightedDealsSection = ({ deals, isLoading }: HighlightedDealsSe
                   fallbackLabel={deal.title}
                 />
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary-600">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-secondary-300">
                     {deal.vendor}
                   </p>
-                  <h3 className="text-lg font-semibold text-slate-900">{deal.title}</h3>
-                  <p className="text-xs text-slate-500">Source : {deal.source}</p>
+                  <h3 className="text-lg font-semibold text-white">{deal.title}</h3>
+                  <p className="text-xs text-neutral-400">Source : {deal.source}</p>
                 </div>
               </div>
               <div className="mt-4 space-y-3">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-slate-900">{resolvePriceLabel(deal)}</span>
+                  <span className="text-2xl font-bold text-secondary-200">{resolvePriceLabel(deal)}</span>
                   {totalPriceLabel && totalPriceLabel !== resolvePriceLabel(deal) ? (
-                    <span className="text-xs text-slate-500">avec livraison : {totalPriceLabel}</span>
+                    <span className="text-xs text-neutral-400">avec livraison : {totalPriceLabel}</span>
                   ) : null}
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-400">
                   {typeof deal.shippingCost === 'number' ? (
                     <span>Livraison : {formatCurrency(deal.shippingCost)}</span>
                   ) : null}
@@ -105,14 +105,14 @@ export const HighlightedDealsSection = ({ deals, isLoading }: HighlightedDealsSe
                     <span>{deal.pricePerKg.toFixed(2)} € / kg</span>
                   ) : null}
                   {deal.inStock !== null && deal.inStock !== undefined ? (
-                    <span className={deal.inStock ? 'text-emerald-600' : 'text-red-500'}>
+                    <span className={deal.inStock ? 'text-accent-400' : 'text-alert-400'}>
                       {deal.inStock ? 'En stock' : 'Rupture'}
                     </span>
                   ) : null}
                 </div>
                 <a
                   href={deal.link ?? '#'}
-                  className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700"
+                  className="inline-flex items-center justify-center rounded-lg bg-flame-gradient px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105"
                   target="_blank"
                   rel="noreferrer"
                 >
