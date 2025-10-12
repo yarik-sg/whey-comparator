@@ -22,11 +22,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL("https://fitidion.io"),
   title: {
-    default: "FitIdion — Plateforme du Fitness Intelligent",
+    default: "FitIdion · Fitness intelligent & comparateur d'offres sport",
     template: "%s · FitIdion",
   },
   description:
-    "FitIdion — Plateforme du Fitness Intelligent. Comparez les meilleures offres fitness, produits et salles de sport en un clic.",
+    "FitIdion est la plateforme du fitness intelligent : comparez les compléments, suivez les prix en temps réel et activez des alertes personnalisées.",
   keywords: [
     "FitIdion",
     "comparateur fitness",
@@ -35,17 +35,17 @@ export const metadata: Metadata = {
     "alertes nutrition",
   ],
   openGraph: {
-    title: "FitIdion — Plateforme du Fitness Intelligent",
+    title: "FitIdion · Fitness intelligent & comparateur d'offres sport",
     description:
-      "Comparez les meilleures offres fitness, produits et salles de sport en un clic grâce à FitIdion.",
+      "La plateforme FitIdion centralise catalogues, promotions et analyses pour optimiser vos achats de compléments et équipements sportifs.",
     siteName: "FitIdion",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "FitIdion — Plateforme du Fitness Intelligent",
+    title: "FitIdion · Fitness intelligent",
     description:
-      "Comparez les meilleures offres fitness, produits et salles de sport en un clic.",
+      "Comparez, suivez et optimisez vos achats sport grâce au design intelligent FitIdion.",
   },
 };
 

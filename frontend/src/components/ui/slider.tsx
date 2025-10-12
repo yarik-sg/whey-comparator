@@ -53,7 +53,7 @@ export function Slider({
     <div className={cn("relative flex h-10 items-center", disabled && "opacity-60", className)}>
       <div className="absolute left-0 right-0 h-1 rounded-full bg-white/30 dark:bg-white/10" />
       <div
-        className="absolute h-1 rounded-full bg-primary shadow-glow"
+        className="absolute h-1 rounded-full bg-fitidion-orange shadow-glow"
         style={{ left: `${startPercent}%`, width: `${Math.max(endPercent - startPercent, 0)}%` }}
       />
       <input

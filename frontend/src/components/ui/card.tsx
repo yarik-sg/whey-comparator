@@ -34,7 +34,7 @@ export const CardTitle = ({
   ...props
 }: React.HTMLAttributes<HTMLHeadingElement>) => (
   <h3
-    className={cn("text-xl font-semibold text-dark dark:text-white", className)}
+    className={cn("text-xl font-semibold text-fitidion-dark dark:text-white", className)}
     {...props}
   />
 );

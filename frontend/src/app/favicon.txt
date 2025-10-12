@@ -1,1 +1,1 @@
-Icon handled via app/icon.svg (FitIdion palette).
+# TODO: Upload favicon.ico manually via GitHub after merge
