@@ -9,10 +9,10 @@ const DistanceBadge = ({ value, onReset }: { value: number; onReset: () => void 
   <button
     type="button"
     onClick={onReset}
-    className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600 transition hover:bg-orange-100"
+    className="inline-flex items-center gap-2 rounded-full border border-secondary-300/70 bg-secondary-100/80 px-3 py-1 text-xs font-medium text-neutral-900 transition hover:bg-secondary-200/80"
   >
     Rayon : {value} km
-    <span className="text-orange-400">×</span>
+    <span className="text-secondary-500">×</span>
   </button>
 );
 
@@ -21,7 +21,7 @@ const GeolocationStatus = ({ status, message }: { status: string; message: strin
     return null;
   }
 
-  const tone = status === 'error' ? 'text-red-600' : status === 'pending' ? 'text-slate-500' : 'text-emerald-600';
+  const tone = status === 'error' ? 'text-alert-400' : status === 'pending' ? 'text-neutral-300' : 'text-accent-300';
 
   return (
     <p className={`text-xs ${tone}`}>
@@ -128,21 +128,21 @@ export const GymLocatorSection = () => {
   const visibleGyms = showAll ? gyms : gyms.slice(0, limitForDisplay);
 
   return (
-    <section className="space-y-6 rounded-2xl bg-white/90 p-6 shadow-sm">
+    <section className="space-y-6 rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 shadow-aurora-soft">
       <div className="space-y-3">
-        <span className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-orange-500">
+        <span className="inline-flex items-center gap-2 rounded-full bg-secondary-200/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-900 shadow-aurora-soft">
           Nouveauté
         </span>
-        <h2 className="text-2xl font-semibold text-slate-900">Trouvez votre salle de sport</h2>
-        <p className="max-w-3xl text-sm text-slate-600">
+        <h2 className="text-2xl font-semibold text-white">Trouvez votre salle de sport</h2>
+        <p className="max-w-3xl text-sm text-neutral-300">
           Visualisez les clubs Basic-Fit, Fitness Park, On Air, Neoness et autres enseignes près de chez vous. Comparez leurs
           abonnements mensuels et repérez les services inclus.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl border border-orange-100 bg-orange-50/60 p-4 md:flex-row md:items-end">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 md:flex-row md:items-end">
         <div className="flex-1 space-y-2">
-          <label htmlFor="gym-city" className="text-xs font-semibold uppercase tracking-wide text-orange-600">
+          <label htmlFor="gym-city" className="text-xs font-semibold uppercase tracking-wide text-secondary-300">
             Entrez votre ville
           </label>
           <input
@@ -153,18 +153,18 @@ export const GymLocatorSection = () => {
             placeholder="Paris, Lyon, Marseille…"
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            className="w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 shadow-inner focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200/60"
           />
         </div>
         <div className="flex flex-1 flex-col gap-2">
-          <label htmlFor="gym-city-select" className="text-xs font-semibold uppercase tracking-wide text-orange-600">
+          <label htmlFor="gym-city-select" className="text-xs font-semibold uppercase tracking-wide text-secondary-300">
             Villes disponibles
           </label>
           <select
             id="gym-city-select"
             value={selectedCity ?? ''}
             onChange={handleCityChange}
-            className="w-full rounded-lg border border-orange-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 shadow-inner focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200/60"
           >
             <option value="">Toutes les villes</option>
             {availableCities.map((city) => (
@@ -175,7 +175,7 @@ export const GymLocatorSection = () => {
           </select>
         </div>
         <div className="flex flex-col gap-2">
-          <label htmlFor="gym-distance" className="text-xs font-semibold uppercase tracking-wide text-orange-600">
+          <label htmlFor="gym-distance" className="text-xs font-semibold uppercase tracking-wide text-secondary-300">
             Rayon (km)
           </label>
           <input
@@ -186,14 +186,14 @@ export const GymLocatorSection = () => {
             step="1"
             value={maxDistance}
             onChange={handleDistanceChange}
-            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-orange-200 accent-orange-500"
+            className="h-2 w-full cursor-pointer appearance-none rounded-full bg-neutral-700 accent-primary-500"
           />
-          <div className="flex items-center justify-between text-xs text-orange-600">
+          <div className="flex items-center justify-between text-xs text-secondary-300">
             <span>{maxDistance} km</span>
             <button
               type="button"
               onClick={handleResetDistance}
-              className="text-orange-500 underline decoration-dotted underline-offset-4 hover:text-orange-600"
+              className="text-secondary-300 underline decoration-dotted underline-offset-4 hover:text-secondary-200"
             >
               Réinitialiser
             </button>
@@ -202,14 +202,14 @@ export const GymLocatorSection = () => {
         <div className="flex flex-col gap-2">
           <button
             type="submit"
-            className="inline-flex items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
+            className="inline-flex items-center justify-center rounded-lg bg-flame-gradient px-4 py-2 text-sm font-semibold text-white shadow-aurora-soft transition hover:brightness-110"
           >
             Rechercher
           </button>
           <button
             type="button"
             onClick={handleUseLocation}
-            className="inline-flex items-center justify-center rounded-lg border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-500 transition hover:border-orange-300 hover:text-orange-600"
+            className="inline-flex items-center justify-center rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-2 text-sm font-semibold text-neutral-200 transition hover:border-primary-400 hover:text-white"
           >
             Utiliser ma position
           </button>
@@ -218,12 +218,12 @@ export const GymLocatorSection = () => {
 
       <div className="flex flex-wrap items-center gap-3">
         {selectedCity ? (
-          <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-3 py-1 text-xs font-medium text-orange-600">
+          <span className="inline-flex items-center gap-2 rounded-full border border-secondary-300/70 bg-secondary-100/80 px-3 py-1 text-xs font-medium text-neutral-900">
             Ville : {selectedCity}
           </span>
         ) : null}
         {coordinates ? (
-          <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-3 py-1 text-xs font-medium text-orange-600">
+          <span className="inline-flex items-center gap-2 rounded-full border border-secondary-300/70 bg-secondary-100/80 px-3 py-1 text-xs font-medium text-neutral-900">
             Position détectée
           </span>
         ) : null}
@@ -232,13 +232,13 @@ export const GymLocatorSection = () => {
       </div>
 
       {error ? (
-        <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
+        <div className="rounded-xl border border-alert-400/70 bg-alert-500/10 p-4 text-sm text-alert-300">
           Impossible de charger les salles de sport pour le moment. Réessayez plus tard.
         </div>
       ) : null}
 
       {(isLoading || isFetching) && gyms.length === 0 ? (
-        <div className="rounded-2xl border border-orange-100 bg-orange-50/90 p-4 text-center text-sm font-medium text-orange-700">
+        <div className="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-4 text-center text-sm font-medium text-neutral-200">
           Chargement des salles…
         </div>
       ) : null}
@@ -246,13 +246,13 @@ export const GymLocatorSection = () => {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {(isLoading || isFetching) && gyms.length === 0
           ? Array.from({ length: limitForDisplay }).map((_, index) => (
-              <div key={index} className="h-48 animate-pulse rounded-2xl bg-orange-100/60" />
+              <div key={index} className="h-48 animate-pulse rounded-2xl bg-neutral-800/60" />
             ))
           : visibleGyms.map((gym) => <GymCard key={gym.id} gym={gym} />)}
       </div>
 
       {gyms.length === 0 && !isLoading && !isFetching ? (
-        <div className="rounded-xl border border-orange-100 bg-orange-50/80 p-6 text-center text-sm text-orange-700">
+        <div className="rounded-xl border border-neutral-800 bg-neutral-900/70 p-6 text-center text-sm text-neutral-200">
           Aucune salle trouvée
         </div>
       ) : null}
@@ -261,7 +261,7 @@ export const GymLocatorSection = () => {
         <button
           type="button"
           onClick={() => setShowAll(true)}
-          className="mx-auto flex items-center gap-2 rounded-full border border-orange-200 bg-white px-5 py-2 text-sm font-semibold text-orange-500 shadow-sm transition hover:border-orange-300 hover:text-orange-600"
+          className="mx-auto flex items-center gap-2 rounded-full border border-secondary-300/70 bg-secondary-100/80 px-5 py-2 text-sm font-semibold text-neutral-900 shadow-aurora-soft transition hover:bg-secondary-200/80"
         >
           Voir toutes les salles proches ({Math.max(totalResults - visibleGyms.length, 0)})
         </button>

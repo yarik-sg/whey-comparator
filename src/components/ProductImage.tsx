@@ -9,16 +9,16 @@ type ProductImageProps = {
   fallbackLabel?: string;
 };
 
-const baseContainerClasses = 'relative overflow-hidden bg-slate-100';
+const baseContainerClasses = 'relative overflow-hidden bg-neutral-800/40';
 const fallbackClasses = 'text-lg font-semibold uppercase tracking-wide text-white';
 
 const fallbackGradients = [
-  'from-primary-500 via-primary-500/95 to-primary-600',
-  'from-emerald-500 via-emerald-500/95 to-emerald-600',
-  'from-indigo-500 via-indigo-500/95 to-indigo-600',
-  'from-amber-500 via-amber-500/95 to-amber-600',
-  'from-rose-500 via-rose-500/95 to-rose-600',
-  'from-sky-500 via-sky-500/95 to-sky-600',
+  'from-primary-500 via-primary-400 to-primary-600',
+  'from-secondary-400 via-secondary-300 to-secondary-500',
+  'from-neutral-800 via-neutral-700 to-neutral-900',
+  'from-accent-400 via-accent-500 to-accent-600',
+  'from-gold-400 via-gold-300 to-gold-500',
+  'from-alert-400 via-alert-500 to-alert-600',
 ];
 
 const hashString = (value: string) => {

@@ -60,15 +60,18 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+    <div className="relative min-h-screen overflow-hidden bg-neutral-900 text-neutral-100">
+      <div className="absolute inset-0 -z-20 bg-neutral-900" aria-hidden />
+      <div className="absolute inset-0 -z-10 bg-midnight-glow" aria-hidden />
+      <div className="absolute inset-0 -z-10 bg-radiant-radial opacity-80" aria-hidden />
 
-      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 pb-12 pt-10 lg:px-8">
-        <header className="space-y-3">
-          <span className="inline-flex items-center rounded-full bg-primary-100 px-3 py-1 text-xs font-medium text-primary-700">
+      <div className="relative mx-auto flex max-w-7xl flex-col gap-10 px-4 pb-16 pt-12 lg:px-8">
+        <header className="space-y-4">
+          <span className="inline-flex items-center gap-2 rounded-full bg-secondary-200/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-900 shadow-aurora-soft">
             Comparateur intelligent
           </span>
-          <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">Comparez vos compléments favoris</h1>
-          <p className="max-w-2xl text-base text-slate-600">
+          <h1 className="text-3xl font-bold text-white sm:text-4xl">Comparez vos compléments favoris</h1>
+          <p className="max-w-2xl text-base text-neutral-200">
             Filtrez par marque, type et budget pour construire un comparatif entre deux et quatre produits.
             Analysez les KPIs clés comme le prix par 100 g de protéine pour trouver le meilleur rapport
             qualité/prix.
@@ -76,11 +79,11 @@ export default function App() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <a
               href="#price-alerts"
-              className="inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-primary-500"
+              className="inline-flex items-center justify-center rounded-full bg-flame-gradient px-6 py-2 text-sm font-semibold text-white shadow-aurora-soft transition hover:brightness-105"
             >
               Activer une alerte prix
             </a>
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-neutral-300">
               {activeAlertCount > 0
                 ? `${activeAlertCount} alerte${activeAlertCount > 1 ? 's' : ''} active${
                     activeAlertCount > 1 ? 's' : ''

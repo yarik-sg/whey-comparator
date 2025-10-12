@@ -102,14 +102,14 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
                 {product.badges.map((badge) => (
                   <span
                     key={badge}
-                    className="rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-700"
+                    className="rounded-full bg-secondary-100/80 px-2 py-1 text-xs font-semibold text-neutral-900"
                   >
                     {badge}
                   </span>
                 ))}
               </div>
             ) : (
-              <span className="text-sm text-slate-400">Aucun badge</span>
+              <span className="text-sm text-neutral-400">Aucun badge</span>
             ),
         },
         {
@@ -142,7 +142,15 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
         },
         {
           label: 'Disponibilité',
-          render: (product: Product) => formatStock(product),
+          render: (product: Product) => {
+            const label = formatStock(product);
+            if (typeof product.inStock === 'boolean') {
+              return (
+                <span className={product.inStock ? 'text-accent-300' : 'text-alert-400'}>{label}</span>
+              );
+            }
+            return <span className="text-neutral-300">{label}</span>;
+          },
         },
         {
           label: 'Offres suivies',
@@ -164,11 +172,11 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
 
   if (isLoading) {
     return (
-      <section className="rounded-2xl bg-white p-6 shadow-sm">
-        <div className="mb-4 h-6 w-48 animate-pulse rounded bg-slate-200" />
+      <section className="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 shadow-aurora-soft">
+        <div className="mb-4 h-6 w-48 animate-pulse rounded bg-neutral-800/60" />
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-28 animate-pulse rounded-xl bg-slate-200" />
+            <div key={index} className="h-28 animate-pulse rounded-xl bg-neutral-800/60" />
           ))}
         </div>
       </section>
@@ -177,9 +185,9 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
 
   if (products.length < 2) {
     return (
-      <section className="rounded-2xl bg-white p-6 text-center shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Choisissez au moins 2 produits</h2>
-        <p className="mt-2 text-sm text-slate-500">
+      <section className="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 text-center shadow-aurora-soft">
+        <h2 className="text-lg font-semibold text-white">Choisissez au moins 2 produits</h2>
+        <p className="mt-2 text-sm text-neutral-300">
           Utilisez la colonne de gauche pour sélectionner entre deux et quatre produits à comparer.
         </p>
       </section>
@@ -187,42 +195,42 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
   }
 
   return (
-    <section className="space-y-6 rounded-2xl bg-white p-6 shadow-sm">
+    <section className="space-y-6 rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 shadow-aurora-soft">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Comparatif des produits</h2>
-          <p className="text-sm text-slate-500">Colonnes dynamiques selon votre sélection.</p>
+          <h2 className="text-lg font-semibold text-white">Comparatif des produits</h2>
+          <p className="text-sm text-neutral-300">Colonnes dynamiques selon votre sélection.</p>
         </div>
-        <p className="text-xs text-slate-400">Retirez un produit pour libérer une place dans le comparateur.</p>
+        <p className="text-xs text-neutral-400">Retirez un produit pour libérer une place dans le comparateur.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {products.map((product) => (
           <article
             key={product.id}
-            className="flex h-full flex-col justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/80 p-4 shadow-sm"
+            className="flex h-full flex-col justify-between gap-4 rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 shadow-inner"
           >
             <div className="flex items-start gap-3">
               <ProductImage
                 imageUrl={product.imageUrl}
                 alt={product.imageAlt}
-                className="h-16 w-16 flex-shrink-0 rounded-xl border border-white shadow"
+                className="h-16 w-16 flex-shrink-0 rounded-xl border border-secondary-200/70 shadow-aurora-soft"
                 fallbackLabel={product.imageAlt}
               />
               <div className="flex flex-1 flex-col">
-                <span className="text-xs font-semibold uppercase tracking-wide text-primary-600">
+                <span className="text-xs font-semibold uppercase tracking-wide text-secondary-300">
                   {typeLabels[product.type] ?? typeLabels.other}
                 </span>
-                <h3 className="text-base font-semibold text-slate-900">{product.name}</h3>
-                <span className="text-xs text-slate-500">{product.bestVendor ?? product.brand}</span>
+                <h3 className="text-base font-semibold text-white">{product.name}</h3>
+                <span className="text-xs text-neutral-300">{product.bestVendor ?? product.brand}</span>
               </div>
             </div>
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-lg font-bold text-slate-900">
+                <p className="text-lg font-bold text-secondary-200">
                   {formatPrice(product.bestPrice ?? product.totalPrice)}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-neutral-400">
                   {typeof product.pricePerKg === 'number'
                     ? `${product.pricePerKg.toFixed(2)} € / kg`
                     : formatStock(product)}
@@ -231,7 +239,7 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
               <button
                 type="button"
                 onClick={() => toggleProductSelection(product.id)}
-                className="rounded-full border border-primary-200 px-3 py-1 text-xs font-medium text-primary-600 transition hover:border-primary-300 hover:bg-primary-50"
+                className="rounded-full border border-secondary-300/70 bg-secondary-100/80 px-3 py-1 text-xs font-medium text-neutral-900 transition hover:bg-secondary-200/80"
               >
                 Retirer
               </button>
@@ -241,8 +249,8 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full table-auto border-collapse text-left text-sm text-slate-700">
-          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <table className="w-full table-auto border-collapse text-left text-sm text-neutral-200">
+          <thead className="bg-neutral-900/80 text-xs font-semibold uppercase tracking-wide text-secondary-300">
             <tr>
               <th className="w-48 px-4 py-3">Critère</th>
               {products.map((product) => (
@@ -256,20 +264,20 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
             {rows.map((row, rowIndex) => (
               <tr
                 key={row.label}
-                className={`${rowIndex % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'} border-b border-slate-100 last:border-0`}
+                className={`${rowIndex % 2 === 0 ? 'bg-neutral-900/70' : 'bg-neutral-900/50'} border-b border-neutral-800 last:border-0`}
               >
-                <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-secondary-300">
                   {row.label}
                 </th>
                 {products.map((product) => (
-                  <td key={product.id} className="px-4 py-4 align-top text-slate-700">
+                  <td key={product.id} className="px-4 py-4 align-top text-neutral-200">
                     {row.render(product)}
                   </td>
                 ))}
               </tr>
             ))}
-            <tr className="border-b border-slate-100 bg-white">
-              <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr className="border-b border-neutral-800 bg-neutral-900/70">
+              <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-secondary-300">
                 Lien
               </th>
               {products.map((product) => (
@@ -277,7 +285,7 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
                   {product.link ? (
                     <a
                       href={product.link}
-                      className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-secondary-200 hover:text-white"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -285,7 +293,7 @@ export const ProductComparisonTable = ({ products, isLoading }: ProductCompariso
                       <span aria-hidden>↗</span>
                     </a>
                   ) : (
-                    <span className="text-sm text-slate-400">Non renseigné</span>
+                    <span className="text-sm text-neutral-400">Non renseigné</span>
                   )}
                 </td>
               ))}

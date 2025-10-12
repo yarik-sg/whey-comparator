@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 
 const IconWrapper = ({ children, className = '' }) => (
   <span
-    className={`inline-flex h-9 w-9 items-center justify-center rounded-full bg-orange-50 text-orange-500 shadow-sm ${className}`}
+    className={`inline-flex h-9 w-9 items-center justify-center rounded-full bg-secondary-100/80 text-neutral-900 shadow-aurora-soft ${className}`}
   >
     {children}
   </span>
@@ -111,21 +111,21 @@ export const GymCard = memo(function GymCard({ gym }) {
   const topAmenities = useMemo(() => amenities.slice(0, 3), [amenities]);
 
   return (
-    <article className="group flex h-full flex-col justify-between rounded-2xl border border-orange-100 bg-white/90 p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+    <article className="group flex h-full flex-col justify-between rounded-2xl border border-neutral-800 bg-neutral-900/60 p-5 shadow-aurora-soft transition hover:-translate-y-1 hover:border-secondary-300/60">
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <IconWrapper>
             <MapPinIcon />
           </IconWrapper>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-orange-500">{brand}</p>
-            <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
+            <p className="text-xs font-semibold uppercase tracking-wide text-secondary-300">{brand}</p>
+            <h3 className="text-lg font-semibold text-white">{name}</h3>
           </div>
         </div>
 
-        <div className="space-y-2 text-sm text-slate-600">
+        <div className="space-y-2 text-sm text-neutral-300">
           <div className="flex items-center gap-2">
-            <MapPinIcon className="h-4 w-4 text-orange-400" />
+            <MapPinIcon className="h-4 w-4 text-secondary-300" />
             <span>
               {address}
               <br />
@@ -135,7 +135,7 @@ export const GymCard = memo(function GymCard({ gym }) {
 
           {formattedDistance ? (
             <div className="flex items-center gap-2">
-              <ClockIcon className="h-4 w-4 text-orange-400" />
+              <ClockIcon className="h-4 w-4 text-secondary-300" />
               <span>
                 {formattedDistance}
                 {travelTime ? ` • ${travelTime}` : ''}
@@ -149,7 +149,7 @@ export const GymCard = memo(function GymCard({ gym }) {
             {topAmenities.map((amenity) => (
               <li
                 key={amenity}
-                className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-600"
+                className="rounded-full bg-secondary-100/80 px-3 py-1 text-xs font-medium text-neutral-900"
               >
                 {amenity}
               </li>
@@ -158,10 +158,10 @@ export const GymCard = memo(function GymCard({ gym }) {
         ) : null}
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 border-t border-orange-100 pt-4">
+      <div className="mt-4 flex flex-col gap-3 border-t border-neutral-800 pt-4">
         <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <EuroIcon className="text-orange-500" />
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-200">
+            <EuroIcon className="text-secondary-300" />
             {formattedPrice}
           </span>
           {website ? (
@@ -169,7 +169,7 @@ export const GymCard = memo(function GymCard({ gym }) {
               href={website}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-orange-500 transition hover:text-orange-600"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-secondary-200 transition hover:text-white"
             >
               Site web
               <LinkIcon />

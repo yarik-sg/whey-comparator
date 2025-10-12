@@ -14,10 +14,10 @@ interface KpiCardProps {
 }
 
 const KpiCard = ({ label, value, helper }: KpiCardProps) => (
-  <div className="rounded-xl border border-slate-200 bg-white/60 p-4">
-    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-    <p className="mt-2 text-2xl font-semibold text-slate-900">{value}</p>
-    {helper ? <p className="mt-1 text-xs text-slate-500">{helper}</p> : null}
+  <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4 shadow-inner">
+    <p className="text-xs font-semibold uppercase tracking-wide text-secondary-300">{label}</p>
+    <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
+    {helper ? <p className="mt-1 text-xs text-neutral-300">{helper}</p> : null}
   </div>
 );
 
@@ -84,9 +84,9 @@ export const KpiSummaryBar = ({ selectedProducts, isLoading }: KpiSummaryBarProp
 
   if (isLoading) {
     return (
-      <section className="grid gap-4 rounded-2xl bg-white/80 p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 shadow-aurora-soft sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="h-24 animate-pulse rounded-xl bg-slate-200" />
+          <div key={index} className="h-24 animate-pulse rounded-xl bg-neutral-800/60" />
         ))}
       </section>
     );
@@ -94,8 +94,8 @@ export const KpiSummaryBar = ({ selectedProducts, isLoading }: KpiSummaryBarProp
 
   if (!metrics) {
     return (
-      <section className="rounded-2xl bg-white/80 p-6 text-center shadow-sm">
-        <p className="text-sm text-slate-500">
+      <section className="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 text-center shadow-aurora-soft">
+        <p className="text-sm text-neutral-300">
           Sélectionnez des produits pour voir les indicateurs clés (KPIs).
         </p>
       </section>
@@ -103,7 +103,7 @@ export const KpiSummaryBar = ({ selectedProducts, isLoading }: KpiSummaryBarProp
   }
 
   return (
-    <section className="grid gap-4 rounded-2xl bg-white/80 p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
+    <section className="grid gap-4 rounded-2xl border border-neutral-800 bg-neutral-900/70 p-6 shadow-aurora-soft sm:grid-cols-2 lg:grid-cols-4">
       <KpiCard label="Prix moyen" value={formatCurrency(metrics.averagePrice)} />
       <KpiCard
         label="Prix moyen / kg"

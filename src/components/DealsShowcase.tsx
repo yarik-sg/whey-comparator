@@ -21,19 +21,19 @@ const deals = [
 
 export function DealsShowcase() {
   return (
-    <section className="rounded-3xl bg-white p-8 shadow-lg shadow-slate-900/5">
+    <section className="rounded-3xl border border-neutral-800 bg-neutral-900/70 p-8 shadow-aurora-soft">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="max-w-lg space-y-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-600">Offres à ne pas manquer</p>
-          <h2 className="text-3xl font-bold text-slate-900">Promotions inspirées des meilleures sélections idealo</h2>
-          <p className="text-base text-slate-600">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-secondary-300">Offres à ne pas manquer</p>
+          <h2 className="text-3xl font-bold text-white">Promotions inspirées des meilleures sélections idealo</h2>
+          <p className="text-base text-neutral-300">
             Comparez les tarifs et les avantages de chaque offre avant de passer commande. Notre algorithme
             met en avant les deals avec le meilleur prix par 100 g et la disponibilité la plus fiable.
           </p>
         </div>
         <a
           href="#comparateur"
-          className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          className="inline-flex items-center justify-center rounded-full bg-flame-gradient px-6 py-3 text-sm font-semibold text-white shadow-aurora-soft transition hover:brightness-110"
         >
           Voir tous les produits comparés
         </a>
@@ -43,18 +43,18 @@ export function DealsShowcase() {
         {deals.map((deal) => (
           <article
             key={deal.title}
-            className="group relative flex flex-col gap-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-6 transition hover:border-primary-200 hover:bg-white"
+            className="group relative flex flex-col gap-4 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-6 transition hover:border-secondary-300/60 hover:bg-neutral-900/80"
           >
-            <span className="inline-flex w-fit rounded-full bg-primary-100 px-3 py-1 text-xs font-semibold text-primary-700">
+            <span className="inline-flex w-fit rounded-full bg-secondary-100/80 px-3 py-1 text-xs font-semibold text-neutral-900">
               {deal.badge}
             </span>
-            <h3 className="text-xl font-semibold text-slate-900">{deal.title}</h3>
-            <p className="text-sm text-slate-600">{deal.description}</p>
+            <h3 className="text-xl font-semibold text-white">{deal.title}</h3>
+            <p className="text-sm text-neutral-300">{deal.description}</p>
             <div className="mt-auto flex items-center justify-between">
-              <span className="text-2xl font-bold text-primary-600">{deal.discount}</span>
+              <span className="text-2xl font-bold text-secondary-200">{deal.discount}</span>
               <button
                 type="button"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900 transition group-hover:text-primary-600"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-200 transition group-hover:text-secondary-200"
               >
                 Découvrir l'offre
                 <svg
