@@ -7,7 +7,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn, type ClassValue } from "@/lib/utils";
 
 const baseStyles =
-  "inline-flex items-center justify-center rounded-full font-semibold tracking-tight transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-full font-semibold tracking-tight transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-60";
 
 export type ButtonVariant =
   | "primary"
@@ -19,13 +19,13 @@ export type ButtonSize = "default" | "sm" | "lg" | "icon";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-fitidion-orange text-white shadow-glow hover:bg-fitidion-orange/90 focus-visible:ring-fitidion-orange focus-visible:ring-offset-fitidion-light",
+    "bg-primary text-white shadow-glow hover:bg-primary/90 focus-visible:ring-primary",
   secondary:
-    "bg-fitidion-orange/10 text-fitidion-orange hover:bg-fitidion-orange/20 focus-visible:ring-fitidion-orange/40 focus-visible:ring-offset-fitidion-light",
+    "bg-secondary text-dark shadow-sm hover:bg-secondary/90 focus-visible:ring-primary/40 dark:text-text",
   ghost:
-    "bg-transparent text-muted hover:bg-fitidion-orange/10 focus-visible:ring-fitidion-orange/40 focus-visible:ring-offset-fitidion-light",
+    "bg-transparent text-primary hover:bg-accent focus-visible:ring-primary/30",
   outline:
-    "border border-white/40 bg-white/40 text-fitidion-dark shadow-sm backdrop-blur hover:border-fitidion-orange/40 hover:bg-fitidion-orange/10 focus-visible:ring-fitidion-orange/40 focus-visible:ring-offset-fitidion-light dark:border-white/10 dark:bg-white/10 dark:text-slate-100",
+    "border border-primary text-primary bg-transparent hover:bg-primary/10 focus-visible:ring-primary",
 };
 
 const sizes: Record<ButtonSize, string> = {
