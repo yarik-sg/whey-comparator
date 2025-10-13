@@ -8,21 +8,21 @@ import { Card } from "@/components/ui/card";
 const pillars = [
   {
     icon: ShieldCheck,
-    title: "Fiabilité des données",
+    title: "Données fiables",
     description:
-      "Sources vérifiées, scrapers et API fiables pour des résultats précis et transparents sur chaque produit.",
+      "Scrapers propriétaires, API partenaires et contrôles humains pour garantir une information produit vérifiée.",
   },
   {
     icon: Zap,
-    title: "Mises à jour en temps réel",
+    title: "Mises à jour continues",
     description:
-      "Nos robots actualisent les prix, disponibilités et frais de port 24/7 pour saisir les meilleures opportunités.",
+      "Prix, stocks et frais de port sont recalculés 24/7 pour vous alerter dès qu’un seuil est franchi.",
   },
   {
     icon: Star,
     title: "Classements transparents",
     description:
-      "Un scoring objectif qui pondère prix, avis et rapport qualité/prix pour comparer sans biais.",
+      "Score FitIdion basé sur le rapport qualité/prix, les avis et la fiabilité des marchands, sans influence commerciale.",
   },
 ];
 
