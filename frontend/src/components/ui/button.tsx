@@ -7,7 +7,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn, type ClassValue } from "@/lib/utils";
 
 const baseStyles =
-  "inline-flex items-center justify-center rounded-full font-semibold tracking-tight transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-60";
+  "inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 hover:-translate-y-0.5 hover:shadow-lg";
 
 export type ButtonVariant =
   | "primary"
@@ -19,18 +19,18 @@ export type ButtonSize = "default" | "sm" | "lg" | "icon";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-white shadow-glow hover:bg-primary/90 focus-visible:ring-primary",
+    "bg-primary text-white hover:bg-primary/90 focus-visible:ring-primary",
   secondary:
-    "bg-secondary text-dark shadow-sm hover:bg-secondary/90 focus-visible:ring-primary/40 dark:text-text",
+    "bg-secondary text-dark hover:opacity-90 focus-visible:ring-primary/40 dark:text-text",
   ghost:
     "bg-transparent text-primary hover:bg-accent focus-visible:ring-primary/30",
   outline:
-    "border border-primary text-primary bg-transparent hover:bg-primary/10 focus-visible:ring-primary",
+    "border border-primary text-primary hover:bg-primary/10 focus-visible:ring-primary",
 };
 
 const sizes: Record<ButtonSize, string> = {
   default: "h-12 px-6 text-sm",
-  sm: "h-10 px-4 text-xs uppercase tracking-[0.3em]",
+  sm: "h-10 px-4 text-sm",
   lg: "h-14 px-8 text-base",
   icon: "h-10 w-10",
 };
