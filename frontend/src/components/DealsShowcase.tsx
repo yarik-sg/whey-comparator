@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Award, Star } from "lucide-react";
+import { Award, Flame, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -121,7 +122,7 @@ function DealCard({
       viewport={{ once: true, amount: 0.2 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Card className="group flex h-full flex-col overflow-hidden border-white/15 bg-white/80 shadow-glass transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-fitidion dark:border-white/10 dark:bg-slate-900/60">
+      <Card className="group flex h-full flex-col overflow-hidden border-accent/40 bg-white shadow-neo transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.85)]">
         <CardHeader className="space-y-4">
           <div className="relative overflow-hidden rounded-3xl">
             <img
@@ -131,6 +132,12 @@ function DealCard({
               loading="lazy"
               decoding="async"
             />
+            {discountPercentage && (
+              <div className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary shadow">
+                <Flame className="h-3.5 w-3.5" aria-hidden="true" />
+                En promo
+              </div>
+            )}
             {discountPercentage && (
               <div className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
                 -{discountPercentage}%
@@ -224,6 +231,17 @@ export function DealsShowcase() {
   const [hydrated, setHydrated] = useState(false);
   const [usingFallback, setUsingFallback] = useState(false);
   const fallbackDeals = useMemo(() => getFallbackDeals({ limit: 9 }), []);
+  const router = useRouter();
+  const quickFilters = useMemo(
+    () => [
+      { label: "Whey", query: "whey isolate" },
+      { label: "Créatine", query: "creatine" },
+      { label: "BCAA", query: "bcaa" },
+      { label: "Vegan", query: "vegan protein" },
+      { label: "Accessoires", query: "fitness accessoires" },
+    ],
+    [],
+  );
 
   useEffect(() => {
     setHydrated(true);
@@ -296,6 +314,19 @@ export function DealsShowcase() {
           </div>
         </div>
 
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          {quickFilters.map(({ label, query }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => router.push(`/comparateur?q=${encodeURIComponent(query)}`)}
+              className="inline-flex items-center rounded-full border border-primary/20 bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-wide text-dark transition hover:border-primary/40 hover:bg-primary hover:text-white dark:border-primary/40 dark:bg-[rgba(51,65,85,0.4)] dark:text-text-1"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {usingFallback && (
           <p className="mt-2 text-sm font-medium text-primary">
             Offres de démonstration affichées lorsque les promotions temps réel sont indisponibles.
@@ -313,7 +344,7 @@ export function DealsShowcase() {
             ? Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={`skeleton-${index}`}
-                  className="h-[420px] animate-pulse rounded-3xl border border-white/20 bg-white/10"
+                  className="h-[420px] animate-pulse rounded-3xl border border-accent/50 bg-accent/60 dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.6)]"
                   aria-hidden
                 />
               ))
@@ -331,6 +362,17 @@ export function DealsShowcase() {
                   Aucune promotion disponible pour le moment.
                 </p>
               )}
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <Button
+            variant="outline"
+            size="lg"
+            className="rounded-full border-primary/40 text-primary hover:bg-primary/10"
+            onClick={() => router.push("/catalogue")}
+          >
+            Voir toutes les offres
+          </Button>
         </div>
       </div>
     </section>

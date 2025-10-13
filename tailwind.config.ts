@@ -47,6 +47,15 @@ const config: Config = {
       borderRadius: {
         '3xl': '1.75rem',
       },
+      keyframes: {
+        marquee: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+      },
+      animation: {
+        marquee: 'marquee 36s linear infinite',
+      },
     },
   },
   plugins: [],

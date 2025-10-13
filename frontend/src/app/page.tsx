@@ -10,6 +10,7 @@ import { PopularCategories } from "@/components/PopularCategories";
 import { GymLocatorSection } from "@/components/GymLocatorSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { StatsSection } from "@/components/StatsSection";
+import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 
 export default function Home() {
@@ -37,12 +38,13 @@ export default function Home() {
   return (
     <div className="bg-background text-text">
       <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
-      <PopularCategories onSelectCategory={handleSelectCategory} />
       <DealsShowcase />
-      <GymLocatorSection />
-      <StatsSection />
-      <PartnerLogos />
+      <PopularCategories onSelectCategory={handleSelectCategory} />
       <WhyChooseUsSection />
+      <StatsSection />
+      <GymLocatorSection />
+      <PartnerLogos />
+      <TestimonialsSection />
       <PriceAlertsSection onExploreCatalogue={handleExploreCatalogue} />
     </div>
   );

@@ -52,29 +52,43 @@ export function PartnerLogos() {
           <p className="text-xs font-semibold uppercase tracking-[0.4em] text-primary">
             Ils nous font confiance
           </p>
-          <h2 className="mt-4 text-3xl font-bold text-dark dark:text-white">
+          <h2 className="mt-4 font-heading text-3xl font-semibold text-dark dark:text-white">
             Des partenariats pour dénicher les meilleures offres
           </h2>
-          <p className="mt-4 text-base text-muted dark:text-muted/70">
+          <p className="mt-4 text-base text-muted dark:text-text-2">
             Nous collaborons avec les leaders européens des compléments pour garantir des tarifs négociés,
             des stocks fiables et une information produit transparente.
           </p>
         </div>
-        <div className="mt-12 grid gap-8 sm:grid-cols-3 lg:grid-cols-6">
-          {partnerLogos.map(({ name, alt, logoUrl }) => (
-            <div
-              key={name}
-              className="group flex items-center justify-center rounded-2xl border border-white/15 bg-white/80 px-6 py-6 shadow-glass transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-fitidion dark:border-white/10 dark:bg-white/5"
-            >
-              <img
-                src={logoUrl}
-                alt={alt}
-                className="h-12 w-full max-w-[150px] object-contain opacity-70 transition duration-300 ease-out group-hover:opacity-100"
-                loading="lazy"
-                decoding="async"
-              />
+
+        <div className="mt-12 overflow-hidden rounded-3xl border border-accent/60 bg-white/70 p-6 shadow-neo backdrop-blur dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.7)]">
+          <div className="relative flex items-center gap-12">
+            <div className="flex min-w-full items-center gap-12 whitespace-nowrap will-change-transform animate-marquee">
+              {[...partnerLogos, ...partnerLogos].map(({ name, alt, logoUrl }, index) => (
+                <div
+                  key={`${name}-${index}`}
+                  className="flex items-center justify-center rounded-2xl bg-white/80 px-10 py-5 shadow-sm transition hover:shadow-md dark:bg-white/5"
+                >
+                  <img
+                    src={logoUrl}
+                    alt={alt}
+                    className="h-12 w-full max-w-[150px] object-contain opacity-80 transition duration-300 hover:opacity-100"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+        </div>
+
+        <div className="mt-10 flex justify-center">
+          <a
+            href="mailto:partenaires@fitidion.com"
+            className="inline-flex items-center rounded-full border border-primary/40 bg-transparent px-6 py-3 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
+          >
+            Devenez partenaire
+          </a>
         </div>
       </div>
     </section>
