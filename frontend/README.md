@@ -1,6 +1,6 @@
 # 💪 Whey Comparator — Frontend Next.js
 
-Interface officielle du projet Whey Comparator. Elle présente le catalogue, les comparateurs et les tableaux de prix issus de l'API FastAPI. La refonte récente apporte un thème lumineux réhaussé d'accents orange, des sections marketing détaillées et une expérience responsive repensée.
+Interface officielle de FitIdion. Elle présente le catalogue, les comparateurs, l'analyse d'historique de prix, les programmes de coaching et le Gym Locator alimentés par l'API FastAPI. La refonte récente apporte un thème lumineux réhaussé d'accents orange, des sections marketing dynamiques et une expérience responsive repensée.
 
 ## 🗂️ Architecture du dossier
 
@@ -9,12 +9,19 @@ frontend/
 ├── Dockerfile                # Image de dev Node 20 + Next.js
 ├── src/
 │   ├── app/                    # App Router (pages, layouts, API routes)
-│   │   ├── page.tsx            # Landing avec sections Hero/Stats/WhyChooseUs
+│   │   ├── page.tsx            # Landing Hero/Stats/WhyChooseUs
+│   │   ├── analyse/            # Tableau de bord historique de prix
+│   │   ├── alerts/             # Activation & suivi des alertes
 │   │   ├── comparison/         # Comparateur multi-produits (SSR + fallback auto)
 │   │   ├── comparateur/        # Comparateur express client-side (SerpAPI)
 │   │   ├── catalogue/          # Visualisation catalogue Google Sheets
+│   │   ├── equipements/        # Sélection d'équipements FitIdion
+│   │   ├── gyms/               # Listing Basic-Fit & partenaires
+│   │   ├── programmes/         # Programmes dynamiques issus de `data/programmes.json`
+│   │   ├── products/           # Fiches produits + PriceHistoryChart
+│   │   ├── search/             # Recherche unifiée (produits, gyms, programmes)
 │   │   └── api/catalogue/      # Proxy vers SerpAPI avec contrôles de quota
-│   ├── components/             # UI réutilisables (HeroSection, DealsShowcase, etc.)
+│   ├── components/             # UI réutilisables (HeroSection, PriceHistoryChart, ProgramCard, GymCard…)
 │   ├── components/ui/          # Boutons, inputs, primitives stylées
 │   ├── lib/                    # Client HTTP, helpers TanStack Query
 │   └── types/                  # Typages pour les réponses API
@@ -27,8 +34,8 @@ frontend/
 ## ⚙️ Fonctionnement du frontend
 
 1. **App Router (Next.js 15)** : mixe composants serveur (SEO, SSR des listes) et client (interactions, formulaires, animations) pour des pages rapides.
-2. **Data fetching** : `src/lib/apiClient.ts` gère la résolution des URLs (`NEXT_PUBLIC_API_BASE_URL` / `API_BASE_URL`) et normalise les erreurs. Les hooks TanStack Query (`useProductList`, `useOffers`) alimentent les vues.
-3. **Sections clés** : Hero animé (Framer Motion), catégories populaires, vitrine des promos, statistiques, logos partenaires, arguments de valeur et formulaire d'alertes prix.
+2. **Data fetching** : `src/lib/apiClient.ts` gère la résolution des URLs (`NEXT_PUBLIC_API_BASE_URL` / `API_BASE_URL`) et normalise les erreurs. Les hooks TanStack Query (`useProductList`, `useOffers`, `usePriceHistory`) alimentent les vues.
+3. **Sections clés** : Hero animé, catalogue, comparateurs, page Analyse (PriceHistoryChart), Programmes dynamiques, Gym Locator Basic-Fit, recherche unifiée et formulaire d'alertes prix.
 4. **Thème & design system** : couleurs lumineuses (`#f8fafc`, `#0f172a`, accents orange `#f97316`), typographie Inter/Poppins et composants arrondis avec ombres douces.
 5. **Accessibilité** : focus visibles, aria-live pour messages formulaire, navigation clavier sur CTA et filtres.
 
@@ -43,9 +50,9 @@ frontend/
 
 ## ✨ Améliorations récentes
 
-- Nouveau thème lumineux : palette sable/orange, polices Inter + Poppins, boutons arrondis.
-- Sections marketing supplémentaires : statistiques, partenaires, avantages, formulaires d'alertes.
-- Refonte UI du comparateur (préchargement de produits, CTA directionnels, animations de transition).
+- Intégration du graphique `PriceHistoryChart` avec statistiques issues de `GET /products/{id}/price-history`.
+- Nouvelles pages `programmes`, `gyms`, `analyse` et `search` connectées à l'API agrégée FitIdion.
+- Refonte UI du comparateur (préchargement de produits, CTA directionnels, animations de transition) et du formulaire d'alertes.
 
 ## 📦 Dépendances installées
 
