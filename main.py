@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 
 from fastapi.middleware.cors import CORSMiddleware
 import html
+import json
 import os, re
 import requests
+from pathlib import Path
 from urllib.parse import urlparse, parse_qs, quote
 from functools import lru_cache
 from math import atan2, cos, radians, sin, sqrt
@@ -30,6 +32,10 @@ SERPAPI_KEY = os.getenv(
 )
 SERPAPI_BASE = "https://serpapi.com/search.json"
 SCRAPER_BASE_URL = os.getenv("SCRAPER_BASE_URL", "http://localhost:8001")
+
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+PROGRAMMES_PATH = DATA_DIR / "programmes.json"
 
 
 def _env_flag(name: str, *, default: bool = False) -> bool:
@@ -2345,21 +2351,107 @@ def search_equipments(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
 
 
 @app.get("/search")
-async def search_all(q: str = Query(""), limit: int = Query(10, ge=1, le=50)):
-    normalized_limit = _normalize_limit(limit)
+async def search_all(q: str, limit: int = 10):
     normalized_query = (q or "").strip()
+    effective_limit = max(1, min(int(limit or 0), 50))
+    lowercase_query = normalized_query.lower()
 
-    products = search_products(normalized_query, limit=normalized_limit)
-    gyms = search_gyms(normalized_query, limit=normalized_limit)
-    programs = search_programs(normalized_query, limit=normalized_limit)
-    equipments = search_equipments(normalized_query, limit=normalized_limit)
+    results: Dict[str, Any] = {"products": [], "gyms": [], "programmes": []}
 
-    return {
-        "products": products,
-        "gyms": gyms,
-        "programs": programs,
-        "equipments": equipments,
-    }
+    serp_api_key = os.getenv("SERPAPI_KEY")
+    if normalized_query and serp_api_key:
+        serp_params = {"q": normalized_query, "tbm": "shop", "api_key": serp_api_key}
+        try:
+            serp_response = requests.get(
+                SERPAPI_BASE,
+                params=serp_params,
+                timeout=8,
+            )
+            serp_response.raise_for_status()
+            serp_payload = serp_response.json()
+            shopping_results = (serp_payload.get("shopping_results") or [])[:effective_limit]
+            results["products"] = [
+                {
+                    "title": item.get("title"),
+                    "price": item.get("price"),
+                    "source": item.get("source"),
+                    "link": item.get("link"),
+                    "thumbnail": item.get("thumbnail"),
+                }
+                for item in shopping_results
+            ]
+        except (requests.RequestException, ValueError):
+            results["products"] = []
+
+    gym_params = {"limit": effective_limit}
+    if normalized_query:
+        gym_params["query"] = normalized_query
+
+    try:
+        gyms_response = requests.get(
+            "http://localhost:8000/gyms",
+            params=gym_params,
+            timeout=5,
+        )
+        gyms_response.raise_for_status()
+        gyms_payload = gyms_response.json()
+        if isinstance(gyms_payload, list):
+            gyms_results = gyms_payload
+        elif isinstance(gyms_payload, dict):
+            gyms_results = gyms_payload.get("gyms") or []
+        else:
+            gyms_results = []
+        results["gyms"] = gyms_results[:effective_limit]
+    except (requests.RequestException, ValueError):
+        results["gyms"] = []
+
+    programmes_source: List[Dict[str, Any]] = []
+    try:
+        if PROGRAMMES_PATH.exists():
+            with PROGRAMMES_PATH.open("r", encoding="utf-8") as handle:
+                programmes_payload = json.load(handle)
+                if isinstance(programmes_payload, list):
+                    programmes_source = programmes_payload
+    except (OSError, json.JSONDecodeError):
+        programmes_source = []
+
+    def format_program_price(raw_price: Union[str, float, int, Dict[str, Any], None]) -> Optional[str]:
+        if isinstance(raw_price, dict):
+            amount = raw_price.get("amount")
+            currency = raw_price.get("currency")
+            if amount is not None and currency:
+                try:
+                    return f"{float(amount):.2f} {currency}"
+                except (TypeError, ValueError):
+                    return None
+        elif isinstance(raw_price, (int, float)):
+            return f"{float(raw_price):.2f}"
+        elif isinstance(raw_price, str):
+            return raw_price.strip() or None
+        return None
+
+    filtered_programmes: List[Dict[str, Any]] = []
+    for programme in programmes_source:
+        name = str(programme.get("name") or programme.get("nom") or "").strip()
+        if lowercase_query and name and lowercase_query not in name.lower():
+            continue
+
+        formatted_price = format_program_price(programme.get("price"))
+        filtered_programmes.append(
+            {
+                "nom": name or normalized_query,
+                "price": formatted_price,
+                "link": programme.get("link"),
+                "focus": programme.get("focus"),
+                "niveau": programme.get("level") or programme.get("niveau"),
+            }
+        )
+        if len(filtered_programmes) >= effective_limit:
+            break
+
+    results["programmes"] = filtered_programmes
+
+    return results
 
 # --- Routes ---
 

@@ -1,227 +1,104 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
-import { EquipmentCard } from "@/components/EquipmentCard";
-import { GymCard } from "@/components/GymCard";
-import { ProgramCard } from "@/components/ProgramCard";
-import { SearchBar } from "@/components/SearchBar";
-import { ProductCard } from "@/components/ProductCard";
-import type { ProductSummary, ProgramSummary, EquipmentSummary } from "@/types/api";
-import { normalizeApiGymLocation, type ApiGymLocation } from "@/lib/gymLocator";
+import { Card } from "@/components/ui/card";
 
-interface UnifiedSearchResponse {
-  products: ProductSummary[];
-  gyms: ApiGymLocation[];
-  programs: ProgramSummary[];
-  equipments: EquipmentSummary[];
+interface SearchResults {
+  products?: Array<Record<string, unknown>>;
+  gyms?: Array<Record<string, unknown>>;
+  programmes?: Array<Record<string, unknown>>;
+  error?: boolean;
 }
 
 export default function SearchPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const queryParam = searchParams.get("q") ?? "";
-  const normalizedQuery = queryParam.trim();
-
-  const [searchInput, setSearchInput] = useState(queryParam);
-  const [results, setResults] = useState<UnifiedSearchResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const params = useSearchParams();
+  const query = params.get("q") || "";
+  const [results, setResults] = useState<SearchResults | null>(null);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    setSearchInput(queryParam);
-  }, [queryParam]);
-
-  useEffect(() => {
-    if (!normalizedQuery) {
+    if (!query) {
       setResults(null);
-      setError(null);
-      setIsLoading(false);
+      setIsError(false);
       return;
     }
 
-    const controller = new AbortController();
-    setIsLoading(true);
-    setError(null);
+    let isMounted = true;
+    setIsError(false);
+    setResults(null);
 
-    const fetchResults = async () => {
-      try {
-        const response = await fetch(
-          `/api/proxy?target=search&q=${encodeURIComponent(normalizedQuery)}`,
-          { signal: controller.signal },
-        );
-
-        if (!response.ok) {
-          throw new Error(`Impossible de charger les résultats (code ${response.status}).`);
+    fetch(`/api/proxy?target=search&q=${encodeURIComponent(query)}`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Erreur réseau");
         }
-
-        const payload: UnifiedSearchResponse = await response.json();
+        return res.json();
+      })
+      .then((payload: SearchResults) => {
+        if (!isMounted) return;
         setResults(payload);
-      } catch (fetchError) {
-        if (controller.signal.aborted) {
-          return;
-        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setIsError(true);
+        setResults({ error: true });
+      });
 
-        const message =
-          fetchError instanceof Error
-            ? fetchError.message
-            : "Une erreur est survenue pendant la recherche.";
-        setError(message);
-        setResults(null);
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false);
-        }
-      }
+    return () => {
+      isMounted = false;
     };
+  }, [query]);
 
-    fetchResults();
+  if (!query) {
+    return <p className="mt-20 text-center">Entrez une recherche.</p>;
+  }
 
-    return () => controller.abort();
-  }, [normalizedQuery]);
+  if (!results && !isError) {
+    return <p className="mt-20 text-center">Chargement...</p>;
+  }
 
-  const normalizedGyms = useMemo(
-    () => (results?.gyms ? results.gyms.map(normalizeApiGymLocation) : []),
-    [results?.gyms],
-  );
-  const products = results?.products ?? [];
-  const programs = results?.programs ?? [];
-  const equipments = results?.equipments ?? [];
-
-  const hasAnyResults =
-    products.length > 0 ||
-    normalizedGyms.length > 0 ||
-    programs.length > 0 ||
-    equipments.length > 0;
-
-  const handleSearchSubmit = useCallback(
-    (value: string) => {
-      const trimmed = value.trim();
-      if (!trimmed) {
-        router.push("/search");
-        return;
-      }
-
-      router.push(`/search?q=${encodeURIComponent(trimmed)}`);
-    },
-    [router],
-  );
+  if (isError || results?.error) {
+    return <p className="mt-20 text-center text-red-500">Impossible de charger les résultats.</p>;
+  }
 
   return (
-    <div className="min-h-screen bg-background text-dark dark:bg-dark dark:text-[var(--text)]">
-      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="space-y-6 text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-dark dark:text-[var(--text)]">
-            Moteur de recherche FitIdion
-          </h1>
-          <p className="mx-auto max-w-2xl text-base text-muted dark:text-[var(--text-2)]">
-            {normalizedQuery
-              ? `Résultats pour « ${normalizedQuery} »`
-              : "Recherchez des compléments, des salles de sport, des programmes ou des équipements en un seul endroit."}
-          </p>
-          <div className="mx-auto max-w-3xl">
-            <SearchBar
-              value={searchInput}
-              onChange={setSearchInput}
-              onSubmit={handleSearchSubmit}
-              isLoading={isLoading}
-            />
-          </div>
-        </div>
+    <main className="mx-auto max-w-6xl space-y-12 px-6 py-10">
+      {["products", "gyms", "programmes"].map((section) => {
+        const items = (results?.[section as keyof SearchResults] as Array<Record<string, unknown>>) || [];
+        if (!items || items.length === 0) {
+          return null;
+        }
 
-        <div className="mt-12 space-y-12">
-          {error ? (
-            <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-5 text-left text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100">
-              {error}
+        return (
+          <section key={section}>
+            <h2 className="mb-4 text-2xl font-bold capitalize text-primary">{section}</h2>
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+              {items.map((item, index) => {
+                const title =
+                  (item["title"] as string | undefined) ||
+                  (item["nom"] as string | undefined) ||
+                  (item["name"] as string | undefined);
+                const price = item["price"] as string | undefined;
+                const link = item["link"] as string | undefined;
+
+                return (
+                  <Card key={`${section}-${index}`} className="p-4">
+                    <h3 className="font-semibold">{title || "Résultat"}</h3>
+                    {price ? <p>{price}</p> : null}
+                    {link ? (
+                      <a href={link} className="text-primary">
+                        Voir
+                      </a>
+                    ) : null}
+                  </Card>
+                );
+              })}
             </div>
-          ) : null}
-
-          {!normalizedQuery && !isLoading ? (
-            <div className="rounded-3xl border border-accent/60 bg-accent p-6 text-left text-sm text-muted dark:border-accent-d/40 dark:bg-[rgba(148,163,184,0.12)] dark:text-[var(--text-2)]">
-              Tapez un mot-clé pour explorer nos produits, programmes, équipements et gyms partenaires.
-            </div>
-          ) : null}
-
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-3 text-primary">
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-              <span className="text-sm font-semibold">Analyse des résultats…</span>
-            </div>
-          ) : null}
-
-          {!isLoading && normalizedQuery && !hasAnyResults && !error ? (
-            <div className="rounded-3xl border border-accent/60 bg-background/90 px-6 py-8 text-center text-sm text-muted dark:border-accent-d/40 dark:bg-dark/80 dark:text-[var(--text-2)]">
-              Aucun résultat trouvé pour « {normalizedQuery} »
-            </div>
-          ) : null}
-
-          {hasAnyResults ? (
-            <div className="space-y-16">
-              {products.length > 0 ? (
-                <section className="space-y-6">
-                  <header className="flex flex-col gap-2 text-left sm:flex-row sm:items-baseline sm:justify-between">
-                    <h2 className="text-2xl font-semibold text-primary">Produits</h2>
-                    <span className="text-sm text-muted">{products.length} résultat{products.length > 1 ? "s" : ""}</span>
-                  </header>
-                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {products.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              {normalizedGyms.length > 0 ? (
-                <section className="space-y-6">
-                  <header className="flex flex-col gap-2 text-left sm:flex-row sm:items-baseline sm:justify-between">
-                    <h2 className="text-2xl font-semibold text-primary">Gyms</h2>
-                    <span className="text-sm text-muted">
-                      {normalizedGyms.length} résultat{normalizedGyms.length > 1 ? "s" : ""}
-                    </span>
-                  </header>
-                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {normalizedGyms.map((gym) => (
-                      <GymCard key={gym.id} gym={gym} />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              {programs.length > 0 ? (
-                <section className="space-y-6">
-                  <header className="flex flex-col gap-2 text-left sm:flex-row sm:items-baseline sm:justify-between">
-                    <h2 className="text-2xl font-semibold text-primary">Programmes</h2>
-                    <span className="text-sm text-muted">{programs.length} programme{programs.length > 1 ? "s" : ""}</span>
-                  </header>
-                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {programs.map((program) => (
-                      <ProgramCard key={program.id} program={program} />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              {equipments.length > 0 ? (
-                <section className="space-y-6">
-                  <header className="flex flex-col gap-2 text-left sm:flex-row sm:items-baseline sm:justify-between">
-                    <h2 className="text-2xl font-semibold text-primary">Équipements</h2>
-                    <span className="text-sm text-muted">
-                      {equipments.length} équipement{equipments.length > 1 ? "s" : ""}
-                    </span>
-                  </header>
-                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {equipments.map((equipment) => (
-                      <EquipmentCard key={equipment.id} equipment={equipment} />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </div>
+          </section>
+        );
+      })}
+    </main>
   );
 }
