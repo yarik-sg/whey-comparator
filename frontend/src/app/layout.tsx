@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/QueryProvider";
@@ -22,6 +22,9 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "FitIdion — La plateforme du Fitness Intelligent",
   description: "Comparez les meilleures offres fitness, produits et salles de sport.",
+};
+
+export const viewport: Viewport = {
   themeColor: "#FF6600",
 };
 

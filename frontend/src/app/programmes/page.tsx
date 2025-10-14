@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import ComingSoon from "@/components/ComingSoon";
-import { buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 export default function ProgrammesPage() {
   return (
@@ -16,12 +16,9 @@ export default function ProgrammesPage() {
               Personnalisez vos entraînements grâce à des programmes conçus pour atteindre vos objectifs plus rapidement et en toute sérénité.
             </p>
             <div className="flex justify-center">
-              <Link
-                href="/comparateur"
-                className={buttonClassName({ size: "lg", className: "shadow-neo" })}
-              >
-                Voir les plans
-              </Link>
+              <Button asChild size="lg" className="shadow-neo">
+                <Link href="/comparateur">Voir les plans</Link>
+              </Button>
             </div>
           </div>
         </div>

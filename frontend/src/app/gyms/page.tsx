@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import ComingSoon from "@/components/ComingSoon";
-import { buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 export default function GymsPage() {
   return (
@@ -16,12 +16,9 @@ export default function GymsPage() {
               Comparez les salles proches de vous et trouvez l’environnement idéal pour progresser avec le suivi FitIdion.
             </p>
             <div className="flex justify-center">
-              <Link
-                href="/comparison"
-                className={buttonClassName({ size: "lg", className: "shadow-neo" })}
-              >
-                Découvrir les salles
-              </Link>
+              <Button asChild size="lg" className="shadow-neo">
+                <Link href="/comparison">Découvrir les salles</Link>
+              </Button>
             </div>
           </div>
         </div>
