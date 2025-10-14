@@ -74,7 +74,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
     <section className="relative isolate overflow-hidden bg-background pb-24 pt-28 text-text transition-colors sm:pt-32">
       <div className="absolute inset-0 -z-20">
         <Image
-          src="/FitIdion_Banner.png"
+          src="/window.svg"
           alt="Athlète réalisant une séance de musculation"
           fill
           priority

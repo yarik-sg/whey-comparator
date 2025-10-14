@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import ComingSoon from "@/components/ComingSoon";
-import { buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 export default function AnalysePage() {
   return (
@@ -16,12 +16,9 @@ export default function AnalysePage() {
               Visualisez vos progrès et découvrez des insights personnalisés pour optimiser vos décisions fitness au quotidien.
             </p>
             <div className="flex justify-center">
-              <Link
-                href="/products"
-                className={buttonClassName({ size: "lg", className: "shadow-neo" })}
-              >
-                Explorer les insights
-              </Link>
+              <Button asChild size="lg" className="shadow-neo">
+                <Link href="/products">Explorer les insights</Link>
+              </Button>
             </div>
           </div>
         </div>

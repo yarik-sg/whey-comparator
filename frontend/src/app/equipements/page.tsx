@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import ComingSoon from "@/components/ComingSoon";
-import { buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 export default function EquipementsPage() {
   return (
@@ -16,12 +16,9 @@ export default function EquipementsPage() {
               Restez motivé avec une sélection d’appareils intelligents, testés et triés pour améliorer chaque séance d’entraînement.
             </p>
             <div className="flex justify-center">
-              <Link
-                href="/catalogue"
-                className={buttonClassName({ size: "lg", className: "shadow-neo" })}
-              >
-                Explorer le matériel
-              </Link>
+              <Button asChild size="lg" className="shadow-neo">
+                <Link href="/catalogue">Explorer le matériel</Link>
+              </Button>
             </div>
           </div>
         </div>
