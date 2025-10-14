@@ -1,6 +1,6 @@
 # 🧬 Whey Comparator — Backend FastAPI
 
-Ce dossier contient l'API qui alimente le comparateur de compléments alimentaires. Elle centralise les offres collectées (scraping, sources partenaires) et expose des routes REST pour le frontend Next.js ainsi que pour des intégrations tierces.
+Ce dossier contient l'API qui alimente la plateforme FitIdion. Elle centralise les offres collectées (scraping, sources partenaires), calcule les historiques de prix et orchestre les workflows d'alertes consommés par le frontend Next.js et des intégrations tierces.
 
 ## 🗂️ Architecture du dossier
 
@@ -10,10 +10,11 @@ apps/api/
 │   ├── main.py              # Initialisation FastAPI + middlewares
 │   ├── config.py            # Chargement des variables d'environnement (préfixe API_)
 │   ├── database.py          # Session SQLAlchemy + gestion du moteur
-│   ├── models.py            # Modèles ORM (Product, Supplier, Offer, ScrapeJob)
+│   ├── models.py            # Modèles ORM (Product, Supplier, Offer, PriceHistory, PriceAlert, ScrapeJob)
 │   ├── schemas.py           # Schémas Pydantic v2 pour les payloads/retours
-│   ├── routers/             # Routes REST (products, suppliers, offers)
+│   ├── routers/             # Routes REST (products, suppliers, offers, price_alerts)
 │   ├── celery_app.py        # Configuration Celery (broker/result Redis)
+│   ├── scheduler.py         # Gestionnaire de tâches planifiées (rafraîchissement scraping)
 │   └── tasks.py             # Tâches d'ingestion & scraping simulé
 ├── alembic/                 # Scripts de migrations
 ├── alembic.ini              # Configuration Alembic
@@ -23,11 +24,11 @@ apps/api/
 
 ## ⚙️ Fonctionnement
 
-1. **Application FastAPI** : `app/main.py` installe CORS et monte les routeurs `products`, `suppliers`, `offers` et la route de healthcheck. Chaque route renvoie des schémas Pydantic typés (pagination incluse).
-2. **Accès base de données** : `database.py` expose `SessionLocal` et une dépendance `get_db` pour injecter une session SQLAlchemy dans les routes. Les modèles couvrent produits, fournisseurs, offres et historiques de scraping.
+1. **Application FastAPI** : `app/main.py` installe CORS et monte les routeurs `products`, `suppliers`, `offers`, `price_alerts` ainsi que la route de healthcheck. Chaque endpoint renvoie des schémas Pydantic typés (pagination incluse).
+2. **Accès base de données** : `database.py` expose `SessionLocal` et une dépendance `get_db` pour injecter une session SQLAlchemy dans les routes. Les modèles couvrent produits, fournisseurs, offres, historiques de prix et alertes.
 3. **Migrations & data lifecycle** : Alembic gère la structure SQL. Les mises à jour CRUD se propagent via SQLAlchemy avec rafraîchissement automatique.
 4. **Tâches asynchrones** : `celery_app.py` configure Celery (Redis). Le module `tasks.py` simule une exécution de scraping, alimente la table `scrape_jobs` et stocke les logs horodatés.
-5. **Interopérabilité frontend** : les routes paginées et filtrables exposent les mêmes champs que consommés par l'App Router (résumés produits, offres filtrées, listes de marchands).
+5. **Interopérabilité frontend** : les routes paginées et filtrables exposent les mêmes champs que consommés par l'App Router (résumés produits, offres filtrées, listes de marchands, historiques de prix et alertes actives).
 
 ## 📚 Bibliothèques principales
 
@@ -40,9 +41,23 @@ apps/api/
 
 ## ✨ Améliorations récentes
 
-- Exposition d'une pagination homogène (`PaginatedProducts`, `PaginatedOffers`, `PaginatedSuppliers`) consommée par le nouveau thème frontend.
-- Ajout des routes `offers` et `suppliers` avec filtres multi-critères pour alimenter les nouvelles sections comparateur & partenaires.
-- Enregistrement des jobs de scraping simulés pour accompagner la refonte UI (vignettes d'activité, logs).
+- Ajout de l'endpoint `GET /products/{id}/price-history` avec calcul automatique des statistiques (min/moyenne/tendance) pour les graphiques d'analyse de prix.
+- Uniformisation des réponses paginées (`PaginatedProducts`, `PaginatedOffers`, `PaginatedSuppliers`, `PaginatedPriceAlerts`) pour le thème frontend et les intégrations tierces.
+- Enregistrement des jobs de scraping simulés et des alertes prix afin d'alimenter la recherche unifiée et les sections monitoring du dashboard.
+
+## 🔌 Endpoints phares
+
+| Méthode | Route | Description |
+| --- | --- | --- |
+| `GET` | `/products` | Liste paginée avec filtres, ratio protéines/prix et meilleure offre associée. |
+| `GET` | `/products/{id}` | Détail complet incluant nutrition, tags, offres attachées. |
+| `GET` | `/products/{id}/price-history` | 30 points max + statistiques (`current`, `lowest`, `trend`). |
+| `GET` | `/offers` | Filtrage multi-critères (prix, disponibilité, marchands). |
+| `GET` | `/suppliers` | Référentiel marchands & URLs d'affiliation. |
+| `POST` | `/price-alerts` | Création d'une alerte (email + seuil) synchronisée avec le worker Celery. |
+| `PATCH` | `/price-alerts/{id}` | Activation/désactivation et mise à jour du seuil cible. |
+
+Les payloads Pydantic sont disponibles dans `app/schemas.py`. Une vue d'ensemble (API d'orchestration + agrégation) est décrite dans `../../docs/api_endpoints.md`.
 
 ## 📦 Dépendances & installation
 
@@ -75,12 +90,12 @@ poetry run celery -A app.tasks.celery_app worker -l info
 
 ## 🛠️ Fonctionnement quotidien
 
-- `GET /products` accepte filtres `search`, `sort_by`, `sort_order`, `limit`, `offset`.
-- `GET /offers` ajoute `product_id`, `supplier_id`, `min_price`, `max_price`, `available`.
+- `GET /products` accepte les filtres `search`, `sort_by`, `sort_order`, `limit`, `offset`, `min_price`, `max_price`.
+- `GET /offers` ajoute `product_id`, `supplier_id`, `available`, `currency`.
 - `GET /suppliers` supporte la recherche texte (`name`, `website`).
-- CRUD complet pour chaque ressource + `GET /health`.
-
-Consultez `/docs` (Swagger UI) une fois le serveur lancé.
+- `GET /products/{id}/price-history` expose un historique consolidé pour alimenter les graphiques Recharts.
+- `POST /price-alerts` et `PATCH /price-alerts/{id}` gèrent l'activation des notifications côté utilisateur.
+- Toutes les routes CRUD sont documentées sur `/docs` (Swagger UI) une fois le serveur lancé.
 
 ## 🛣️ Roadmap backend
 

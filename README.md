@@ -24,6 +24,23 @@ interfaces lumineuses/dynamiques avec bascule automatique clair/sombre.
   globale pour orienter les utilisateurs vers les routines adaptées.
 - **Gym Locator connecté** : scraping Basic-Fit temps réel via `services/gyms_scraper.py` pour alimenter la
   page salles avec des liens marchands officiels.
+- **Recherche unifiée FitIdion** : endpoint `/search` combinant catalogue, gyms et programmes pour proposer
+  des résultats multi-verticales depuis une seule barre.
+
+## 🔌 API & données exposées
+
+FitIdion met à disposition une API publique accessible en local sur `http://localhost:8000` :
+
+- `GET /products/{id}/price-history` — agrégation des 30 derniers relevés avec statistiques (min/moyenne/
+  tendance) consommée par les graphiques Recharts.
+- `GET /programmes` — JSON structuré (`data/programmes.json`) partagé entre le frontend et la recherche
+  unifiée pour afficher les routines dynamiques.
+- `GET /gyms` — données Basic-Fit/partenaires actualisées via `services/gyms_scraper.py` avec fallback
+  catalogue.
+- `GET /search` — recherche instantanée (produits, gyms, programmes) avec pondération sur la pertinence.
+- `POST /price-alerts` — enregistrement et activation des alertes (workflow géré par Celery/Redis).
+
+La liste exhaustive des routes (CRUD FastAPI + agrégation) est détaillée dans `docs/api_endpoints.md`.
 
 ## 🏗️ Structure du dépôt
 
