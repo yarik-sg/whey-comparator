@@ -81,6 +81,36 @@ export interface ProductSummary {
   originalPrice?: ApiPrice | null;
 }
 
+export interface ProgramSummary {
+  id: string;
+  name: string;
+  focus?: string | null;
+  level?: string | null;
+  description?: string | null;
+  durationWeeks?: number | null;
+  sessionsPerWeek?: number | null;
+  intensity?: string | null;
+  equipmentNeeded?: string[] | null;
+  coach?: string | null;
+  price?: ApiPrice | null;
+  link?: string | null;
+}
+
+export interface EquipmentSummary {
+  id: string;
+  name: string;
+  brand?: string | null;
+  category?: string | null;
+  description?: string | null;
+  highlights?: string[] | null;
+  price?: ApiPrice | null;
+  bestVendor?: string | null;
+  rating?: number | null;
+  reviewsCount?: number | null;
+  image?: string | null;
+  link?: string | null;
+}
+
 export interface ProductListResponse {
   products: ProductSummary[];
   pagination: {
