@@ -10,11 +10,11 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navItems = [
-  { label: "Plateforme", href: "/" },
-  { label: "Comparateur", href: "/comparateur" },
-  { label: "Catalogue", href: "/catalogue" },
-  { label: "Analyses", href: "/products" },
-  { label: "Alertes", href: "/alerts" },
+  { label: "Produits", href: "/products" },
+  { label: "Programmes", href: "/programmes" },
+  { label: "Équipements", href: "/equipements" },
+  { label: "Salles", href: "/gyms" },
+  { label: "Analyse", href: "/analyse" },
 ];
 
 export function SiteHeader() {
