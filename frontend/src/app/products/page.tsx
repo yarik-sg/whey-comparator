@@ -283,7 +283,7 @@ export default function ProductsPage() {
           />
 
           <section className="space-y-6">
-            <div className="flex flex-col gap-4 rounded-3xl border border-secondary/60 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 rounded-3xl border border-accent/70 bg-background px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted">
                 {isBusy ? "Chargement…" : `${totalCount.toLocaleString("fr-FR")} produits`}
               </p>
@@ -301,7 +301,7 @@ export default function ProductsPage() {
                 ))}
 
               {!isBusy && products.length === 0 && (
-                <p className="col-span-full rounded-3xl border border-secondary/60 bg-accent p-8 text-center text-muted">
+                <p className="col-span-full rounded-3xl border border-accent/70 bg-accent p-8 text-center text-muted">
                   Aucun produit n&apos;a été trouvé. Essayez un autre filtre.
                 </p>
               )}

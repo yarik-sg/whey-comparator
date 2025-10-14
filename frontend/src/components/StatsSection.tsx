@@ -49,7 +49,7 @@ export function StatsSection() {
           <p className="text-xs font-semibold uppercase tracking-[0.4em] text-primary">
             Données de confiance
           </p>
-          <h2 className="mt-3 text-3xl font-bold text-dark sm:text-4xl dark:text-white">
+          <h2 className="mt-3 text-3xl font-bold text-dark sm:text-4xl dark:text-[var(--text)]">
             Nos indicateurs clés
           </h2>
           <p className="mt-4 text-base text-muted dark:text-muted/70">
@@ -61,18 +61,18 @@ export function StatsSection() {
           {stats.map(({ icon: Icon, value, label, description }) => (
             <Card
               key={label}
-              className="group relative overflow-hidden border-white/15 bg-white/75 p-6 shadow-glass transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-fitidion dark:border-white/10 dark:bg-slate-900/60"
+              className="group relative overflow-hidden border-accent/70 bg-background/95 p-6 shadow-neo transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-fitidion dark:border-[var(--text)]/20 dark:bg-dark/80"
             >
               <dt className="flex items-center gap-4">
                 <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition group-hover:bg-primary/20">
                   <Icon className="h-6 w-6" aria-hidden="true" />
                 </span>
                 <span>
-                  <span className="block text-3xl font-bold text-dark dark:text-white">{value}</span>
+                  <span className="block text-3xl font-bold text-dark dark:text-[var(--text)]">{value}</span>
                   <span className="text-xs font-semibold uppercase tracking-[0.3em] text-muted/80">{label}</span>
                 </span>
               </dt>
-              <dd className="mt-4 text-sm leading-relaxed text-muted dark:text-muted/70">
+              <dd className="mt-4 text-sm leading-relaxed text-muted dark:text-[var(--text-2)]">
                 {description}
               </dd>
               <span className="pointer-events-none absolute inset-x-6 bottom-2 h-1 rounded-full bg-gradient-to-r from-fitidion-orange/30 via-fitidion-gold/50 to-fitidion-orange/30 opacity-0 transition group-hover:opacity-100" />

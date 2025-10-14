@@ -74,16 +74,16 @@ export function CreatePriceAlert({ product }: CreatePriceAlertProps) {
   };
 
   return (
-    <section className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-gray-100">
+    <section className="space-y-4 rounded-3xl border border-accent/70 bg-background/90 p-6 text-sm text-dark shadow-neo dark:border-[var(--text)]/20 dark:bg-dark/80 dark:text-[var(--text)]">
       <header className="space-y-2">
-        <h2 className="text-lg font-semibold text-white">🔔 Créer une alerte de prix</h2>
-        <p className="text-xs text-gray-300">
+        <h2 className="text-lg font-semibold text-dark dark:text-[var(--text)]">🔔 Créer une alerte de prix</h2>
+        <p className="text-xs text-muted">
           Recevez un e-mail dès que nous détectons une baisse sous votre seuil personnalisé.
         </p>
       </header>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-300">
+          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-muted">
             Adresse e-mail
             <Input
               type="email"
@@ -93,7 +93,7 @@ export function CreatePriceAlert({ product }: CreatePriceAlertProps) {
               required
             />
           </label>
-          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-gray-300">
+          <label className="space-y-2 text-xs font-semibold uppercase tracking-wide text-muted">
             Seuil souhaité (€)
             <Input
               type="number"
@@ -105,20 +105,20 @@ export function CreatePriceAlert({ product }: CreatePriceAlertProps) {
             />
           </label>
         </div>
-        <div className="flex items-center justify-between text-xs text-gray-400">
+        <div className="flex items-center justify-between text-xs text-muted">
           <p>
             Prix actuel :
-            <span className="ml-1 font-semibold text-white">
+            <span className="ml-1 font-semibold text-primary">
               {product.bestPrice?.formatted ?? (bestPrice ? `${bestPrice.toFixed(2)} €` : "—")}
             </span>
           </p>
           {recommendedThreshold && (
-            <p className="rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-300">
+            <p className="rounded-full bg-primary/10 px-3 py-1 text-primary">
               Suggestion : {recommendedThreshold} €
             </p>
           )}
         </div>
-        <Button type="submit" className="w-full rounded-full bg-primary text-white hover:bg-primary/90" disabled={isPending}>
+        <Button type="submit" className="w-full rounded-full" disabled={isPending}>
           {isPending ? "Création en cours…" : "Créer l'alerte"}
         </Button>
       </form>

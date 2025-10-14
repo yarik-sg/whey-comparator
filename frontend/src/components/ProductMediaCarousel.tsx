@@ -45,7 +45,7 @@ export function ProductMediaCarousel({ images, alt, className }: ProductMediaCar
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="relative overflow-hidden rounded-3xl border border-secondary/60 bg-white shadow-sm">
+      <div className="relative overflow-hidden rounded-3xl border border-accent/70 bg-background shadow-sm">
         {/* eslint-disable-next-line @next/next/no-img-element -- remote catalog images */}
         <img
           src={activeImage}
@@ -58,7 +58,7 @@ export function ProductMediaCarousel({ images, alt, className }: ProductMediaCar
             <button
               type="button"
               onClick={() => goTo(activeIndex - 1)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-muted shadow transition hover:bg-white"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-accent/90 text-muted shadow transition hover:bg-white"
               aria-label="Image précédente"
             >
               <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -66,7 +66,7 @@ export function ProductMediaCarousel({ images, alt, className }: ProductMediaCar
             <button
               type="button"
               onClick={() => goTo(activeIndex + 1)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-muted shadow transition hover:bg-white"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-accent/90 text-muted shadow transition hover:bg-white"
               aria-label="Image suivante"
             >
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -88,7 +88,7 @@ export function ProductMediaCarousel({ images, alt, className }: ProductMediaCar
                   "relative overflow-hidden rounded-2xl border transition",
                   isActive
                     ? "border-primary ring-2 ring-primary/30"
-                    : "border-secondary/60 hover:border-primary/30",
+                    : "border-accent/70 hover:border-primary/30",
                 )}
                 aria-label={`Afficher l'image ${index + 1}`}
               >

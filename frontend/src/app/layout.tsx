@@ -21,7 +21,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "FitIdion — La plateforme du Fitness Intelligent",
-  description: "Trouvez les meilleures offres fitness, produits et salles de sport en un clic.",
+  description: "Comparez les meilleures offres fitness, produits et salles de sport.",
   themeColor: "#FF6600",
 };
 

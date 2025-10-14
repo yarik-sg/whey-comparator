@@ -186,7 +186,7 @@ function HeroCounter({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
       transition={{ duration: 0.5 }}
-      className="rounded-2xl border border-white/40 bg-white/80 p-5 text-center shadow-neo backdrop-blur dark:border-white/10 dark:bg-[rgba(30,41,59,0.72)]"
+      className="rounded-2xl border border-white/40 bg-accent/90 p-5 text-center shadow-neo backdrop-blur dark:border-white/10 dark:bg-[rgba(30,41,59,0.72)]"
     >
       <motion.span className="text-3xl font-semibold text-dark dark:text-text-1">
         {prefix}

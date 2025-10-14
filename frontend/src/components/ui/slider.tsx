@@ -43,10 +43,10 @@ export function Slider({
     "pointer-events-none absolute inset-x-0 h-0 w-full appearance-none focus:outline-none",
     "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4",
     "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white",
-    "[&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-secondary/60",
+    "[&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-accent/70",
     "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4",
     "[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white",
-    "[&::-moz-range-thumb]:shadow [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-secondary/60",
+    "[&::-moz-range-thumb]:shadow [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-accent/70",
   );
 
   return (
