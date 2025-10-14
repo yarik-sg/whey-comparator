@@ -2351,55 +2351,16 @@ def search_equipments(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
 
 
 @app.get("/search")
-async def search_all(q: str = Query(""), limit: int = Query(10, ge=1, le=50)):
+async def search_all(q: str, limit: int = 10):
     normalized_query = (q or "").strip()
-    normalized_limit = _normalize_limit(limit)
+    effective_limit = max(1, min(int(limit or 0), 50))
     lowercase_query = normalized_query.lower()
 
-    def ensure_price_payload(payload: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-        if payload is None:
-            return {"amount": None, "currency": None, "formatted": None}
-        return payload
+    results: Dict[str, Any] = {"products": [], "gyms": [], "programmes": []}
 
-    def parse_price_label(label: Optional[str]) -> Optional[Dict[str, Any]]:
-        if not label:
-            return None
-
-        normalized_label = label.replace("\u202f", " ").strip()
-        numeric_match = re.search(r"([0-9]+(?:[\.,][0-9]+)?)", normalized_label)
-        amount_value: Optional[float] = None
-        if numeric_match:
-            try:
-                amount_value = float(numeric_match.group(1).replace(",", "."))
-            except ValueError:
-                amount_value = None
-
-        lowercase_label = normalized_label.lower()
-        currency: Optional[str] = None
-        if "€" in normalized_label or "eur" in lowercase_label:
-            currency = "EUR"
-        elif "ca$" in lowercase_label or "cad" in lowercase_label:
-            currency = "CAD"
-        elif "chf" in lowercase_label:
-            currency = "CHF"
-        elif "£" in normalized_label or "gbp" in lowercase_label:
-            currency = "GBP"
-        elif "$" in normalized_label or "usd" in lowercase_label:
-            currency = "USD"
-
-        if amount_value is None and currency is None:
-            return None
-
-        return _format_price_payload({"amount": amount_value, "currency": currency})
-
-    products: List[Dict[str, Any]] = []
     serp_api_key = os.getenv("SERPAPI_KEY")
-    if serp_api_key and normalized_query:
-        serp_params = {
-            "q": normalized_query,
-            "tbm": "shop",
-            "api_key": serp_api_key,
-        }
+    if normalized_query and serp_api_key:
+        serp_params = {"q": normalized_query, "tbm": "shop", "api_key": serp_api_key}
         try:
             serp_response = requests.get(
                 SERPAPI_BASE,
@@ -2408,130 +2369,89 @@ async def search_all(q: str = Query(""), limit: int = Query(10, ge=1, le=50)):
             )
             serp_response.raise_for_status()
             serp_payload = serp_response.json()
-            shopping_results = serp_payload.get("shopping_results", []) or []
-            for index, product in enumerate(shopping_results[:normalized_limit]):
-                price_payload = parse_price_label(product.get("price"))
-                product_id = (
-                    product.get("product_id")
-                    or product.get("product_id_token")
-                    or product.get("position")
-                    or product.get("link")
-                    or f"serp-{index}"
-                )
-                name = (product.get("title") or "").strip() or normalized_query
-                vendor = product.get("source")
-                thumbnail = product.get("thumbnail")
-
-                products.append(
-                    {
-                        "id": product_id,
-                        "product_id": product.get("product_id"),
-                        "name": name,
-                        "brand": vendor,
-                        "image": thumbnail,
-                        "image_url": thumbnail,
-                        "bestPrice": ensure_price_payload(price_payload),
-                        "offersCount": 1,
-                        "bestVendor": vendor,
-                        "bestDeal": None,
-                        "link": product.get("link"),
-                        "rating": product.get("rating"),
-                        "reviewsCount": product.get("reviews"),
-                    }
-                )
-        except Exception:
-            products = search_products(normalized_query, limit=normalized_limit)
-    elif normalized_query:
-        products = search_products(normalized_query, limit=normalized_limit)
-
-    def filter_gyms(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        if not lowercase_query:
-            return entries[:normalized_limit]
-
-        terms = [token for token in lowercase_query.split() if token]
-        if not terms:
-            return entries[:normalized_limit]
-
-        filtered: List[Dict[str, Any]] = []
-        for entry in entries:
-            haystack_parts = [
-                str(entry.get("name") or ""),
-                str(entry.get("brand") or ""),
-                str(entry.get("city") or ""),
-                " ".join(entry.get("amenities", []) or []),
+            shopping_results = (serp_payload.get("shopping_results") or [])[:effective_limit]
+            results["products"] = [
+                {
+                    "title": item.get("title"),
+                    "price": item.get("price"),
+                    "source": item.get("source"),
+                    "link": item.get("link"),
+                    "thumbnail": item.get("thumbnail"),
+                }
+                for item in shopping_results
             ]
-            haystack = " ".join(haystack_parts).lower()
-            if not all(term in haystack for term in terms):
-                continue
+        except (requests.RequestException, ValueError):
+            results["products"] = []
 
-            filtered.append(entry)
-            if len(filtered) >= normalized_limit:
-                break
+    gym_params = {"limit": effective_limit}
+    if normalized_query:
+        gym_params["query"] = normalized_query
 
-        return filtered
-
-    gyms: List[Dict[str, Any]] = []
     try:
         gyms_response = requests.get(
             "http://localhost:8000/gyms",
-            params={"limit": normalized_limit},
+            params=gym_params,
             timeout=5,
         )
         gyms_response.raise_for_status()
         gyms_payload = gyms_response.json()
-        if isinstance(gyms_payload, dict):
-            gyms_candidates = gyms_payload.get("gyms") or []
-        elif isinstance(gyms_payload, list):
-            gyms_candidates = gyms_payload
+        if isinstance(gyms_payload, list):
+            gyms_results = gyms_payload
+        elif isinstance(gyms_payload, dict):
+            gyms_results = gyms_payload.get("gyms") or []
         else:
-            gyms_candidates = []
-        gyms = filter_gyms(list(gyms_candidates))
-    except Exception:
-        gyms = search_gyms(normalized_query, limit=normalized_limit)
+            gyms_results = []
+        results["gyms"] = gyms_results[:effective_limit]
+    except (requests.RequestException, ValueError):
+        results["gyms"] = []
 
-    programs: List[Dict[str, Any]] = []
+    programmes_source: List[Dict[str, Any]] = []
     try:
         if PROGRAMMES_PATH.exists():
             with PROGRAMMES_PATH.open("r", encoding="utf-8") as handle:
-                raw_programs = json.load(handle)
-        else:
-            raw_programs = []
+                programmes_payload = json.load(handle)
+                if isinstance(programmes_payload, list):
+                    programmes_source = programmes_payload
     except (OSError, json.JSONDecodeError):
-        raw_programs = []
+        programmes_source = []
 
-    for program in raw_programs[: normalized_limit * 2]:
-        name = (program.get("name") or "").strip()
+    def format_program_price(raw_price: Union[str, float, int, Dict[str, Any], None]) -> Optional[str]:
+        if isinstance(raw_price, dict):
+            amount = raw_price.get("amount")
+            currency = raw_price.get("currency")
+            if amount is not None and currency:
+                try:
+                    return f"{float(amount):.2f} {currency}"
+                except (TypeError, ValueError):
+                    return None
+        elif isinstance(raw_price, (int, float)):
+            return f"{float(raw_price):.2f}"
+        elif isinstance(raw_price, str):
+            return raw_price.strip() or None
+        return None
+
+    filtered_programmes: List[Dict[str, Any]] = []
+    for programme in programmes_source:
+        name = str(programme.get("name") or programme.get("nom") or "").strip()
         if lowercase_query and name and lowercase_query not in name.lower():
             continue
 
-        price_payload = _format_price_payload(program.get("price"))
-        programs.append(
+        formatted_price = format_program_price(programme.get("price"))
+        filtered_programmes.append(
             {
-                "id": program.get("id"),
-                "name": name or normalized_query,
-                "focus": program.get("focus"),
-                "level": program.get("level"),
-                "description": program.get("description"),
-                "durationWeeks": program.get("duration_weeks"),
-                "sessionsPerWeek": program.get("sessions_per_week"),
-                "intensity": program.get("intensity"),
-                "equipmentNeeded": program.get("equipment_needed"),
-                "coach": program.get("coach"),
-                "price": ensure_price_payload(price_payload),
-                "link": program.get("link"),
+                "nom": name or normalized_query,
+                "price": formatted_price,
+                "link": programme.get("link"),
+                "focus": programme.get("focus"),
+                "niveau": programme.get("level") or programme.get("niveau"),
             }
         )
-        if len(programs) >= normalized_limit:
+        if len(filtered_programmes) >= effective_limit:
             break
 
-    equipments = search_equipments(normalized_query, limit=normalized_limit)
+    results["programmes"] = filtered_programmes
 
-    return {
-        "products": products,
-        "gyms": gyms,
-        "programs": programs,
-        "equipments": equipments,
-    }
+    return results
 
 # --- Routes ---
 
