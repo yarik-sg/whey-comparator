@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { CreatePriceAlert } from "@/components/CreatePriceAlert";
-import { PriceHistoryChart } from "@/components/PriceHistoryChart";
+import PriceHistoryChart, { type PriceHistoryChartDatum } from "@/components/PriceHistoryChart";
 import { ProductMediaCarousel } from "@/components/ProductMediaCarousel";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { PriceComparison } from "@/components/PriceComparison";
@@ -22,6 +22,7 @@ import {
 } from "@/lib/productIdentifiers";
 import type {
   DealItem,
+  PriceHistoryResponse,
   ProductOffersResponse,
   SimilarProductsResponse,
 } from "@/types/api";
@@ -144,6 +145,38 @@ async function fetchSimilarProducts(
   }
 }
 
+async function fetchPriceHistoryData(
+  productId: number | string,
+  fallbackCurrency?: string | null,
+): Promise<PriceHistoryChartDatum[]> {
+  const encodedId = encodeURIComponent(String(productId));
+
+  try {
+    const response = await apiClient.get<PriceHistoryResponse>(
+      `/products/${encodedId}/price-history`,
+      {
+        cache: "no-store",
+      },
+    );
+
+    const history = response?.history ?? [];
+
+    return history
+      .filter((entry) => typeof entry.price === "number" && Number.isFinite(entry.price))
+      .map((entry) => ({
+        recorded_at: entry.date,
+        price: entry.price,
+        platform: entry.platform ?? null,
+        currency: entry.currency ?? fallbackCurrency ?? "EUR",
+      }));
+  } catch (error) {
+    const isNotFound = error instanceof ApiError && error.status === 404;
+    const logger = isNotFound ? console.warn : console.error;
+    logger("Erreur chargement historique prix", error);
+    return [];
+  }
+}
+
 export default async function ProductDetailPage({
   params,
 }: {
@@ -182,6 +215,13 @@ export default async function ProductDetailPage({
   const hasAverageRating = typeof averageRating === "number" && !Number.isNaN(averageRating);
   const hasReviewsCount = typeof reviewsCount === "number" && !Number.isNaN(reviewsCount);
   const analyticsProductId = parseNumericIdentifier(product.id ?? canonicalProductId ?? rawProductId);
+  const priceHistoryData =
+    analyticsProductId !== null
+      ? await fetchPriceHistoryData(
+          analyticsProductId,
+          product.bestPrice?.currency ?? bestOffer?.price.currency ?? null,
+        )
+      : [];
 
   return (
     <div className="bg-gradient-to-b from-white via-white to-slate-50 pb-16 pt-10">
@@ -313,7 +353,7 @@ export default async function ProductDetailPage({
           <div className="space-y-6">
             <PriceComparison offers={offers} />
             {analyticsProductId !== null && (
-              <PriceHistoryChart productId={analyticsProductId} />
+              <PriceHistoryChart data={priceHistoryData} />
             )}
             {analyticsProductId !== null && (
               <ReviewsSection productId={analyticsProductId} />
