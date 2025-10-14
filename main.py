@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 
 from fastapi.middleware.cors import CORSMiddleware
 import html
+import json
 import os, re
 import requests
+from pathlib import Path
 from urllib.parse import urlparse, parse_qs, quote
 from functools import lru_cache
 from math import atan2, cos, radians, sin, sqrt
@@ -30,6 +32,10 @@ SERPAPI_KEY = os.getenv(
 )
 SERPAPI_BASE = "https://serpapi.com/search.json"
 SCRAPER_BASE_URL = os.getenv("SCRAPER_BASE_URL", "http://localhost:8001")
+
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+PROGRAMMES_PATH = DATA_DIR / "programmes.json"
 
 
 def _env_flag(name: str, *, default: bool = False) -> bool:
@@ -2346,12 +2352,178 @@ def search_equipments(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
 
 @app.get("/search")
 async def search_all(q: str = Query(""), limit: int = Query(10, ge=1, le=50)):
-    normalized_limit = _normalize_limit(limit)
     normalized_query = (q or "").strip()
+    normalized_limit = _normalize_limit(limit)
+    lowercase_query = normalized_query.lower()
 
-    products = search_products(normalized_query, limit=normalized_limit)
-    gyms = search_gyms(normalized_query, limit=normalized_limit)
-    programs = search_programs(normalized_query, limit=normalized_limit)
+    def ensure_price_payload(payload: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        if payload is None:
+            return {"amount": None, "currency": None, "formatted": None}
+        return payload
+
+    def parse_price_label(label: Optional[str]) -> Optional[Dict[str, Any]]:
+        if not label:
+            return None
+
+        normalized_label = label.replace("\u202f", " ").strip()
+        numeric_match = re.search(r"([0-9]+(?:[\.,][0-9]+)?)", normalized_label)
+        amount_value: Optional[float] = None
+        if numeric_match:
+            try:
+                amount_value = float(numeric_match.group(1).replace(",", "."))
+            except ValueError:
+                amount_value = None
+
+        lowercase_label = normalized_label.lower()
+        currency: Optional[str] = None
+        if "€" in normalized_label or "eur" in lowercase_label:
+            currency = "EUR"
+        elif "ca$" in lowercase_label or "cad" in lowercase_label:
+            currency = "CAD"
+        elif "chf" in lowercase_label:
+            currency = "CHF"
+        elif "£" in normalized_label or "gbp" in lowercase_label:
+            currency = "GBP"
+        elif "$" in normalized_label or "usd" in lowercase_label:
+            currency = "USD"
+
+        if amount_value is None and currency is None:
+            return None
+
+        return _format_price_payload({"amount": amount_value, "currency": currency})
+
+    products: List[Dict[str, Any]] = []
+    serp_api_key = os.getenv("SERPAPI_KEY")
+    if serp_api_key and normalized_query:
+        serp_params = {
+            "q": normalized_query,
+            "tbm": "shop",
+            "api_key": serp_api_key,
+        }
+        try:
+            serp_response = requests.get(
+                SERPAPI_BASE,
+                params=serp_params,
+                timeout=8,
+            )
+            serp_response.raise_for_status()
+            serp_payload = serp_response.json()
+            shopping_results = serp_payload.get("shopping_results", []) or []
+            for index, product in enumerate(shopping_results[:normalized_limit]):
+                price_payload = parse_price_label(product.get("price"))
+                product_id = (
+                    product.get("product_id")
+                    or product.get("product_id_token")
+                    or product.get("position")
+                    or product.get("link")
+                    or f"serp-{index}"
+                )
+                name = (product.get("title") or "").strip() or normalized_query
+                vendor = product.get("source")
+                thumbnail = product.get("thumbnail")
+
+                products.append(
+                    {
+                        "id": product_id,
+                        "product_id": product.get("product_id"),
+                        "name": name,
+                        "brand": vendor,
+                        "image": thumbnail,
+                        "image_url": thumbnail,
+                        "bestPrice": ensure_price_payload(price_payload),
+                        "offersCount": 1,
+                        "bestVendor": vendor,
+                        "bestDeal": None,
+                        "link": product.get("link"),
+                        "rating": product.get("rating"),
+                        "reviewsCount": product.get("reviews"),
+                    }
+                )
+        except Exception:
+            products = search_products(normalized_query, limit=normalized_limit)
+    elif normalized_query:
+        products = search_products(normalized_query, limit=normalized_limit)
+
+    def filter_gyms(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        if not lowercase_query:
+            return entries[:normalized_limit]
+
+        terms = [token for token in lowercase_query.split() if token]
+        if not terms:
+            return entries[:normalized_limit]
+
+        filtered: List[Dict[str, Any]] = []
+        for entry in entries:
+            haystack_parts = [
+                str(entry.get("name") or ""),
+                str(entry.get("brand") or ""),
+                str(entry.get("city") or ""),
+                " ".join(entry.get("amenities", []) or []),
+            ]
+            haystack = " ".join(haystack_parts).lower()
+            if not all(term in haystack for term in terms):
+                continue
+
+            filtered.append(entry)
+            if len(filtered) >= normalized_limit:
+                break
+
+        return filtered
+
+    gyms: List[Dict[str, Any]] = []
+    try:
+        gyms_response = requests.get(
+            "http://localhost:8000/gyms",
+            params={"limit": normalized_limit},
+            timeout=5,
+        )
+        gyms_response.raise_for_status()
+        gyms_payload = gyms_response.json()
+        if isinstance(gyms_payload, dict):
+            gyms_candidates = gyms_payload.get("gyms") or []
+        elif isinstance(gyms_payload, list):
+            gyms_candidates = gyms_payload
+        else:
+            gyms_candidates = []
+        gyms = filter_gyms(list(gyms_candidates))
+    except Exception:
+        gyms = search_gyms(normalized_query, limit=normalized_limit)
+
+    programs: List[Dict[str, Any]] = []
+    try:
+        if PROGRAMMES_PATH.exists():
+            with PROGRAMMES_PATH.open("r", encoding="utf-8") as handle:
+                raw_programs = json.load(handle)
+        else:
+            raw_programs = []
+    except (OSError, json.JSONDecodeError):
+        raw_programs = []
+
+    for program in raw_programs[: normalized_limit * 2]:
+        name = (program.get("name") or "").strip()
+        if lowercase_query and name and lowercase_query not in name.lower():
+            continue
+
+        price_payload = _format_price_payload(program.get("price"))
+        programs.append(
+            {
+                "id": program.get("id"),
+                "name": name or normalized_query,
+                "focus": program.get("focus"),
+                "level": program.get("level"),
+                "description": program.get("description"),
+                "durationWeeks": program.get("duration_weeks"),
+                "sessionsPerWeek": program.get("sessions_per_week"),
+                "intensity": program.get("intensity"),
+                "equipmentNeeded": program.get("equipment_needed"),
+                "coach": program.get("coach"),
+                "price": ensure_price_payload(price_payload),
+                "link": program.get("link"),
+            }
+        )
+        if len(programs) >= normalized_limit:
+            break
+
     equipments = search_equipments(normalized_query, limit=normalized_limit)
 
     return {
