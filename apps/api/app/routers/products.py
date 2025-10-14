@@ -312,17 +312,15 @@ def get_price_history(
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    history_query = (
-        select(PriceHistory)
-        .where(PriceHistory.product_id == product_id)
-        .order_by(PriceHistory.recorded_at.asc())
-    )
+    history_query = select(PriceHistory).where(PriceHistory.product_id == product_id)
     delta = PRICE_HISTORY_PERIODS.get(period)
     if delta:
         start_date = datetime.now(timezone.utc) - delta
         history_query = history_query.where(PriceHistory.recorded_at >= start_date)
 
+    history_query = history_query.order_by(PriceHistory.recorded_at.desc()).limit(30)
     entries = db.execute(history_query).scalars().all()
+    entries = list(reversed(entries))
 
     if not entries:
         return schemas.PriceHistoryResponse(

@@ -138,7 +138,7 @@ class PriceHistory(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="CASCADE"))
-    platform: Mapped[str | None] = mapped_column(String(100))
+    platform: Mapped[str | None] = mapped_column(String(50))
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="EUR", nullable=False)
     in_stock: Mapped[bool | None] = mapped_column(Boolean, default=True)
