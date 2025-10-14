@@ -144,7 +144,7 @@ export default function Comparateur() {
                 port et disponibilité.
               </p>
             </div>
-            <Card className="w-full max-w-md border-secondary/60 bg-white/80 backdrop-blur">
+            <Card className="w-full max-w-md border-accent/70 bg-background/80 backdrop-blur">
               <form className="space-y-4" onSubmit={handleSearchSubmit}>
                 <label htmlFor="search" className="text-sm font-medium text-muted">
                   Produit ou référence à comparer
@@ -171,7 +171,7 @@ export default function Comparateur() {
       </section>
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 space-y-10">
-        <Card className="border-secondary/60">
+        <Card className="border-accent/70">
           <div className="flex flex-col gap-2">
             <h2 className="text-xl font-semibold text-dark">Filtres rapides</h2>
             <p className="text-sm text-muted">
@@ -242,13 +242,13 @@ export default function Comparateur() {
               {Array.from({ length: 8 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-80 animate-pulse rounded-3xl border border-secondary/60 bg-accent/70"
+                  className="h-80 animate-pulse rounded-3xl border border-accent/70 bg-accent/70"
                   aria-hidden
                 />
               ))}
             </div>
           ) : produitsFiltres.length === 0 ? (
-            <div className="rounded-3xl border border-secondary/60 bg-accent p-8 text-center text-sm text-primary">
+            <div className="rounded-3xl border border-accent/70 bg-accent p-8 text-center text-sm text-primary">
               Aucun résultat ne correspond aux filtres sélectionnés. Essayez d&apos;élargir votre recherche.
             </div>
           ) : (
@@ -261,7 +261,7 @@ export default function Comparateur() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 24 }}
                     transition={{ duration: 0.25, delay: index * 0.04 }}
-                    className="group flex h-full flex-col rounded-3xl border border-secondary/60 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
+                    className="group flex h-full flex-col rounded-3xl border border-accent/70 bg-background p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
                   >
                     <div className="relative flex items-center justify-center rounded-2xl bg-accent p-6">
                       {/* eslint-disable-next-line @next/next/no-img-element -- remote images */}

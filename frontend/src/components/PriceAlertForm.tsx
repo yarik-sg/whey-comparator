@@ -134,7 +134,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
   );
 
   const containerClassName = cn(
-    "space-y-6 rounded-3xl border border-white/15 bg-white/85 p-8 shadow-glow backdrop-blur dark:border-white/10 dark:bg-slate-900/60",
+    "space-y-6 rounded-3xl border border-accent/70 bg-background/95 p-8 text-dark shadow-neo backdrop-blur dark:border-[var(--text)]/25 dark:bg-dark/80 dark:text-[var(--text)]",
     className,
   );
 
@@ -166,7 +166,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
     >
       <div className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="alert-email" className="block text-sm font-semibold text-dark dark:text-white">
+          <label htmlFor="alert-email" className="block text-sm font-semibold text-dark dark:text-[var(--text)]">
             Adresse e-mail
           </label>
           <Input
@@ -181,11 +181,11 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
             placeholder="vous@exemple.com"
             aria-invalid={errors.email ? "true" : undefined}
           />
-          {errors.email && <p className="text-sm text-red-400">{errors.email}</p>}
+          {errors.email && <p className="text-sm text-primary">{errors.email}</p>}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="alert-product" className="block text-sm font-semibold text-dark dark:text-white">
+          <label htmlFor="alert-product" className="block text-sm font-semibold text-dark dark:text-[var(--text)]">
             Produit ciblé
           </label>
           <Input
@@ -198,11 +198,11 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
             placeholder="Ex. Whey Native Chocolat 1kg"
             aria-invalid={errors.product ? "true" : undefined}
           />
-          {errors.product && <p className="text-sm text-red-400">{errors.product}</p>}
+          {errors.product && <p className="text-sm text-primary">{errors.product}</p>}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="alert-threshold" className="block text-sm font-semibold text-dark dark:text-white">
+          <label htmlFor="alert-threshold" className="block text-sm font-semibold text-dark dark:text-[var(--text)]">
             Seuil de prix (€)
           </label>
           <Input
@@ -219,7 +219,7 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
             aria-invalid={errors.priceThreshold ? "true" : undefined}
           />
           {errors.priceThreshold && (
-            <p className="text-sm text-red-400">{errors.priceThreshold}</p>
+            <p className="text-sm text-primary">{errors.priceThreshold}</p>
           )}
         </div>
       </div>
@@ -229,8 +229,8 @@ export function PriceAlertForm({ className }: PriceAlertFormProps = {}) {
           className={cn(
             "rounded-2xl border px-4 py-3 text-sm",
             status.state === "success"
-              ? "border-emerald-300/40 bg-emerald-500/10 text-emerald-200"
-              : "border-red-300/40 bg-red-500/10 text-red-200",
+              ? "border-primary/40 bg-accent text-primary"
+              : "border-dark/40 bg-secondary text-dark",
           )}
         >
           {status.message}

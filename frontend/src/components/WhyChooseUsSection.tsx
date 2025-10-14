@@ -59,12 +59,12 @@ export function WhyChooseUsSection() {
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.5 }}
             >
-              <Card className="group h-full border-white/15 bg-white/80 p-8 shadow-glass transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-fitidion dark:border-white/10 dark:bg-slate-900/60">
+              <Card className="group h-full border-accent/70 bg-background/95 p-8 shadow-neo transition hover:-translate-y-1 hover:border-primary/60 hover:shadow-fitidion dark:border-[var(--text)]/20 dark:bg-dark/80">
                 <span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <Icon className="h-7 w-7" aria-hidden="true" />
                 </span>
-                <h3 className="mt-6 text-xl font-semibold text-dark dark:text-white">{title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-muted dark:text-muted/70">{description}</p>
+                <h3 className="mt-6 text-xl font-semibold text-dark dark:text-[var(--text)]">{title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-muted dark:text-[var(--text-2)]">{description}</p>
               </Card>
             </motion.div>
           ))}

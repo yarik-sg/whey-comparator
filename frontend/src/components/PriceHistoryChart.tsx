@@ -84,7 +84,7 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
         : "text-muted";
 
   return (
-    <section className="space-y-6 rounded-2xl border border-secondary/60 bg-white p-6 shadow-sm">
+    <section className="space-y-6 rounded-2xl border border-accent/70 bg-background p-6 shadow-sm">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3 text-muted">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/60 text-primary">
@@ -129,7 +129,7 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
       )}
 
       {statistics && (
-        <div className="flex flex-wrap gap-4 rounded-2xl border border-secondary/60 bg-accent p-4 text-sm text-muted">
+        <div className="flex flex-wrap gap-4 rounded-2xl border border-accent/70 bg-accent p-4 text-sm text-muted">
           <div className="flex flex-1 min-w-[140px] items-center gap-2">
             <TrendIcon className={`h-5 w-5 ${trendColor}`} aria-hidden />
             <div>
@@ -205,7 +205,7 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
                     price: number;
                   };
                   return (
-                    <div className="rounded-xl border border-secondary/60 bg-white px-4 py-3 text-sm text-muted shadow-lg">
+                    <div className="rounded-xl border border-accent/70 bg-background px-4 py-3 text-sm text-muted shadow-lg">
                       <p className="font-semibold text-dark">{point.tooltip}</p>
                       <p className="text-xs text-muted">{formatter.format(point.price)}</p>
                     </div>
@@ -219,7 +219,7 @@ export function PriceHistoryChart({ productId, defaultPeriod = "30d" }: PriceHis
       )}
 
       {!isLoading && !hasHistory && (
-        <div className="rounded-xl border border-dashed border-secondary/60 p-6 text-center text-sm text-muted">
+        <div className="rounded-xl border border-dashed border-accent/70 p-6 text-center text-sm text-muted">
           Historique de prix non disponible pour cette période.
         </div>
       )}

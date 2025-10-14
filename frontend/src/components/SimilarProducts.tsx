@@ -31,7 +31,7 @@ export function SimilarProducts({
   return (
     <section
       className={cn(
-        "space-y-4 rounded-3xl border border-secondary/60 bg-white p-6 shadow-sm",
+        "space-y-4 rounded-3xl border border-accent/70 bg-background p-6 shadow-sm",
         className,
       )}
       aria-labelledby="similar-products-heading"

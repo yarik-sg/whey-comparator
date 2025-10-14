@@ -79,16 +79,16 @@ function renderRating(offer: DealItem) {
 export function OfferTable({ offers, caption }: OfferTableProps) {
   if (offers.length === 0) {
     return (
-      <p className="rounded-3xl border border-secondary/60 bg-accent p-6 text-sm text-muted">
+      <p className="rounded-3xl border border-accent/70 bg-accent p-6 text-sm text-muted">
         Aucune offre disponible pour le moment.
       </p>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-secondary/60 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-3xl border border-accent/70 bg-background shadow-sm">
       {caption && (
-        <div className="border-b border-secondary/60 bg-accent px-4 py-3 text-sm font-semibold text-primary">
+        <div className="border-b border-accent/70 bg-accent px-4 py-3 text-sm font-semibold text-primary">
           {caption}
         </div>
       )}
@@ -131,7 +131,7 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
                 return (
                   <tr
                     key={offer.id}
-                    className={`border-t border-secondary/60 transition ${
+                    className={`border-t border-accent/70 transition ${
                       highlight ? "bg-accent" : "hover:bg-accent"
                     }`}
                   >
@@ -205,7 +205,7 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
               className={`rounded-2xl border p-4 shadow-sm transition ${
                 highlight
                   ? "border-primary/30 bg-accent"
-                  : "border-secondary/60 bg-white hover:border-primary/30"
+                  : "border-accent/70 bg-background hover:border-primary/30"
               }`}
             >
               <header className="flex flex-wrap items-center justify-between gap-2">

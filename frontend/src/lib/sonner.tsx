@@ -62,7 +62,7 @@ function positionClasses(position: ToasterProps["position"]) {
 
 function toastColors(type: ToastType, richColors: boolean | undefined) {
   if (!richColors) {
-    return "bg-slate-900/90 text-slate-50";
+    return "bg-dark/90 text-white dark:bg-[var(--background)]/90";
   }
   switch (type) {
     case "success":

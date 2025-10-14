@@ -72,7 +72,7 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
   const topAmenities = useMemo(() => amenities.slice(0, 3), [amenities]);
 
   return (
-    <article className="group flex h-full flex-col justify-between rounded-3xl border border-secondary/60 bg-white/95 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+    <article className="group flex h-full flex-col justify-between rounded-3xl border border-accent/70 bg-background/95 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <IconBadge>
@@ -118,7 +118,7 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
         ) : null}
       </div>
 
-      <footer className="mt-6 border-t border-secondary/60 pt-4">
+      <footer className="mt-6 border-t border-accent/70 pt-4">
         <div className="flex items-center justify-between text-sm">
           <span className="inline-flex items-center gap-2 font-semibold text-dark">
             <PiggyBank className="h-4 w-4 text-primary" aria-hidden="true" />

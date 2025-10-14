@@ -18,7 +18,7 @@ export function PriceComparison({
   description = "Analyse temps réel des vendeurs avec frais de livraison inclus.",
 }: PriceComparisonProps) {
   const containerClass = cn(
-    "space-y-4 rounded-3xl border border-secondary/60 bg-white p-6 shadow-sm",
+    "space-y-4 rounded-3xl border border-accent/70 bg-background p-6 shadow-neo",
     className,
   );
 

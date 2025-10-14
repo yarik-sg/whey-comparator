@@ -43,16 +43,16 @@ const socialLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-accent/50 bg-accent py-16 text-text shadow-neo dark:border-accent-d/40 dark:bg-[var(--secondary)] dark:text-[var(--text-2)]">
+    <footer className="mt-16 border-t border-accent/60 bg-background py-16 text-dark shadow-neo dark:border-accent-d/40 dark:bg-dark dark:text-[var(--text)]">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 sm:px-6">
         <div className="grid gap-10 lg:grid-cols-[1.5fr,repeat(3,1fr)]">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-3 rounded-2xl bg-white/80 px-5 py-3 text-xs font-semibold uppercase tracking-[0.35em] text-primary shadow-neo dark:bg-[var(--background)]/40 dark:text-[var(--text-1)]">
+            <div className="inline-flex items-center gap-3 rounded-2xl bg-accent px-5 py-3 text-xs font-semibold uppercase tracking-[0.35em] text-primary shadow-neo dark:bg-[var(--background)]/40 dark:text-[var(--text-1)]">
               FitIdion
               <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
               Fitness Intelligent
             </div>
-            <h2 className="text-2xl font-semibold leading-tight text-text dark:text-[var(--text-1)]">
+            <h2 className="text-2xl font-semibold leading-tight text-dark dark:text-[var(--text-1)]">
               Comparez, optimisez et suivez vos achats fitness avec une interface pensée pour la performance.
             </h2>
             <p className="max-w-xl text-sm leading-relaxed text-muted dark:text-[var(--text-2)]">
@@ -61,7 +61,7 @@ export function SiteFooter() {
           </div>
           {linkSections.map((section) => (
             <nav key={section.title} className="space-y-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-text dark:text-[var(--text-1)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-dark dark:text-[var(--text-1)]">
                 {section.title}
               </p>
               <ul className="space-y-3 text-muted dark:text-[var(--text-2)]">
@@ -100,7 +100,7 @@ export function SiteFooter() {
                 href={link.href}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-white/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-text transition duration-200 hover:-translate-y-0.5 hover:bg-white/60 hover:text-primary dark:bg-[var(--background)]/30 dark:text-[var(--text-2)] dark:hover:bg-[var(--background)]/50 dark:hover:text-[var(--text-1)]"
+                className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-dark transition duration-200 hover:-translate-y-0.5 hover:bg-secondary/70 hover:text-primary dark:bg-[var(--background)]/30 dark:text-[var(--text-2)] dark:hover:bg-[var(--background)]/50 dark:hover:text-[var(--text-1)]"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
                 {link.label}

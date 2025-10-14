@@ -126,7 +126,7 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
               </span>
             )}
           </div>
-          <div className="absolute left-4 top-4 inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary shadow-md dark:bg-[var(--background)]/80">
+          <div className="absolute left-4 top-4 inline-flex items-center rounded-full bg-background/95 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary shadow-md dark:bg-[var(--background)]/80">
             {product.brand ?? "Produit"}
           </div>
         </div>

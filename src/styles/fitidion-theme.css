@@ -1,0 +1,175 @@
+:root {
+  color-scheme: light;
+  --fitidion-primary: #ff6600;
+  --fitidion-secondary: #ffe8d1;
+  --fitidion-accent: #fff5eb;
+  --fitidion-dark: #1b1b1f;
+  --fitidion-text: #222222;
+  --fitidion-background: #ffffff;
+  --fitidion-surface: #f7f7f9;
+  --fitidion-border: rgba(27, 27, 31, 0.12);
+  --fitidion-muted: rgba(34, 34, 34, 0.65);
+  --fitidion-font-sans: 'Poppins', 'Inter', sans-serif;
+  --fitidion-radius-sm: 0.75rem;
+  --fitidion-radius-md: 1.25rem;
+  --fitidion-radius-lg: 1.75rem;
+  --fitidion-radius-full: 9999px;
+  --fitidion-transition: 180ms ease;
+}
+
+.dark {
+  color-scheme: dark;
+  --fitidion-background: #1b1b1f;
+  --fitidion-surface: #24242a;
+  --fitidion-border: rgba(255, 245, 235, 0.12);
+  --fitidion-text: #f8fafc;
+  --fitidion-muted: rgba(248, 250, 252, 0.75);
+  --fitidion-secondary: #2b2b33;
+  --fitidion-accent: rgba(255, 102, 0, 0.12);
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background-color: var(--fitidion-background);
+  color: var(--fitidion-text);
+  font-family: var(--fitidion-font-sans);
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background-image:
+    radial-gradient(circle at 12% 18%, rgba(255, 102, 0, 0.06), transparent 55%),
+    radial-gradient(circle at 82% 6%, rgba(255, 232, 209, 0.4), transparent 60%),
+    linear-gradient(180deg, rgba(255, 245, 235, 0.7), transparent 42%),
+    var(--fitidion-background);
+}
+
+.dark body {
+  background-image:
+    radial-gradient(circle at 14% 22%, rgba(255, 148, 77, 0.16), transparent 55%),
+    radial-gradient(circle at 78% 18%, rgba(51, 65, 85, 0.5), transparent 65%),
+    linear-gradient(180deg, rgba(27, 27, 31, 0.92), rgba(27, 27, 31, 0.92));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--fitidion-transition);
+}
+
+a:hover {
+  color: var(--fitidion-primary);
+}
+
+button,
+.fitidion-button {
+  font-family: var(--fitidion-font-sans);
+  font-weight: 600;
+  border-radius: var(--fitidion-radius-full, 9999px);
+  border: 1px solid transparent;
+  background: var(--fitidion-primary);
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  line-height: 1.2;
+  transition: transform var(--fitidion-transition), box-shadow var(--fitidion-transition),
+    background-color var(--fitidion-transition);
+  box-shadow: 0 18px 45px -24px rgba(255, 102, 0, 0.45);
+}
+
+button:hover,
+.fitidion-button:hover {
+  background: color-mix(in srgb, var(--fitidion-primary) 92%, black 8%);
+  transform: translateY(-2px);
+}
+
+button:focus-visible,
+.fitidion-button:focus-visible {
+  outline: 2px solid rgba(255, 102, 0, 0.28);
+  outline-offset: 2px;
+}
+
+.dark button,
+.dark .fitidion-button {
+  background: #ff7a26;
+  box-shadow: 0 18px 35px -20px rgba(2, 6, 17, 0.55);
+}
+
+.card,
+.fitidion-card {
+  background: var(--fitidion-surface);
+  border-radius: var(--fitidion-radius-lg);
+  border: 1px solid var(--fitidion-border);
+  box-shadow: 0 24px 60px -30px rgba(27, 27, 31, 0.25);
+  padding: 1.5rem;
+  transition: transform var(--fitidion-transition), box-shadow var(--fitidion-transition);
+}
+
+.card:hover,
+.fitidion-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 80px -36px rgba(27, 27, 31, 0.28);
+}
+
+.dark .card,
+.dark .fitidion-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 245, 235, 0.08);
+  box-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.55);
+}
+
+input,
+textarea,
+select,
+.fitidion-input {
+  font-family: var(--fitidion-font-sans);
+  border-radius: var(--fitidion-radius-md);
+  border: 1px solid rgba(34, 34, 34, 0.12);
+  background: var(--fitidion-accent);
+  padding: 0.75rem 1rem;
+  color: var(--fitidion-dark);
+  transition: border-color var(--fitidion-transition), box-shadow var(--fitidion-transition),
+    background-color var(--fitidion-transition);
+  box-shadow: 0 12px 25px -20px rgba(27, 27, 31, 0.25);
+}
+
+input::placeholder,
+textarea::placeholder,
+select::placeholder,
+.fitidion-input::placeholder {
+  color: rgba(27, 27, 31, 0.55);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.fitidion-input:focus-visible {
+  outline: none;
+  border-color: var(--fitidion-primary);
+  box-shadow: 0 0 0 4px rgba(255, 102, 0, 0.14);
+}
+
+.dark input,
+.dark textarea,
+.dark select,
+.dark .fitidion-input {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 245, 235, 0.12);
+  color: var(--fitidion-text);
+  box-shadow: 0 18px 40px -24px rgba(2, 6, 17, 0.75);
+}
+
+::selection {
+  background: rgba(255, 102, 0, 0.22);
+  color: #ffffff;
+}
+
+.dark ::selection {
+  background: rgba(255, 148, 77, 0.45);
+  color: #050607;
+}
