@@ -12,12 +12,18 @@ interfaces lumineuses/dynamiques avec bascule automatique clair/sombre.
   (marque, forme, rapport protéines/prix) avec fallback local lorsque le scraping échoue.
 - **Comparateur en temps réel** : juxtaposition de produits, surlignage automatique du meilleur deal et
   historique des prix synchronisé avec les alertes.
+- **Analyse d'historique des prix** : collecte quotidienne (PostgreSQL + fallback) avec statistiques
+  auto-calculées (min/moyenne/tendance) et visualisation Recharts sur les fiches produit.
 - **Alertes FitIdion** : interface dédiée pour activer/mettre en pause les notifications de baisse de prix
   avec onboarding simplifié et suivi par e-mail.
 - **Dashboard visuel** : sections « Pourquoi FitIdion », « Gym Locator » et « Insights » aux cartes vitrées,
   gradients FitIdion et ombres douces pour un rendu premium.
 - **Système de design unifié** : Tailwind CSS 4, composants boutons/inputs/checkbox/slider optimisés pour
   la palette FitIdion et un ThemeProvider maison avec stockage local du mode sombre.
+- **Programmes dynamiques** : page `/programmes` connectée à l'API (JSON partagé) et intégrée à la recherche
+  globale pour orienter les utilisateurs vers les routines adaptées.
+- **Gym Locator connecté** : scraping Basic-Fit temps réel via `services/gyms_scraper.py` pour alimenter la
+  page salles avec des liens marchands officiels.
 
 ## 🏗️ Structure du dépôt
 
@@ -25,6 +31,7 @@ interfaces lumineuses/dynamiques avec bascule automatique clair/sombre.
 whey-comparator/
 ├── README.md                 # Ce document (identité FitIdion)
 ├── docs/                     # Guides produit, design system, roadmap FitIdion
+├── data/                     # Jeux de données (catalogue fallback, programmes dynamiques…)
 ├── frontend/                 # Application Next.js 15 (React 19)
 │   ├── src/app/              # Pages App Router + layout FitIdion
 │   ├── src/components/       # Composants UI thématisés FitIdion
@@ -124,6 +131,8 @@ Les dossiers `docs/` et `frontend/public/README_Branding.txt` détaillent :
   configurations `.eslintrc.js` (séparation Vite / Next).
 - **Tests API** : `pytest` dans `apps/api/tests` (exemples fournis pour la couche FastAPI).
 - **CI/CD** : workflows à compléter (lint + tests) avant déploiement automatique.
+- **Scraping gyms** : `python -m services.gyms_scraper` pour valider la collecte Basic-Fit et détecter les
+  changements de markup.
 
 ---
 

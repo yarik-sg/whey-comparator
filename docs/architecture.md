@@ -36,6 +36,9 @@ whey-comparator/
   FitIdion (stockage local + détection système) et ajoute `BrandHeader`, `SiteHeader`, `SiteFooter` remaniés.
 - **Expérience produit** : sections marketing (HeroSection, DealsShowcase, StatsSection,
   GymLocatorSection…) tirent parti des nouvelles classes FitIdion et du QueryProvider.
+- **Analytique & contenus dynamiques** : `PriceHistoryChart` rend les 30 derniers relevés via Recharts,
+  `ReviewsSection` s’appuie sur les nouveaux endpoints et la page `/programmes` consomme `GET /programmes`
+  via le proxy Next.js.
 - **API client** : `src/lib/apiClient.ts` et `src/lib/queries.ts` orchestrent l'accès
   aux endpoints (TanStack Query vendored dans `vendor/`).
 
@@ -52,6 +55,10 @@ whey-comparator/
 
 - **`services/`** contient les clients scrapers, normalisation des prix et utilitaires
   de géocodage utilisés par l'API ou les workers Celery.
+- **`services/gyms_scraper.py`** scrute la directory Basic-Fit (BeautifulSoup) pour alimenter `/gyms`
+  et la recherche unifiée.
+- **`data/`** stocke les fallback (catalogue, historiques) et `programmes.json` synchronisé avec
+  `GET /programmes` et la page frontend dédiée.
 - Les logos FitIdion et le favicon sont exclus du dépôt Git ; des placeholders texte sont
   présents dans `frontend/public/` et `frontend/src/app/` et devront être remplacés via GitHub
   après merge.
@@ -72,7 +79,7 @@ whey-comparator/
 2. **Agrégation** : `main.py` fusionne données live + fallback, calcule les métriques FitIdion
    (ratio protéines/prix, disponibilité, fiabilité marchands).
 3. **Frontend** : Next.js consomme les endpoints via TanStack Query, rend le comparateur,
-   les fiches produits, les alertes et la page catalogue (composants server + client).
+   les fiches produits, les alertes, l’historique de prix (Recharts) et la page programmes.
 4. **Alertes** : `apps/api` stocke les alertes, le worker envoie les notifications (mail / webhook).
 
 ---
