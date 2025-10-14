@@ -1,32 +1,49 @@
-import Link from "next/link";
+"use client";
 
-import ComingSoon from "@/components/ComingSoon";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { MapPin } from "lucide-react";
+
+type Gym = {
+  name: string;
+  link: string;
+  brand: string;
+};
 
 export default function GymsPage() {
-  return (
-    <div className="min-h-screen bg-background text-dark dark:bg-dark dark:text-[var(--text)]">
-      <section className="bg-secondary text-dark dark:bg-secondary/80 dark:text-dark">
-        <div className="mx-auto max-w-5xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="space-y-6 text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-              Découvrez nos Salles partenaires
-            </h1>
-            <p className="mx-auto max-w-2xl text-base text-dark/80 sm:text-lg">
-              Comparez les salles proches de vous et trouvez l’environnement idéal pour progresser avec le suivi FitIdion.
-            </p>
-            <div className="flex justify-center">
-              <Button asChild size="lg" className="shadow-neo">
-                <Link href="/comparison">Découvrir les salles</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+  const [gyms, setGyms] = useState<Gym[]>([]);
 
-      <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-        <ComingSoon />
-      </section>
-    </div>
+  useEffect(() => {
+    fetch("/api/proxy?target=gyms&limit=12")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setGyms(data);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load gyms", error);
+      });
+  }, []);
+
+  return (
+    <main className="max-w-6xl mx-auto px-6 py-16">
+      <h1 className="text-4xl font-bold mb-6">Salles de sport en France</h1>
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {gyms.map((gym, i) => (
+          <a
+            key={`${gym.name}-${i}`}
+            href={gym.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-4 border rounded-xl hover:shadow-md transition"
+          >
+            <p className="font-semibold">{gym.name}</p>
+            <p className="text-sm text-gray-500 flex items-center gap-1">
+              <MapPin className="w-4 h-4 text-primary" /> {gym.brand}
+            </p>
+          </a>
+        ))}
+      </div>
+    </main>
   );
 }

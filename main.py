@@ -13,6 +13,7 @@ from math import atan2, cos, radians, sin, sqrt
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fallback_catalogue import get_fallback_product, get_fallback_products
+from services.gyms_scraper import get_basicfit_gyms
 
 app = FastAPI()
 
@@ -2061,9 +2062,22 @@ def pick_best_offer(offers: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     return cleaned[0]
 
 
-# Support both /gyms and /api/gyms to keep backward compatibility while
-# exposing the documented /api/gyms path for the frontend.
+# Lightweight endpoint used by the Next.js frontend to fetch live gym listings.
 @app.get("/gyms")
+def get_gyms(query: str = Query("", description="Filtrer par nom"), limit: int = Query(20, ge=1, le=100)):
+    try:
+        gyms = get_basicfit_gyms()
+    except requests.RequestException as exc:  # pragma: no cover - network failure path
+        raise HTTPException(status_code=502, detail=f"Impossible de récupérer les salles: {exc}") from exc
+
+    normalized_query = query.strip().lower()
+    if normalized_query:
+        gyms = [g for g in gyms if normalized_query in g["name"].lower()]
+
+    return gyms[:limit]
+
+
+# Keep the richer /api/gyms endpoint for the legacy SPA consumption.
 @app.get("/api/gyms")
 def list_gyms(
     city: Optional[str] = Query(None, description="Filtrer par ville (Paris, Lyon, ...)."),
