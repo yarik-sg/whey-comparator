@@ -222,6 +222,119 @@ GYM_DIRECTORY: List[Dict[str, Any]] = [
     },
 ]
 
+# --- Unified search mock datasets ---
+
+FITNESS_PROGRAMS: List[Dict[str, Any]] = [
+    {
+        "id": "hypertrophy-blueprint",
+        "name": "Blueprint Hypertrophie",
+        "focus": "Prise de masse",
+        "level": "Intermédiaire",
+        "duration_weeks": 8,
+        "sessions_per_week": 4,
+        "intensity": "Modérée à élevée",
+        "equipment_needed": [
+            "Barre olympique",
+            "Haltères",
+            "Rack à squats",
+        ],
+        "coach": "Coach Alex - FitIdion Lab",
+        "description": (
+            "Programme structuré autour des mouvements polyarticulaires avec un suivi"
+            " hebdomadaire des charges et un bloc de deload intégré."
+        ),
+        "price": {"amount": 49.0, "currency": "EUR"},
+        "link": "https://fitidion.com/programmes/hypertrophie-blueprint",
+    },
+    {
+        "id": "athlete-foundation",
+        "name": "Fondamentaux Athlétiques",
+        "focus": "Force & mobilité",
+        "level": "Débutant",
+        "duration_weeks": 6,
+        "sessions_per_week": 3,
+        "intensity": "Progressive",
+        "equipment_needed": [
+            "Kettlebell",
+            "Bandes de résistance",
+            "Poids du corps",
+        ],
+        "coach": "Coach Marie - FitIdion Lab",
+        "description": (
+            "Cycle complet pour reprendre les bases : mobilité articulaires,"
+            " renforcement du tronc et apprentissage des mouvements clefs."
+        ),
+        "price": {"amount": 39.0, "currency": "EUR"},
+        "link": "https://fitidion.com/programmes/fondamentaux-athletiques",
+    },
+    {
+        "id": "hiit-performance",
+        "name": "Performance HIIT 2.0",
+        "focus": "Conditionnement",
+        "level": "Avancé",
+        "duration_weeks": 10,
+        "sessions_per_week": 5,
+        "intensity": "Très élevée",
+        "equipment_needed": [
+            "Rameur",
+            "Air bike",
+            "Box pliométrique",
+        ],
+        "coach": "Coach Lina - FitIdion Lab",
+        "description": (
+            "Intervalles haute intensité avec suivi de la charge d'entraînement"
+            " et protocoles de récupération guidés."
+        ),
+        "price": {"amount": 59.0, "currency": "EUR"},
+        "link": "https://fitidion.com/programmes/hiit-performance",
+    },
+]
+
+TRAINING_EQUIPMENTS: List[Dict[str, Any]] = [
+    {
+        "id": "adjustable-dumbbells",
+        "name": "Haltères réglables 2.0",
+        "brand": "FitIdion Gear",
+        "category": "Haltères",
+        "description": "Jeu de 2 haltères ajustables de 2,5 à 24 kg avec mécanisme sécurisé.",
+        "highlights": ["Gain de place", "Poignée anti-glisse", "Réglage instantané"],
+        "price": {"amount": 249.0, "currency": "EUR"},
+        "best_vendor": "FitIdion Store",
+        "rating": 4.8,
+        "reviews_count": 126,
+        "image": "https://cdn.jsdelivr.net/gh/tsiwla/assets-cdn/equipment/dumbbells-adjustable.png",
+        "link": "https://fitidion.com/equipements/halteres-reglables",
+    },
+    {
+        "id": "smart-rope",
+        "name": "Corde connectée Tempo",
+        "brand": "FitIdion Gear",
+        "category": "Cardio",
+        "description": "Corde à sauter connectée avec suivi des rotations et des calories brûlées.",
+        "highlights": ["Suivi via app", "Capteurs intégrés", "Recharge USB-C"],
+        "price": {"amount": 89.0, "currency": "EUR"},
+        "best_vendor": "FitIdion Store",
+        "rating": 4.6,
+        "reviews_count": 84,
+        "image": "https://cdn.jsdelivr.net/gh/tsiwla/assets-cdn/equipment/smart-rope.png",
+        "link": "https://fitidion.com/equipements/corde-connectee",
+    },
+    {
+        "id": "mobility-kit",
+        "name": "Pack Mobilité Premium",
+        "brand": "FitIdion Gear",
+        "category": "Mobilité",
+        "description": "Kit complet avec rouleau de massage, balle lacrosse et bandes élastiques.",
+        "highlights": ["Idéal récupération", "Bandes 3 résistances", "Guide vidéo inclus"],
+        "price": {"amount": 69.0, "currency": "EUR"},
+        "best_vendor": "FitIdion Store",
+        "rating": 4.7,
+        "reviews_count": 56,
+        "image": "https://cdn.jsdelivr.net/gh/tsiwla/assets-cdn/equipment/mobility-kit.png",
+        "link": "https://fitidion.com/equipements/mobilite-premium",
+    },
+]
+
 
 def _sanitize_city(value: Optional[str]) -> Optional[str]:
     if not value:
@@ -2043,6 +2156,209 @@ def list_gyms(
             "available_filters": ["city", "max_distance_km", "lat", "lng"],
             "notes": "Mock gyms directory — ready for Basic-Fit, Fitness Park et On Air.",
         },
+    }
+
+
+def _normalize_limit(limit: Optional[int], *, default: int = 10, maximum: int = 50) -> int:
+    if limit is None:
+        return default
+    try:
+        value = int(limit)
+    except (TypeError, ValueError):
+        return default
+    return max(1, min(value, maximum))
+
+
+def _format_price_payload(price: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not price:
+        return None
+    amount = price.get("amount")
+    currency = price.get("currency")
+    try:
+        amount_value = float(amount) if amount is not None else None
+    except (TypeError, ValueError):
+        amount_value = None
+    formatted = format_numeric_price(amount_value, currency)
+    return {
+        "amount": amount_value,
+        "currency": (currency or "EUR").upper(),
+        "formatted": formatted,
+    }
+
+
+def search_products(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
+    normalized_query = (q or "").strip()
+    products = fetch_scraper_products()
+    collected: List[Dict[str, Any]] = []
+
+    if products:
+        for product in products:
+            name = product.get("name") or ""
+            brand = product.get("brand") or ""
+            if not matches_query(name, normalized_query) and not matches_query(brand, normalized_query):
+                continue
+            collected.append(build_product_summary(product))
+            if len(collected) >= limit:
+                break
+
+    if len(collected) < limit:
+        fallback_query = normalized_query or "whey protein"
+        fallback_catalogue = build_serp_catalogue(
+            fallback_query,
+            limit=max(limit, 12),
+        )
+        for summary in fallback_catalogue:
+            collected.append(summary)
+            if len(collected) >= limit:
+                break
+
+    return collected[:limit]
+
+
+def search_gyms(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
+    terms = [token for token in (q or "").lower().split() if token]
+    results: List[Dict[str, Any]] = []
+
+    for item in GYM_DIRECTORY:
+        haystack_parts = [
+            str(item.get("name") or ""),
+            str(item.get("brand") or ""),
+            str(item.get("city") or ""),
+            " ".join(item.get("amenities", [])),
+        ]
+        haystack = " ".join(haystack_parts).lower()
+        if terms and not all(term in haystack for term in terms):
+            continue
+
+        distance = item.get("distance_km")
+        try:
+            distance_value = float(distance) if distance is not None else None
+        except (TypeError, ValueError):
+            distance_value = None
+
+        results.append(
+            {
+                "id": item.get("id"),
+                "name": item.get("name"),
+                "brand": item.get("brand"),
+                "address": item.get("address"),
+                "postal_code": item.get("postal_code"),
+                "city": item.get("city"),
+                "latitude": item.get("latitude"),
+                "longitude": item.get("longitude"),
+                "distance_km": distance_value,
+                "estimated_duration": _estimate_travel_time(distance_value),
+                "monthly_price": item.get("monthly_price"),
+                "currency": item.get("currency", "EUR"),
+                "amenities": item.get("amenities", []),
+                "website": item.get("website"),
+                "source": item.get("source", {}),
+            }
+        )
+
+        if len(results) >= limit:
+            break
+
+    return results[:limit]
+
+
+def search_programs(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
+    terms = [token for token in (q or "").lower().split() if token]
+    results: List[Dict[str, Any]] = []
+
+    for program in FITNESS_PROGRAMS:
+        haystack = " ".join(
+            [
+                str(program.get("name") or ""),
+                str(program.get("focus") or ""),
+                str(program.get("level") or ""),
+                str(program.get("description") or ""),
+                " ".join(program.get("equipment_needed", [])),
+            ]
+        ).lower()
+        if terms and not all(term in haystack for term in terms):
+            continue
+
+        price_payload = _format_price_payload(program.get("price"))
+        results.append(
+            {
+                "id": program.get("id"),
+                "name": program.get("name"),
+                "focus": program.get("focus"),
+                "level": program.get("level"),
+                "duration_weeks": program.get("duration_weeks"),
+                "sessions_per_week": program.get("sessions_per_week"),
+                "intensity": program.get("intensity"),
+                "equipment_needed": program.get("equipment_needed", []),
+                "coach": program.get("coach"),
+                "description": program.get("description"),
+                "price": price_payload,
+                "link": program.get("link"),
+            }
+        )
+
+        if len(results) >= limit:
+            break
+
+    return results[:limit]
+
+
+def search_equipments(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
+    terms = [token for token in (q or "").lower().split() if token]
+    results: List[Dict[str, Any]] = []
+
+    for equipment in TRAINING_EQUIPMENTS:
+        haystack = " ".join(
+            [
+                str(equipment.get("name") or ""),
+                str(equipment.get("brand") or ""),
+                str(equipment.get("category") or ""),
+                str(equipment.get("description") or ""),
+                " ".join(equipment.get("highlights", [])),
+            ]
+        ).lower()
+        if terms and not all(term in haystack for term in terms):
+            continue
+
+        price_payload = _format_price_payload(equipment.get("price"))
+        results.append(
+            {
+                "id": equipment.get("id"),
+                "name": equipment.get("name"),
+                "brand": equipment.get("brand"),
+                "category": equipment.get("category"),
+                "description": equipment.get("description"),
+                "highlights": equipment.get("highlights", []),
+                "price": price_payload,
+                "best_vendor": equipment.get("best_vendor"),
+                "rating": equipment.get("rating"),
+                "reviews_count": equipment.get("reviews_count"),
+                "image": equipment.get("image"),
+                "link": equipment.get("link"),
+            }
+        )
+
+        if len(results) >= limit:
+            break
+
+    return results[:limit]
+
+
+@app.get("/search")
+async def search_all(q: str = Query(""), limit: int = Query(10, ge=1, le=50)):
+    normalized_limit = _normalize_limit(limit)
+    normalized_query = (q or "").strip()
+
+    products = search_products(normalized_query, limit=normalized_limit)
+    gyms = search_gyms(normalized_query, limit=normalized_limit)
+    programs = search_programs(normalized_query, limit=normalized_limit)
+    equipments = search_equipments(normalized_query, limit=normalized_limit)
+
+    return {
+        "products": products,
+        "gyms": gyms,
+        "programs": programs,
+        "equipments": equipments,
     }
 
 # --- Routes ---

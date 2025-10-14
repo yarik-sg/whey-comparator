@@ -65,7 +65,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
         return;
       }
 
-      router.push(`/comparateur?q=${encodeURIComponent(trimmedQuery)}`);
+      router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
     },
     [router, searchQuery],
   );
@@ -110,7 +110,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
             suggestions={popularSearches}
             onSuggestionSelect={(suggestion) => handleSearch(suggestion)}
             onSubmit={(value) => handleSearch(value)}
-            placeholder="Ex : Whey isolate 1 kg, créatine monohydrate, vegan protein…"
+            placeholder="Rechercher un produit, un gym, un programme…"
           />
 
           <div className="flex w-full flex-col items-center gap-6">

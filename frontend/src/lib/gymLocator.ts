@@ -43,7 +43,7 @@ export interface GymLocatorResponse {
   servedFrom?: "api" | "mock" | "fallback";
 }
 
-type ApiGymLocation = {
+export type ApiGymLocation = {
   id?: string;
   name?: string;
   brand?: string;
@@ -454,6 +454,9 @@ const collectAvailableCities = (gyms: readonly GymLocation[]): string[] => {
 };
 
 export const mockGyms: GymLocation[] = BASE_MOCK_GYMS;
+
+export const normalizeApiGymLocation = (gym: ApiGymLocation): GymLocation =>
+  normalizeApiGym(gym);
 
 export const buildGymSearchParams = (filters: GymQueryFilters = {}): URLSearchParams => {
   const params = new URLSearchParams();

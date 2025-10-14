@@ -20,7 +20,7 @@ interface SearchBarProps {
 
 export function SearchBar({
   value,
-  placeholder = "Rechercher un produit ou une marque…",
+  placeholder = "Rechercher un produit, un gym, un programme…",
   suggestions = [],
   isLoading = false,
   className,
