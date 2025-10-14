@@ -25,6 +25,7 @@ Toutes les routes sont servies depuis `http://localhost:8000` en environnement d
 | Offres     | `GET /offers`, `POST /offers`, `GET /offers/{id}`, `PUT /offers/{id}`, `DELETE /offers/{id}`            | Filtrage prix, disponibilité, fournisseur, devise.    |
 | Fournisseurs | `GET /suppliers`, `POST /suppliers`, `GET /suppliers/{id}`, `PUT /suppliers/{id}`, `DELETE /suppliers/{id}` | Gestion des marchands & URL d'affiliation.           |
 | Alertes prix | `GET /price-alerts`, `POST /price-alerts`, `PATCH /price-alerts/{id}`, `DELETE /price-alerts/{id}`     | Activation / désactivation, seuils personnalisés.     |
+| Historique de prix | `GET /products/{id}/price-history`                                                               | 30 relevés max + stats (tendance, moyenne, min/max).  |
 
 Les payloads sont définis dans `apps/api/app/schemas.py` (Pydantic v2). Toutes les listes renvoient
 le wrapper :
@@ -72,6 +73,12 @@ Endpoints associés :
 - `GET /products/{id}/price-history` — données agrégées par jour.
 - `GET /products/{id}/similar` — suggestions par marque/catégorie/ratio.
 
+### Historique des prix — `GET /products/{productId}/price-history`
+
+Paramètres : `period` (`7d`, `1m`, `3m`, `6m`, `1y`, `all`). Retourne `points[]` (prix + source + date)
+et `statistics` (current/lowest/highest/average) normalisées en `{ amount, currency, formatted }` avec
+agrégation fallback si le scraping échoue.
+
 ### Comparateur multiréférences — `POST /comparison`
 
 Payload : `{ products: string[] }` (identifiants FitIdion ou textes libres). L'API résout les items,
@@ -82,6 +89,21 @@ prêt à afficher (scores, métriques nutritionnelles, liens marchands).
 
 Payload : `{ email, productId, targetPrice }`. Les alertes sont stockées via l'API CRUD puis le
 backend orchestre l'envoi (worker Celery).
+
+### Programmes — `GET /programmes`
+
+Retourne la liste structurée de programmes (`data/programmes.json`) exposée au frontend et à la recherche
+globale.
+
+### Salles Basic-Fit — `GET /gyms`
+
+Endpoint léger consommant `services/gyms_scraper.get_basicfit_gyms()` pour diffuser les clubs actualisés.
+Accepte `query` (nom) et `limit`.
+
+### Recherche unifiée — `GET /search`
+
+Paramètres : `q` (texte libre) + `limit`. Retourne un objet `{ products[], gyms[], programmes[] }` en
+aggrégeant SerpAPI (produits), scraping Basic-Fit (gyms) et données `programmes.json` filtrées par nom.
 
 ## 3. Webhooks & intégrations
 

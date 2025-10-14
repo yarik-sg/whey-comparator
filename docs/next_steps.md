@@ -1,19 +1,20 @@
 # Roadmap FitIdion
 
 ## 1. Données & intelligence produit
-- Intégrer les scrapers partenaires (Basic-Fit, Amazon, MyProtein) avec normalisation auto.
+- Industrialiser les scrapers partenaires (Basic-Fit déployé, étendre à Amazon/MyProtein avec persistance).
 - Ajouter le score FitIdion (ratio protéines/prix, label clean, avis moyenne pondérée).
+- Enrichir l'historique prix (sources multiples, alertes « plus bas historique », export CSV).
 - Synchroniser les alertes prix avec une plateforme d’emailing (Resend/Brevo) + préférences utilisateur.
 
 ## 2. Expérience utilisateur
 - Sauvegarde de comparaisons et alertes dans un compte FitIdion (SSO léger ou magic link).
-- Modules « Témoignages » et « Guides FitIdion » sur la landing, animés avec Framer Motion.
+- Étendre la page Programmes : filtres objectifs/niveau, favoris, intégration contenus vidéo.
 - Version mobile optimisée du Gym Locator (swipe cards, carte Mapbox, actions rapides).
 
 ## 3. Observabilité & fiabilité
-- Tests end-to-end (Playwright) couvrant comparateur, alertes et catalogue.
+- Tests end-to-end (Playwright) couvrant comparateur, alertes, programmes et catalogue.
 - Instrumentation OpenTelemetry (API + frontend) + export Sentry / Prometheus.
-- Tableau de bord de scraping (temps moyen, taux de succès, anomalies par marchand).
+- Tableau de bord de scraping (temps moyen, taux de succès, anomalies par marchand + Basic-Fit healthcheck).
 
 ## 4. Livraison continue
 - Pipeline CI/CD : lint + tests + build + publication images Docker FitIdion.
