@@ -310,7 +310,7 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
   const imageUrl = buildDisplayImageUrl(deal.image) || "/placeholder.png";
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden border-secondary/60 p-0 shadow-glass transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-fitidion dark:border-primary/30">
+    <Card className="flex h-full flex-col overflow-hidden border-accent/70 p-0 shadow-glass transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-fitidion dark:border-primary/30">
       <div className="relative h-48 w-full overflow-hidden bg-accent">
         <img
           src={imageUrl}
@@ -620,7 +620,7 @@ export default function PromosPage() {
               <a
                 key={item.id}
                 href={item.href}
-                className="inline-flex items-center gap-2 rounded-full border border-secondary/60 bg-accent px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-secondary/60"
+                className="inline-flex items-center gap-2 rounded-full border border-accent/70 bg-accent px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-secondary/60"
               >
                 <span>{item.label}</span>
                 {typeof item.count === "number" && (
@@ -665,7 +665,7 @@ export default function PromosPage() {
                 {Array.from({ length: PROMOS_PER_CATEGORY }).map((_, index) => (
                   <div
                     key={`skeleton-${category.id}-${index}`}
-                    className="h-[420px] animate-pulse rounded-3xl border border-secondary/60 bg-accent"
+                    className="h-[420px] animate-pulse rounded-3xl border border-accent/70 bg-accent"
                     aria-hidden
                   />
                 ))}
@@ -677,7 +677,7 @@ export default function PromosPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-3xl border border-secondary/60 bg-accent/80 p-6 text-sm text-muted dark:text-muted/70">
+              <div className="rounded-3xl border border-accent/70 bg-accent/80 p-6 text-sm text-muted dark:text-muted/70">
                 <p>Aucune promotion active n&apos;a été détectée pour cette catégorie.</p>
                 <p className="mt-2">
                   Lancez une recherche dédiée sur le comparateur pour suivre les prochaines offres :

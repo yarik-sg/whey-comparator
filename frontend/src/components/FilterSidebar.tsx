@@ -80,7 +80,7 @@ export function FilterSidebar({
 
   if (isLoading) {
     return (
-      <aside className="space-y-4 rounded-2xl border border-secondary/60 bg-white p-4">
+      <aside className="space-y-4 rounded-2xl border border-accent/70 bg-background p-4">
         <div className="h-5 w-28 animate-pulse rounded-full bg-accent/60" />
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, index) => (
@@ -92,8 +92,8 @@ export function FilterSidebar({
   }
 
   return (
-    <aside className="rounded-2xl border border-secondary/60 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-secondary/60 px-4 py-3">
+    <aside className="rounded-2xl border border-accent/70 bg-background shadow-sm">
+      <div className="flex items-center justify-between border-b border-accent/70 px-4 py-3">
         <div className="flex items-center gap-2 text-muted">
           <Filter className="h-5 w-5 text-primary" aria-hidden />
           <h3 className="font-semibold">Filtres</h3>
@@ -114,7 +114,7 @@ export function FilterSidebar({
       </div>
 
       <div className={`${isOpen ? "block" : "hidden lg:block"}`}>
-        <section className="space-y-4 border-b border-secondary/60 px-4 py-4">
+        <section className="space-y-4 border-b border-accent/70 px-4 py-4">
           <h4 className="text-sm font-semibold text-dark">Budget</h4>
           <Slider min={sliderMin} max={sliderMax} step={5} value={sliderValue} onValueChange={handlePriceChange} />
           <div className="flex justify-between text-xs text-muted">
@@ -124,7 +124,7 @@ export function FilterSidebar({
         </section>
 
         {brandOptions.length > 0 && (
-          <section className="space-y-3 border-b border-secondary/60 px-4 py-4">
+          <section className="space-y-3 border-b border-accent/70 px-4 py-4">
             <h4 className="text-sm font-semibold text-dark">Marques populaires</h4>
             <div className="max-h-56 space-y-2 overflow-y-auto pr-1 text-sm">
               {brandOptions.map((brand) => {
@@ -144,7 +144,7 @@ export function FilterSidebar({
           </section>
         )}
 
-        <section className="space-y-3 border-b border-secondary/60 px-4 py-4">
+        <section className="space-y-3 border-b border-accent/70 px-4 py-4">
           <h4 className="text-sm font-semibold text-dark">Note minimale</h4>
           <div className="flex flex-col gap-2 text-sm text-muted">
             {[4, 3, 2].map((rating) => (
@@ -169,7 +169,7 @@ export function FilterSidebar({
           </div>
         </section>
 
-        <section className="space-y-3 border-b border-secondary/60 px-4 py-4">
+        <section className="space-y-3 border-b border-accent/70 px-4 py-4">
           <h4 className="text-sm font-semibold text-dark">Disponibilité</h4>
           <label className="flex items-center gap-2 text-sm text-muted">
             <Checkbox
@@ -182,7 +182,7 @@ export function FilterSidebar({
           </label>
         </section>
 
-        <section className="space-y-3 border-b border-secondary/60 px-4 py-4">
+        <section className="space-y-3 border-b border-accent/70 px-4 py-4">
           <h4 className="text-sm font-semibold text-dark">Catégorie</h4>
           <Input
             type="text"

@@ -31,7 +31,7 @@ const config: Config = {
         'fitidion-gold': '#FFE8D1',
       },
       fontFamily: {
-        sans: ['Inter', 'Poppins', 'sans-serif'],
+        sans: ['Poppins', 'Inter', 'sans-serif'],
         heading: ['Poppins', 'Inter', 'sans-serif'],
       },
       boxShadow: {

@@ -21,7 +21,7 @@ const DistanceBadge = ({ value, onReset }: { value: number; onReset: () => void 
   <button
     type="button"
     onClick={onReset}
-    className="inline-flex items-center gap-2 rounded-full border border-secondary/60 bg-accent px-3 py-1 text-xs font-semibold text-primary transition hover:border-primary/30 hover:bg-secondary/40"
+    className="inline-flex items-center gap-2 rounded-full border border-accent/70 bg-accent px-3 py-1 text-xs font-semibold text-primary transition hover:border-primary/30 hover:bg-secondary/40"
   >
     Rayon : {value} km
     <span className="text-primary" aria-hidden="true">
@@ -206,7 +206,7 @@ export function GymLocatorSection() {
   };
 
   return (
-    <section className="relative mx-auto w-full max-w-6xl space-y-8 overflow-hidden rounded-[2.5rem] border border-secondary/60 bg-background/90 p-10 shadow-glow backdrop-blur dark:border-primary/30 dark:bg-dark/70">
+    <section className="relative mx-auto w-full max-w-6xl space-y-8 overflow-hidden rounded-[2.5rem] border border-accent/70 bg-background/90 p-10 shadow-glow backdrop-blur dark:border-primary/30 dark:bg-dark/70">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_10%_0%,rgba(255,102,0,0.12),transparent_60%)]" aria-hidden />
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_90%_20%,rgba(253,220,142,0.12),transparent_55%)]" aria-hidden />
       <header className="space-y-3">
@@ -224,7 +224,7 @@ export function GymLocatorSection() {
 
       <form
         onSubmit={handleSubmit}
-        className="grid gap-4 rounded-2xl border border-secondary/60 bg-accent/80 p-4 backdrop-blur md:grid-cols-[1.2fr,1fr,1fr,auto] md:items-end dark:border-primary/30 dark:bg-dark/60"
+        className="grid gap-4 rounded-2xl border border-accent/70 bg-accent/80 p-4 backdrop-blur md:grid-cols-[1.2fr,1fr,1fr,auto] md:items-end dark:border-primary/30 dark:bg-dark/60"
       >
         <div className="space-y-2">
           <label htmlFor="gym-search" className="text-xs font-semibold uppercase tracking-[0.4em] text-primary">
@@ -249,7 +249,7 @@ export function GymLocatorSection() {
             id="gym-city"
             value={selectedCity ?? ""}
             onChange={handleCityChange}
-            className="h-12 w-full rounded-2xl border border-secondary/60 bg-accent px-3 text-sm text-dark shadow-sm backdrop-blur transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-accent dark:border-primary/30 dark:bg-dark/50 dark:text-white"
+            className="h-12 w-full rounded-2xl border border-accent/70 bg-accent px-3 text-sm text-dark shadow-sm backdrop-blur transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-accent dark:border-primary/30 dark:bg-dark/50 dark:text-white"
           >
             <option value="">Toutes les villes</option>
             {availableCities.map((city) => (
@@ -306,12 +306,12 @@ export function GymLocatorSection() {
 
       <div className="flex flex-wrap items-center gap-3">
         {selectedCity ? (
-          <span className="inline-flex items-center gap-2 rounded-full border border-secondary/60 bg-accent px-3 py-1 text-xs font-semibold text-primary">
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/70 bg-accent px-3 py-1 text-xs font-semibold text-primary">
             <MapPin className="h-3 w-3" aria-hidden="true" /> Ville : {selectedCity}
           </span>
         ) : null}
         {coordinates ? (
-          <span className="inline-flex items-center gap-2 rounded-full border border-secondary/60 bg-accent px-3 py-1 text-xs font-semibold text-primary">
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/70 bg-accent px-3 py-1 text-xs font-semibold text-primary">
             <MapPinned className="h-3 w-3" aria-hidden="true" /> Position détectée
           </span>
         ) : null}
@@ -331,7 +331,7 @@ export function GymLocatorSection() {
       ) : null}
 
       {isLoadingInitial ? (
-        <div className="rounded-2xl border border-secondary/60 bg-accent p-4 text-center text-sm font-medium text-primary">
+        <div className="rounded-2xl border border-accent/70 bg-accent p-4 text-center text-sm font-medium text-primary">
           Chargement des salles…
         </div>
       ) : null}
@@ -345,7 +345,7 @@ export function GymLocatorSection() {
       </div>
 
       {gyms.length === 0 && !isLoadingInitial && !isRefreshing ? (
-        <div className="rounded-2xl border border-secondary/60 bg-accent/80 p-6 text-center text-sm text-primary">
+        <div className="rounded-2xl border border-accent/70 bg-accent/80 p-6 text-center text-sm text-primary">
           Aucune salle trouvée
         </div>
       ) : null}

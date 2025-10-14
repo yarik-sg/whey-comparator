@@ -67,7 +67,7 @@ export function PartnerLogos() {
               {[...partnerLogos, ...partnerLogos].map(({ name, alt, logoUrl }, index) => (
                 <div
                   key={`${name}-${index}`}
-                  className="flex items-center justify-center rounded-2xl bg-white/80 px-10 py-5 shadow-sm transition hover:shadow-md dark:bg-white/5"
+                  className="flex items-center justify-center rounded-2xl bg-accent/90 px-10 py-5 shadow-sm transition hover:shadow-md dark:bg-white/5"
                 >
                   <img
                     src={logoUrl}

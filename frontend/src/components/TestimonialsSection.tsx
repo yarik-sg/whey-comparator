@@ -57,7 +57,7 @@ export function TestimonialsSection() {
               Notes agrégées depuis nos marchands partenaires, Google Shopping et les retours clients sur le terrain.
             </p>
           </div>
-          <div className="flex items-end gap-6 rounded-3xl border border-accent/60 bg-white/80 px-6 py-5 shadow-neo backdrop-blur dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.75)]">
+          <div className="flex items-end gap-6 rounded-3xl border border-accent/60 bg-accent/90 px-6 py-5 shadow-neo backdrop-blur dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.75)]">
             <div>
               <p className="text-4xl font-semibold text-dark dark:text-text-1">4.8<span className="ml-1 text-2xl text-primary">/5</span></p>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-muted dark:text-text-2">Basée sur 1 820 avis</p>
@@ -81,7 +81,7 @@ export function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ delay: index * 0.05, duration: 0.5 }}
-              className="flex h-full flex-col justify-between rounded-3xl border border-accent/50 bg-white/90 p-6 shadow-neo transition hover:-translate-y-1 hover:shadow-lg dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.85)]"
+              className="flex h-full flex-col justify-between rounded-3xl border border-accent/50 bg-background/95 p-6 shadow-neo transition hover:-translate-y-1 hover:shadow-lg dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.85)]"
             >
               <div className="flex items-center gap-4">
                 <div className="relative h-12 w-12 overflow-hidden rounded-full border border-white/70 bg-white shadow-sm">

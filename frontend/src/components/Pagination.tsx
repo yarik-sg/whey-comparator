@@ -24,7 +24,7 @@ export function Pagination({ page, totalPages, onPageChange, disabled = false }:
   return (
     <nav
       aria-label="Pagination"
-      className="flex flex-col items-center gap-3 rounded-3xl border border-secondary/60 bg-white px-4 py-3 text-sm text-muted shadow-sm sm:flex-row sm:justify-between"
+      className="flex flex-col items-center gap-3 rounded-3xl border border-accent/70 bg-background px-4 py-3 text-sm text-muted shadow-sm sm:flex-row sm:justify-between"
     >
       <p>
         Page <strong>{page}</strong> sur <strong>{totalPages || 1}</strong>
@@ -34,7 +34,7 @@ export function Pagination({ page, totalPages, onPageChange, disabled = false }:
           type="button"
           onClick={() => goToPage(page - 1)}
           disabled={!hasPrev || disabled}
-          className="rounded-full border border-secondary/60 px-3 py-1 text-sm font-medium text-muted transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-full border border-accent/70 px-3 py-1 text-sm font-medium text-muted transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
         >
           Précédent
         </button>
@@ -42,7 +42,7 @@ export function Pagination({ page, totalPages, onPageChange, disabled = false }:
           type="button"
           onClick={() => goToPage(page + 1)}
           disabled={!hasNext || disabled}
-          className="rounded-full border border-secondary/60 px-3 py-1 text-sm font-medium text-muted transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-full border border-accent/70 px-3 py-1 text-sm font-medium text-muted transition hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
         >
           Suivant
         </button>

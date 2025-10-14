@@ -203,7 +203,7 @@ export default async function ProductDetailPage({
               className="lg:sticky lg:top-28"
             />
 
-            <section className="space-y-6 rounded-3xl border border-secondary/60 bg-white p-6 shadow-sm">
+            <section className="space-y-6 rounded-3xl border border-accent/70 bg-background p-6 shadow-sm">
               <div className="flex flex-col gap-4">
                 <Link
                   href="/products"
@@ -233,7 +233,7 @@ export default async function ProductDetailPage({
                 </CompareLinkButton>
               </div>
 
-              <dl className="grid gap-4 rounded-2xl border border-secondary/60 bg-accent p-4 text-sm text-muted">
+              <dl className="grid gap-4 rounded-2xl border border-accent/70 bg-accent p-4 text-sm text-muted">
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-primary/80">Prix constaté</dt>
                   <dd className="text-lg font-semibold text-dark">{product.bestPrice?.formatted ?? "—"}</dd>
@@ -280,9 +280,9 @@ export default async function ProductDetailPage({
             </section>
 
             {bestOffer && (
-              <section className="space-y-4 rounded-3xl border border-secondary/60 bg-white p-6 text-sm text-muted shadow-sm">
+              <section className="space-y-4 rounded-3xl border border-accent/70 bg-background p-6 text-sm text-muted shadow-sm">
                 <h2 className="text-lg font-semibold text-dark">Offre mise en avant</h2>
-                <div className="space-y-2 rounded-2xl border border-secondary/60 bg-accent p-4">
+                <div className="space-y-2 rounded-2xl border border-accent/70 bg-accent p-4">
                   <p className="text-sm font-semibold text-dark">
                     {bestOffer.vendor} · {bestOffer.price.formatted}
                     {bestOffer.shippingText ? ` (${bestOffer.shippingText})` : ""}
@@ -320,7 +320,7 @@ export default async function ProductDetailPage({
             )}
             <CreatePriceAlert product={product} />
 
-            <section className="rounded-3xl border border-secondary/60 bg-white p-6 text-sm text-muted shadow-sm">
+            <section className="rounded-3xl border border-accent/70 bg-background p-6 text-sm text-muted shadow-sm">
               <h2 className="text-lg font-semibold text-dark">Flux de données</h2>
               <p className="mt-2 text-muted">
                 Ces offres combinent les résultats SerpAPI/Google Shopping et nos collecteurs internes (Amazon, MyProtein…). Les

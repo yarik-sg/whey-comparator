@@ -84,25 +84,25 @@ export default function AlertsPage() {
 
   return (
     <div className="space-y-16 pb-20">
-      <section className="bg-orange-50/80 py-12">
+      <section className="bg-accent py-12">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <Breadcrumb
             items={[
               { label: "Accueil", href: "/" },
               { label: "Mes alertes", href: "/alerts" },
             ]}
-            className="text-sm text-slate-500"
+            className="text-sm text-muted"
           />
 
           <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-orange-500">
+              <p className="text-xs font-semibold uppercase tracking-[0.4em] text-primary">
                 Alertes prix intelligentes
               </p>
-              <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+              <h1 className="text-3xl font-bold text-dark sm:text-4xl">
                 Pilotez vos alertes FitIdion
               </h1>
-              <p className="max-w-2xl text-base text-slate-600">
+              <p className="max-w-2xl text-base text-muted">
                 Suivez vos seuils personnalisés, mettez en pause des alertes ciblées et recevez les variations de prix en
                 avant-première. FitIdion surveille vos compléments favoris 24/7.
               </p>
@@ -116,19 +116,19 @@ export default function AlertsPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 rounded-3xl border border-orange-200 bg-white/80 p-6 text-sm text-slate-600 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-500">Vue d&apos;ensemble</p>
+            <div className="grid gap-4 rounded-3xl border border-accent/70 bg-background/95 p-6 text-sm text-muted shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Vue d&apos;ensemble</p>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <p className="text-3xl font-semibold text-slate-900">{alerts.length}</p>
-                  <p className="text-xs text-slate-500">Alertes chargées</p>
+                  <p className="text-3xl font-semibold text-dark">{alerts.length}</p>
+                  <p className="text-xs text-muted">Alertes chargées</p>
                 </div>
                 <div>
-                  <p className="text-3xl font-semibold text-slate-900">{activeCount}</p>
-                  <p className="text-xs text-slate-500">Alertes actives</p>
+                  <p className="text-3xl font-semibold text-dark">{activeCount}</p>
+                  <p className="text-xs text-muted">Alertes actives</p>
                 </div>
               </div>
-              <p className="rounded-2xl bg-orange-50/80 px-4 py-3 text-xs text-slate-500">
+              <p className="rounded-2xl bg-accent px-4 py-3 text-xs text-muted">
                 {activeEmail
                   ? `Suivi en cours pour ${activeEmail}.`
                   : "Renseignez votre e-mail ci-dessous pour retrouver vos alertes."}
@@ -142,8 +142,8 @@ export default function AlertsPage() {
         <Card className="p-8 sm:p-10">
           <div className="space-y-6">
             <div className="space-y-3">
-              <h2 className="text-2xl font-semibold text-slate-900">Retrouver mes alertes</h2>
-              <p className="text-sm text-slate-600">
+              <h2 className="text-2xl font-semibold text-dark">Retrouver mes alertes</h2>
+              <p className="text-sm text-muted">
                 Saisissez l&apos;adresse utilisée lors de la création d&apos;une alerte pour consulter son statut, mettre en pause ou
                 supprimer une notification personnalisée.
               </p>
@@ -168,21 +168,21 @@ export default function AlertsPage() {
             </form>
 
             {activeEmail && (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted">
                 {isFetching ? "Chargement des alertes…" : `${alerts.length} alerte(s) trouvée(s) pour ${activeEmail}`}
                 {activeCount > 0 ? ` · ${activeCount} active(s)` : ""}
               </p>
             )}
 
             {error && (
-              <p className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+              <p className="rounded-2xl border border-primary/40 bg-accent px-4 py-3 text-sm text-primary">
                 Impossible de charger vos alertes. Réessayez plus tard.
               </p>
             )}
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <div className="overflow-hidden rounded-2xl border border-accent/70 bg-background">
+              <table className="min-w-full divide-y divide-accent/60 text-left text-sm text-muted">
+                <thead className="bg-accent text-xs uppercase tracking-wide text-muted">
                   <tr>
                     <th scope="col" className="px-4 py-3 font-semibold">
                       Produit
@@ -198,10 +198,10 @@ export default function AlertsPage() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-accent/40">
                   {isLoading && (
                     <tr>
-                      <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-500">
+                      <td colSpan={4} className="px-4 py-6 text-center text-sm text-muted">
                         Chargement de vos alertes…
                       </td>
                     </tr>
@@ -209,7 +209,7 @@ export default function AlertsPage() {
 
                   {!isLoading && alerts.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-500">
+                      <td colSpan={4} className="px-4 py-6 text-center text-sm text-muted">
                         {activeEmail
                           ? "Aucune alerte active pour cette adresse."
                           : "Renseignez votre e-mail pour afficher vos alertes."}
@@ -220,25 +220,25 @@ export default function AlertsPage() {
                   {alerts.map((alert) => {
                     const productName = alert.product?.name ?? `Produit #${alert.product_id}`;
                     return (
-                      <tr key={alert.id} className="transition hover:bg-orange-50/40">
+                      <tr key={alert.id} className="transition hover:bg-accent/60">
                         <td className="px-4 py-4">
                           <div className="flex flex-col">
-                            <span className="font-semibold text-slate-900">{productName}</span>
+                            <span className="font-semibold text-dark">{productName}</span>
                             {alert.product?.brand && (
-                              <span className="text-xs text-slate-500">{alert.product.brand}</span>
+                              <span className="text-xs text-muted">{alert.product.brand}</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-sm font-semibold text-slate-900">
+                        <td className="px-4 py-4 text-sm font-semibold text-dark">
                           {formatCurrency(alert.target_price)}
                         </td>
                         <td className="px-4 py-4 text-xs">
                           {alert.active ? (
-                            <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 font-medium text-emerald-600">
+                            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 font-medium text-primary">
                               Active
                             </span>
                           ) : (
-                            <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-500">
+                            <span className="inline-flex items-center rounded-full bg-secondary px-3 py-1 font-medium text-dark">
                               En pause
                             </span>
                           )}
@@ -249,7 +249,7 @@ export default function AlertsPage() {
                               type="button"
                               size="sm"
                               variant="outline"
-                              className="rounded-full border-orange-200 bg-white/80 text-xs text-orange-600 hover:border-orange-300 hover:bg-orange-50"
+                              className="rounded-full border-accent/80 bg-background/80 text-xs text-dark hover:bg-accent hover:text-primary"
                               disabled={toggleAlertMutation.isPending}
                               onClick={() =>
                                 toggleAlertMutation.mutate({
@@ -264,7 +264,7 @@ export default function AlertsPage() {
                               type="button"
                               size="sm"
                               variant="ghost"
-                              className="rounded-full text-xs text-red-500 hover:bg-red-50 hover:text-red-600"
+                              className="rounded-full text-xs text-muted hover:bg-accent hover:text-primary"
                               disabled={deleteAlertMutation.isPending}
                               onClick={() => deleteAlertMutation.mutate(alert.id)}
                             >
@@ -279,7 +279,7 @@ export default function AlertsPage() {
               </table>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-xs text-slate-500">
+            <div className="rounded-2xl border border-accent/70 bg-accent px-5 py-4 text-xs text-muted">
               Astuce : créez vos alertes directement depuis une fiche produit pour pré-remplir le seuil idéal et recevoir un
               suivi prioritaire.
             </div>
@@ -288,18 +288,18 @@ export default function AlertsPage() {
 
         <Card className="p-8 sm:p-10">
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-slate-900">Comment fonctionnent les alertes FitIdion ?</h2>
-            <ul className="space-y-3 text-sm text-slate-600">
+            <h2 className="text-xl font-semibold text-dark">Comment fonctionnent les alertes FitIdion ?</h2>
+            <ul className="space-y-3 text-sm text-muted">
               <li>
-                <span className="font-semibold text-orange-500">1.</span> Nos robots comparent les prix toutes les 15 minutes
+                <span className="font-semibold text-primary">1.</span> Nos robots comparent les prix toutes les 15 minutes
                 sur les marchands partenaires et remontent la meilleure offre.
               </li>
               <li>
-                <span className="font-semibold text-orange-500">2.</span> Lorsque le seuil est atteint, vous recevez un e-mail
+                <span className="font-semibold text-primary">2.</span> Lorsque le seuil est atteint, vous recevez un e-mail
                 personnalisé avec la fiche détaillée du vendeur et les frais de port estimés.
               </li>
               <li>
-                <span className="font-semibold text-orange-500">3.</span> Vous pouvez mettre en pause ou supprimer vos
+                <span className="font-semibold text-primary">3.</span> Vous pouvez mettre en pause ou supprimer vos
                 alertes en un clic depuis cette interface de suivi.
               </li>
             </ul>

@@ -21,7 +21,7 @@ export function SortDropdown({ value, onChange, disabled = false }: SortDropdown
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        className="min-w-[180px] rounded-xl border border-secondary/60 bg-white px-3 py-2 text-sm text-muted focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-w-[180px] rounded-xl border border-accent/70 bg-background px-3 py-2 text-sm text-muted focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>

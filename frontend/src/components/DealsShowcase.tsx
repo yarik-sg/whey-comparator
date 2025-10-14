@@ -133,7 +133,7 @@ function DealCard({
               decoding="async"
             />
             {discountPercentage && (
-              <div className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary shadow">
+              <div className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-accent/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary shadow">
                 <Flame className="h-3.5 w-3.5" aria-hidden="true" />
                 En promo
               </div>

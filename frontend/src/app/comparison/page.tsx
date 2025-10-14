@@ -307,7 +307,7 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         {!trimmedIds && fallbackIds.length === 0 && (
-          <p className="rounded-3xl border border-secondary/60 bg-accent p-8 text-center text-muted">
+          <p className="rounded-3xl border border-accent/70 bg-accent p-8 text-center text-muted">
             Sélectionnez des produits via le catalogue pour lancer une comparaison.
           </p>
         )}
@@ -321,7 +321,7 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
         {data && (
           <div className="space-y-12">
             {usedFallback && (
-              <div className="rounded-3xl border border-secondary/60 bg-accent p-6 text-sm text-muted">
+              <div className="rounded-3xl border border-accent/70 bg-accent p-6 text-sm text-muted">
                 <p className="font-semibold text-primary">Sélection automatique</p>
                 <p className="mt-2 text-muted">
                   Nous avons préchargé la comparaison avec&nbsp;
