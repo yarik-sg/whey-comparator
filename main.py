@@ -2473,6 +2473,13 @@ async def search_all(q: str, limit: int = 10):
 def home():
     return {"message": "API OK ✅ — utilise /compare?q=whey protein"}
 
+
+@app.get("/programmes")
+def get_programmes():
+    with PROGRAMMES_PATH.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
 @app.get("/compare")
 def compare(
     q: str = Query("whey protein"),

@@ -1,56 +1,5 @@
 [
-  {
-    "id": "hypertrophy-blueprint",
-    "name": "Blueprint Hypertrophie",
-    "focus": "Prise de masse",
-    "level": "Intermédiaire",
-    "duration_weeks": 8,
-    "sessions_per_week": 4,
-    "intensity": "Modérée à élevée",
-    "equipment_needed": [
-      "Barre olympique",
-      "Haltères",
-      "Rack à squats"
-    ],
-    "coach": "Coach Alex - FitIdion Lab",
-    "description": "Programme structuré autour des mouvements polyarticulaires avec un suivi hebdomadaire des charges et un bloc de deload intégré.",
-    "price": { "amount": 49, "currency": "EUR" },
-    "link": "https://fitidion.com/programmes/hypertrophie-blueprint"
-  },
-  {
-    "id": "athlete-foundation",
-    "name": "Fondamentaux Athlétiques",
-    "focus": "Force & mobilité",
-    "level": "Débutant",
-    "duration_weeks": 6,
-    "sessions_per_week": 3,
-    "intensity": "Progressive",
-    "equipment_needed": [
-      "Kettlebell",
-      "Bandes de résistance",
-      "Poids du corps"
-    ],
-    "coach": "Coach Marie - FitIdion Lab",
-    "description": "Cycle complet pour reprendre les bases : mobilité articulaires, renforcement du tronc et apprentissage des mouvements clefs.",
-    "price": { "amount": 39, "currency": "EUR" },
-    "link": "https://fitidion.com/programmes/fondamentaux-athletiques"
-  },
-  {
-    "id": "hiit-performance",
-    "name": "Performance HIIT 2.0",
-    "focus": "Conditionnement",
-    "level": "Avancé",
-    "duration_weeks": 10,
-    "sessions_per_week": 5,
-    "intensity": "Très élevée",
-    "equipment_needed": [
-      "Rameur",
-      "Air bike",
-      "Box pliométrique"
-    ],
-    "coach": "Coach Lina - FitIdion Lab",
-    "description": "Intervalles haute intensité avec suivi de la charge d'entraînement et protocoles de récupération guidés.",
-    "price": { "amount": 59, "currency": "EUR" },
-    "link": "https://fitidion.com/programmes/hiit-performance"
-  }
+  { "id": 1, "nom": "Prise de masse", "duree": "8 semaines", "niveau": "Intermédiaire", "objectif": "Développer la masse musculaire" },
+  { "id": 2, "nom": "Sèche musculaire", "duree": "6 semaines", "niveau": "Avancé", "objectif": "Réduire la masse grasse sans perdre de muscle" },
+  { "id": 3, "nom": "Full Body Débutant", "duree": "4 semaines", "niveau": "Débutant", "objectif": "Renforcer tout le corps progressivement" }
 ]
