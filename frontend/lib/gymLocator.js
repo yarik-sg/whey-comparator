@@ -421,6 +421,137 @@ const deduplicateGyms = (gyms) => {
   return Array.from(map.values());
 };
 
+const buildFallbackGym = (data) =>
+  createGymRecord({
+    provider: "fallback",
+    ...data,
+    externalId: data.externalId ?? data.id,
+  });
+
+const BASIC_FIT_FALLBACK = deduplicateGyms([
+  buildFallbackGym({
+    id: "basic-fit-paris-oberkampf",
+    name: "Basic-Fit Paris Oberkampf",
+    brand: "Basic-Fit",
+    address: "114 Rue Oberkampf",
+    postalCode: "75011",
+    city: "Paris",
+    latitude: 48.86514,
+    longitude: 2.38057,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-paris-oberkampf`,
+    amenities: ["Ouvert 24/7", "Cours collectifs", "Espace musculation"],
+    provider: "fallback-basic-fit",
+  }),
+  buildFallbackGym({
+    id: "basic-fit-lyon-part-dieu",
+    name: "Basic-Fit Lyon Part-Dieu",
+    brand: "Basic-Fit",
+    address: "150 Rue Servient",
+    postalCode: "69003",
+    city: "Lyon",
+    latitude: 45.76202,
+    longitude: 4.85179,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-lyon-part-dieu`,
+    amenities: ["Zone cycling", "Espace musculation", "Cours virtuels"],
+    provider: "fallback-basic-fit",
+  }),
+]);
+
+const FITNESS_PARK_FALLBACK = deduplicateGyms([
+  buildFallbackGym({
+    id: "fitness-park-paris-15",
+    name: "Fitness Park Paris 15", 
+    brand: "Fitness Park",
+    address: "24 Rue Mademoiselle",
+    postalCode: "75015",
+    city: "Paris",
+    latitude: 48.84149,
+    longitude: 2.30293,
+    price: 29.95,
+    link: "https://www.fitnesspark.fr/clubs/paris-15-mademoiselle/",
+    amenities: ["Cardio-training", "Studio biking", "Espace musculation"],
+    provider: "fallback-fitness-park",
+  }),
+  buildFallbackGym({
+    id: "fitness-park-bordeaux-lac",
+    name: "Fitness Park Bordeaux Lac",
+    brand: "Fitness Park",
+    address: "Rue du Professeur Georges Jeanneney",
+    postalCode: "33300",
+    city: "Bordeaux",
+    latitude: 44.88798,
+    longitude: -0.56416,
+    price: 29.95,
+    link: "https://www.fitnesspark.fr/clubs/bordeaux-lac/",
+    amenities: ["Parking gratuit", "Zone cross-training", "Cours collectifs"],
+    provider: "fallback-fitness-park",
+  }),
+]);
+
+const NEONESS_FALLBACK = deduplicateGyms([
+  buildFallbackGym({
+    id: "neoness-paris-chatelet",
+    name: "Neoness Paris Châtelet",
+    brand: "Neoness",
+    address: "5 Rue de la Ferronnerie",
+    postalCode: "75001",
+    city: "Paris",
+    latitude: 48.86078,
+    longitude: 2.34699,
+    price: 19.9,
+    link: "https://www.neoness.fr/salle-de-sport/paris-chatelet",
+    amenities: ["Cardio", "Cours collectifs", "Espace cross-training"],
+    provider: "fallback-neoness",
+  }),
+  buildFallbackGym({
+    id: "neoness-lyon-part-dieu",
+    name: "Neoness Lyon Part-Dieu",
+    brand: "Neoness",
+    address: "99 Rue Moncey",
+    postalCode: "69003",
+    city: "Lyon",
+    latitude: 45.76191,
+    longitude: 4.85087,
+    price: 21.9,
+    link: "https://www.neoness.fr/salle-de-sport/lyon-part-dieu",
+    amenities: ["Espace musculation", "Cours vidéo", "Zone stretching"],
+    provider: "fallback-neoness",
+  }),
+]);
+
+const ON_AIR_FALLBACK = deduplicateGyms([
+  buildFallbackGym({
+    id: "on-air-marseille-prado",
+    name: "On Air Marseille Prado",
+    brand: "On Air",
+    address: "6 Avenue du Prado",
+    postalCode: "13006",
+    city: "Marseille",
+    latitude: 43.28535,
+    longitude: 5.37897,
+    price: 34.9,
+    link: "https://www.onair-fitness.fr/clubs/marseille-prado",
+    amenities: ["Cours collectifs live", "Espace cross training", "Sauna"],
+    provider: "fallback-on-air",
+  }),
+  buildFallbackGym({
+    id: "on-air-nice-lingostiere",
+    name: "On Air Nice Lingostière",
+    brand: "On Air",
+    address: "652 Route de Grenoble",
+    postalCode: "06200",
+    city: "Nice",
+    latitude: 43.70853,
+    longitude: 7.19748,
+    price: 39.9,
+    link: "https://www.onair-fitness.fr/clubs/nice-lingostiere",
+    amenities: ["Espace premium", "Studio cycling", "Cours immersifs"],
+    provider: "fallback-on-air",
+  }),
+]);
+
 const extractBasicFitStores = (payload) => {
   if (!payload) {
     return [];
@@ -583,12 +714,13 @@ const fetchBasicFitGymsInternal = async (filters = {}) => {
     return deduplicateGyms(gyms);
   } catch (error) {
     globalThis.console?.warn?.("Failed to fetch Basic-Fit gyms", error);
+    return BASIC_FIT_FALLBACK.map((gym) => ({ ...gym }));
   }
 
   return [];
 };
 
-const fetchFromWordpress = async (endpoints, mapper) => {
+const fetchFromWordpress = async (endpoints, mapper, fallbackGyms = []) => {
   for (const endpoint of endpoints) {
     try {
       const payload = await fetchJson(endpoint);
@@ -610,22 +742,26 @@ const fetchFromWordpress = async (endpoints, mapper) => {
     }
   }
 
+  if (fallbackGyms.length > 0) {
+    return fallbackGyms.map((gym) => ({ ...gym }));
+  }
+
   return [];
 };
 const fetchFitnessParkGymsInternal = async () => {
   const mapper = (entry) =>
     mapWordpressLocation(entry, { brand: "Fitness Park", provider: "fitness-park" });
-  return fetchFromWordpress(FITNESS_PARK_ENDPOINTS, mapper);
+  return fetchFromWordpress(FITNESS_PARK_ENDPOINTS, mapper, FITNESS_PARK_FALLBACK);
 };
 
 const fetchNeonessGymsInternal = async () => {
   const mapper = (entry) => mapWordpressLocation(entry, { brand: "Neoness", provider: "neoness" });
-  return fetchFromWordpress(NEONESS_ENDPOINTS, mapper);
+  return fetchFromWordpress(NEONESS_ENDPOINTS, mapper, NEONESS_FALLBACK);
 };
 
 const fetchOnAirGymsInternal = async () => {
   const mapper = (entry) => mapWordpressLocation(entry, { brand: "On Air", provider: "on-air" });
-  return fetchFromWordpress(ON_AIR_ENDPOINTS, mapper);
+  return fetchFromWordpress(ON_AIR_ENDPOINTS, mapper, ON_AIR_FALLBACK);
 };
 
 const buildCombinedDataset = async (filters = {}) => {
