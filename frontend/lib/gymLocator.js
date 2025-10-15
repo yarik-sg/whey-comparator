@@ -423,8 +423,8 @@ const deduplicateGyms = (gyms) => {
 
 const buildFallbackGym = (data) =>
   createGymRecord({
-    provider: "fallback",
     ...data,
+    provider: data.provider ?? slugify(data.brand ?? "fallback"),
     externalId: data.externalId ?? data.id,
   });
 
@@ -441,7 +441,6 @@ const BASIC_FIT_FALLBACK = deduplicateGyms([
     price: 24.99,
     link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-paris-oberkampf`,
     amenities: ["Ouvert 24/7", "Cours collectifs", "Espace musculation"],
-    provider: "fallback-basic-fit",
   }),
   buildFallbackGym({
     id: "basic-fit-lyon-part-dieu",
@@ -455,7 +454,110 @@ const BASIC_FIT_FALLBACK = deduplicateGyms([
     price: 24.99,
     link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-lyon-part-dieu`,
     amenities: ["Zone cycling", "Espace musculation", "Cours virtuels"],
-    provider: "fallback-basic-fit",
+  }),
+  buildFallbackGym({
+    id: "basic-fit-marseille-castellane",
+    name: "Basic-Fit Marseille Castellane",
+    brand: "Basic-Fit",
+    address: "2 Place Castellane",
+    postalCode: "13006",
+    city: "Marseille",
+    latitude: 43.28754,
+    longitude: 5.38146,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-marseille-castellane`,
+    amenities: ["Cours collectifs", "Zone cardio", "Espace musculation"],
+  }),
+  buildFallbackGym({
+    id: "basic-fit-toulouse-jean-jaures",
+    name: "Basic-Fit Toulouse Jean-Jaurès",
+    brand: "Basic-Fit",
+    address: "19 Allée Jean Jaurès",
+    postalCode: "31000",
+    city: "Toulouse",
+    latitude: 43.60637,
+    longitude: 1.45261,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-toulouse-jean-jaures`,
+    amenities: ["Cours collectifs", "Studio cycling", "Zone stretching"],
+  }),
+  buildFallbackGym({
+    id: "basic-fit-bordeaux-victoire",
+    name: "Basic-Fit Bordeaux Victoire",
+    brand: "Basic-Fit",
+    address: "81 Cours de la Marne",
+    postalCode: "33800",
+    city: "Bordeaux",
+    latitude: 44.83247,
+    longitude: -0.56993,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-bordeaux-victoire`,
+    amenities: ["Zone cardio", "Espace poids libres", "Cours virtuels"],
+  }),
+  buildFallbackGym({
+    id: "basic-fit-lille-gambetta",
+    name: "Basic-Fit Lille Gambetta",
+    brand: "Basic-Fit",
+    address: "92 Rue Léon Gambetta",
+    postalCode: "59800",
+    city: "Lille",
+    latitude: 50.62931,
+    longitude: 3.05681,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-lille-gambetta`,
+    amenities: ["Espace musculation", "Cours collectifs", "Zone cardio"],
+  }),
+  buildFallbackGym({
+    id: "basic-fit-nantes-commerce",
+    name: "Basic-Fit Nantes Commerce",
+    brand: "Basic-Fit",
+    address: "4 Rue de l'Arche Sèche",
+    postalCode: "44000",
+    city: "Nantes",
+    latitude: 47.21405,
+    longitude: -1.55665,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-nantes-commerce`,
+    amenities: ["Espace cardio", "Cours collectifs", "Zone musculation"],
+  }),
+  buildFallbackGym({
+    id: "basic-fit-strasbourg-halles",
+    name: "Basic-Fit Strasbourg Les Halles",
+    brand: "Basic-Fit",
+    address: "24 Place des Halles",
+    postalCode: "67000",
+    city: "Strasbourg",
+    latitude: 48.58563,
+    longitude: 7.74261,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-strasbourg-les-halles`,
+    amenities: ["Cours collectifs", "Espace musculation", "Zone cardio"],
+  }),
+  buildFallbackGym({
+    id: "basic-fit-nice-jean-medecin",
+    name: "Basic-Fit Nice Jean-Médecin",
+    brand: "Basic-Fit",
+    address: "17 Avenue Jean Médecin",
+    postalCode: "06000",
+    city: "Nice",
+    latitude: 43.70062,
+    longitude: 7.26832,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-nice-jean-medecin`,
+    amenities: ["Zone cardio", "Cours collectifs", "Espace poids libres"],
+  }),
+  buildFallbackGym({
+    id: "basic-fit-montpellier-antigone",
+    name: "Basic-Fit Montpellier Antigone",
+    brand: "Basic-Fit",
+    address: "205 Avenue Jacques Cartier",
+    postalCode: "34000",
+    city: "Montpellier",
+    latitude: 43.60893,
+    longitude: 3.89464,
+    price: 24.99,
+    link: `${BASIC_FIT_BASE_URL}/fr-fr/clubs/basic-fit-montpellier-antigone`,
+    amenities: ["Espace musculation", "Zone cardio", "Cours virtuels"],
   }),
 ]);
 
@@ -472,7 +574,6 @@ const FITNESS_PARK_FALLBACK = deduplicateGyms([
     price: 29.95,
     link: "https://www.fitnesspark.fr/clubs/paris-15-mademoiselle/",
     amenities: ["Cardio-training", "Studio biking", "Espace musculation"],
-    provider: "fallback-fitness-park",
   }),
   buildFallbackGym({
     id: "fitness-park-bordeaux-lac",
@@ -486,7 +587,136 @@ const FITNESS_PARK_FALLBACK = deduplicateGyms([
     price: 29.95,
     link: "https://www.fitnesspark.fr/clubs/bordeaux-lac/",
     amenities: ["Parking gratuit", "Zone cross-training", "Cours collectifs"],
-    provider: "fallback-fitness-park",
+  }),
+  buildFallbackGym({
+    id: "fitness-park-paris-nation",
+    name: "Fitness Park Paris Nation",
+    brand: "Fitness Park",
+    address: "21 Rue du Faubourg Saint-Antoine",
+    postalCode: "75011",
+    city: "Paris",
+    latitude: 48.85032,
+    longitude: 2.37318,
+    price: 32.95,
+    link: "https://www.fitnesspark.fr/clubs/paris-nation/",
+    amenities: ["Espace musculation", "Cardio-training", "Studio biking"],
+  }),
+  buildFallbackGym({
+    id: "fitness-park-lyon-republique",
+    name: "Fitness Park Lyon République",
+    brand: "Fitness Park",
+    address: "14 Rue du Président Édouard Herriot",
+    postalCode: "69001",
+    city: "Lyon",
+    latitude: 45.76454,
+    longitude: 4.83572,
+    price: 29.95,
+    link: "https://www.fitnesspark.fr/clubs/lyon-republique/",
+    amenities: ["Espace musculation", "Studio cross training", "Zone cardio"],
+  }),
+  buildFallbackGym({
+    id: "fitness-park-marseille-joliette",
+    name: "Fitness Park Marseille La Joliette",
+    brand: "Fitness Park",
+    address: "54 Rue de la République",
+    postalCode: "13002",
+    city: "Marseille",
+    latitude: 43.303,
+    longitude: 5.37,
+    price: 29.95,
+    link: "https://www.fitnesspark.fr/clubs/marseille-la-joliette/",
+    amenities: ["Espace musculation", "Zone cross-training", "Cours collectifs"],
+  }),
+  buildFallbackGym({
+    id: "fitness-park-toulouse-balma",
+    name: "Fitness Park Toulouse Balma-Gramont",
+    brand: "Fitness Park",
+    address: "2 Rue Louis Bonin",
+    postalCode: "31200",
+    city: "Toulouse",
+    latitude: 43.64312,
+    longitude: 1.48052,
+    price: 29.95,
+    link: "https://www.fitnesspark.fr/clubs/toulouse-balma/",
+    amenities: ["Parking gratuit", "Zone cross-training", "Cours collectifs"],
+  }),
+  buildFallbackGym({
+    id: "fitness-park-nantes-beaulieu",
+    name: "Fitness Park Nantes Beaulieu",
+    brand: "Fitness Park",
+    address: "Boulevard Général de Gaulle",
+    postalCode: "44200",
+    city: "Nantes",
+    latitude: 47.20448,
+    longitude: -1.53498,
+    price: 29.95,
+    link: "https://www.fitnesspark.fr/clubs/nantes-beaulieu/",
+    amenities: ["Parking gratuit", "Zone cardio", "Cours collectifs"],
+  }),
+  buildFallbackGym({
+    id: "fitness-park-lille-flandres",
+    name: "Fitness Park Lille Flandres",
+    brand: "Fitness Park",
+    address: "35 Rue Faidherbe",
+    postalCode: "59800",
+    city: "Lille",
+    latitude: 50.63614,
+    longitude: 3.06991,
+    price: 31.95,
+    link: "https://www.fitnesspark.fr/clubs/lille-flandres/",
+    amenities: ["Espace musculation", "Studio biking", "Zone cross-training"],
+  }),
+  buildFallbackGym({
+    id: "fitness-park-bordeaux-merignac",
+    name: "Fitness Park Bordeaux Mérignac",
+    brand: "Fitness Park",
+    address: "19 Avenue Gustave Eiffel",
+    postalCode: "33700",
+    city: "Mérignac",
+    latitude: 44.83409,
+    longitude: -0.69505,
+    price: 29.95,
+    link: "https://www.fitnesspark.fr/clubs/merignac/",
+    amenities: ["Parking gratuit", "Zone cardio", "Espace musculation"],
+  }),
+  buildFallbackGym({
+    id: "fitness-park-nice-saint-isidore",
+    name: "Fitness Park Nice Saint-Isidore",
+    brand: "Fitness Park",
+    address: "4 Rue Jules Bianchi",
+    postalCode: "06200",
+    city: "Nice",
+    latitude: 43.7148,
+    longitude: 7.1981,
+    price: 31.95,
+    link: "https://www.fitnesspark.fr/clubs/nice-saint-isidore/",
+    amenities: ["Zone cross-training", "Studio biking", "Espace musculation"],
+  }),
+  buildFallbackGym({
+    id: "fitness-park-strasbourg-meinau",
+    name: "Fitness Park Strasbourg Meinau",
+    brand: "Fitness Park",
+    address: "5 Rue du Maréchal Juin",
+    postalCode: "67000",
+    city: "Strasbourg",
+    latitude: 48.56702,
+    longitude: 7.75761,
+    price: 29.95,
+    link: "https://www.fitnesspark.fr/clubs/strasbourg-meinau/",
+    amenities: ["Parking gratuit", "Zone cardio", "Cours collectifs"],
+  }),
+  buildFallbackGym({
+    id: "fitness-park-montpellier-odysseum",
+    name: "Fitness Park Montpellier Odysseum",
+    brand: "Fitness Park",
+    address: "2 Place de Lisbonne",
+    postalCode: "34000",
+    city: "Montpellier",
+    latitude: 43.60702,
+    longitude: 3.91882,
+    price: 29.95,
+    link: "https://www.fitnesspark.fr/clubs/montpellier-odysseum/",
+    amenities: ["Zone cross-training", "Espace musculation", "Studio biking"],
   }),
 ]);
 
@@ -503,7 +733,6 @@ const NEONESS_FALLBACK = deduplicateGyms([
     price: 19.9,
     link: "https://www.neoness.fr/salle-de-sport/paris-chatelet",
     amenities: ["Cardio", "Cours collectifs", "Espace cross-training"],
-    provider: "fallback-neoness",
   }),
   buildFallbackGym({
     id: "neoness-lyon-part-dieu",
@@ -517,7 +746,71 @@ const NEONESS_FALLBACK = deduplicateGyms([
     price: 21.9,
     link: "https://www.neoness.fr/salle-de-sport/lyon-part-dieu",
     amenities: ["Espace musculation", "Cours vidéo", "Zone stretching"],
-    provider: "fallback-neoness",
+  }),
+  buildFallbackGym({
+    id: "neoness-paris-montparnasse",
+    name: "Neoness Paris Montparnasse",
+    brand: "Neoness",
+    address: "73 Rue du Départ",
+    postalCode: "75014",
+    city: "Paris",
+    latitude: 48.84242,
+    longitude: 2.32427,
+    price: 19.9,
+    link: "https://www.neoness.fr/salle-de-sport/paris-montparnasse",
+    amenities: ["Cardio", "Espace musculation", "Cours vidéo"],
+  }),
+  buildFallbackGym({
+    id: "neoness-paris-batignolles",
+    name: "Neoness Paris Batignolles",
+    brand: "Neoness",
+    address: "93 Boulevard des Batignolles",
+    postalCode: "75008",
+    city: "Paris",
+    latitude: 48.88339,
+    longitude: 2.31986,
+    price: 21.9,
+    link: "https://www.neoness.fr/salle-de-sport/paris-batignolles",
+    amenities: ["Espace cardio", "Cours collectifs", "Zone stretching"],
+  }),
+  buildFallbackGym({
+    id: "neoness-paris-la-defense",
+    name: "Neoness Paris La Défense",
+    brand: "Neoness",
+    address: "1 Esplanade du Général de Gaulle",
+    postalCode: "92800",
+    city: "Puteaux",
+    latitude: 48.891,
+    longitude: 2.23862,
+    price: 24.9,
+    link: "https://www.neoness.fr/salle-de-sport/paris-la-defense",
+    amenities: ["Espace musculation", "Cours vidéo", "Zone cardio"],
+  }),
+  buildFallbackGym({
+    id: "neoness-paris-belleville",
+    name: "Neoness Paris Belleville",
+    brand: "Neoness",
+    address: "33 Boulevard de Belleville",
+    postalCode: "75011",
+    city: "Paris",
+    latitude: 48.87032,
+    longitude: 2.38042,
+    price: 19.9,
+    link: "https://www.neoness.fr/salle-de-sport/paris-belleville",
+    amenities: ["Cardio", "Cours collectifs", "Espace musculation"],
+  }),
+  buildFallbackGym({
+    id: "neoness-paris-madeleine",
+    name: "Neoness Paris Madeleine",
+    brand: "Neoness",
+    address: "36 Boulevard de la Madeleine",
+    postalCode: "75009",
+    city: "Paris",
+    latitude: 48.87179,
+    longitude: 2.32653,
+    price: 24.9,
+    link: "https://www.neoness.fr/salle-de-sport/paris-madeleine",
+    amenities: ["Espace cardio", "Cours vidéo", "Zone stretching"],
   }),
 ]);
 
@@ -534,7 +827,6 @@ const ON_AIR_FALLBACK = deduplicateGyms([
     price: 34.9,
     link: "https://www.onair-fitness.fr/clubs/marseille-prado",
     amenities: ["Cours collectifs live", "Espace cross training", "Sauna"],
-    provider: "fallback-on-air",
   }),
   buildFallbackGym({
     id: "on-air-nice-lingostiere",
@@ -548,7 +840,58 @@ const ON_AIR_FALLBACK = deduplicateGyms([
     price: 39.9,
     link: "https://www.onair-fitness.fr/clubs/nice-lingostiere",
     amenities: ["Espace premium", "Studio cycling", "Cours immersifs"],
-    provider: "fallback-on-air",
+  }),
+  buildFallbackGym({
+    id: "on-air-paris-bercy",
+    name: "On Air Paris Bercy",
+    brand: "On Air",
+    address: "16 Boulevard de Bercy",
+    postalCode: "75012",
+    city: "Paris",
+    latitude: 48.84072,
+    longitude: 2.37971,
+    price: 39.9,
+    link: "https://www.onair-fitness.fr/clubs/paris-bercy",
+    amenities: ["Cours immersifs", "Studio cycling", "Espace cross training"],
+  }),
+  buildFallbackGym({
+    id: "on-air-toulouse-labege",
+    name: "On Air Toulouse Labège",
+    brand: "On Air",
+    address: "700 La Pyrénéenne",
+    postalCode: "31670",
+    city: "Labège",
+    latitude: 43.54505,
+    longitude: 1.48948,
+    price: 34.9,
+    link: "https://www.onair-fitness.fr/clubs/toulouse-labege",
+    amenities: ["Studio cycling", "Espace premium", "Sauna"],
+  }),
+  buildFallbackGym({
+    id: "on-air-montpellier-saint-aunes",
+    name: "On Air Montpellier Saint-Aunès",
+    brand: "On Air",
+    address: "295 Rue de la Jasse",
+    postalCode: "34130",
+    city: "Saint-Aunès",
+    latitude: 43.63986,
+    longitude: 3.96912,
+    price: 34.9,
+    link: "https://www.onair-fitness.fr/clubs/montpellier-saint-aunes",
+    amenities: ["Espace premium", "Cours collectifs", "Zone cross training"],
+  }),
+  buildFallbackGym({
+    id: "on-air-lyon-confluence",
+    name: "On Air Lyon Confluence",
+    brand: "On Air",
+    address: "112 Cours Charlemagne",
+    postalCode: "69002",
+    city: "Lyon",
+    latitude: 45.73285,
+    longitude: 4.81945,
+    price: 39.9,
+    link: "https://www.onair-fitness.fr/clubs/lyon-confluence",
+    amenities: ["Espace premium", "Studio cycling", "Cours collectifs"],
   }),
 ]);
 
@@ -711,13 +1054,13 @@ const fetchBasicFitGymsInternal = async (filters = {}) => {
     const payload = await fetchJson(url);
     const stores = extractBasicFitStores(payload);
     const gyms = stores.map(mapBasicFitStore).filter(Boolean);
-    return deduplicateGyms(gyms);
+    return { gyms: deduplicateGyms(gyms), fallbackUsed: false };
   } catch (error) {
     globalThis.console?.warn?.("Failed to fetch Basic-Fit gyms", error);
-    return BASIC_FIT_FALLBACK.map((gym) => ({ ...gym }));
+    return { gyms: BASIC_FIT_FALLBACK.map((gym) => ({ ...gym })), fallbackUsed: true };
   }
 
-  return [];
+  return { gyms: [], fallbackUsed: false };
 };
 
 const fetchFromWordpress = async (endpoints, mapper, fallbackGyms = []) => {
@@ -734,7 +1077,7 @@ const fetchFromWordpress = async (endpoints, mapper, fallbackGyms = []) => {
 
       const gyms = entries.map(mapper).filter(Boolean);
       if (gyms.length > 0) {
-        return deduplicateGyms(gyms);
+        return { gyms: deduplicateGyms(gyms), fallbackUsed: false };
       }
     } catch (error) {
       globalThis.console?.warn?.(`Failed to fetch gyms from ${endpoint}`, error);
@@ -743,10 +1086,10 @@ const fetchFromWordpress = async (endpoints, mapper, fallbackGyms = []) => {
   }
 
   if (fallbackGyms.length > 0) {
-    return fallbackGyms.map((gym) => ({ ...gym }));
+    return { gyms: fallbackGyms.map((gym) => ({ ...gym })), fallbackUsed: true };
   }
 
-  return [];
+  return { gyms: [], fallbackUsed: false };
 };
 const fetchFitnessParkGymsInternal = async () => {
   const mapper = (entry) =>
@@ -772,12 +1115,17 @@ const buildCombinedDataset = async (filters = {}) => {
     fetchOnAirGymsInternal(),
   ]);
 
-  const combined = flatten([basicFit, fitnessPark, neoness, onAir]);
+  const combined = flatten([basicFit.gyms, fitnessPark.gyms, neoness.gyms, onAir.gyms]);
   const gyms = deduplicateGyms(combined);
+
+  const servedFrom =
+    basicFit.fallbackUsed || fitnessPark.fallbackUsed || neoness.fallbackUsed || onAir.fallbackUsed
+      ? "fallback"
+      : "api";
 
   return {
     gyms,
-    servedFrom: "api",
+    servedFrom,
   };
 };
 
@@ -801,14 +1149,24 @@ const normalizeFilterInput = (latOrFilters, maybeLng) => {
 
 export const fetchBasicFitGyms = async (latOrFilters, maybeLng) => {
   const filters = normalizeFilterInput(latOrFilters, maybeLng);
-  return fetchBasicFitGymsInternal(filters);
+  const result = await fetchBasicFitGymsInternal(filters);
+  return result.gyms;
 };
 
-export const fetchFitnessParkGyms = async () => fetchFitnessParkGymsInternal();
+export const fetchFitnessParkGyms = async () => {
+  const result = await fetchFitnessParkGymsInternal();
+  return result.gyms;
+};
 
-export const fetchNeonessGyms = async () => fetchNeonessGymsInternal();
+export const fetchNeonessGyms = async () => {
+  const result = await fetchNeonessGymsInternal();
+  return result.gyms;
+};
 
-export const fetchOnAirGyms = async () => fetchOnAirGymsInternal();
+export const fetchOnAirGyms = async () => {
+  const result = await fetchOnAirGymsInternal();
+  return result.gyms;
+};
 
 export const getAllGyms = async (latOrFilters = {}, maybeLng) => {
   const rawFilters = normalizeFilterInput(latOrFilters, maybeLng);
