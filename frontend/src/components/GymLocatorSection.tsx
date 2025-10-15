@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GymCard } from "@/components/GymCard";
 import type { GymLocatorResponse, GymLocation } from "@/lib/gymLocator";
-import { fetchGymsFromApi } from "@/lib/gymLocator";
+import { fetchGymsFromApi, getFallbackGyms } from "@/lib/gymLocator";
 
 type GeoStatus = "idle" | "pending" | "success" | "error";
 
@@ -110,12 +110,18 @@ export function GymLocatorSection() {
           return;
         }
 
-        globalThis.console?.error?.("Unable to fetch gyms", fetchError);
-        setErrorMessage("Impossible de charger les salles de sport pour le moment. Réessayez plus tard.");
+        globalThis.console?.warn?.(
+          "Impossible de charger les salles de sport depuis l'API, utilisation du jeu de données de secours.",
+          fetchError,
+        );
+        setErrorMessage(
+          "Affichage temporaire des salles de sport depuis nos données de secours. Réessayez plus tard pour les résultats en temps réel.",
+        );
 
         if (!hasExistingGyms) {
-          responseRef.current = null;
-          setResponse(null);
+          const fallback = getFallbackGyms(filters);
+          responseRef.current = fallback;
+          setResponse(fallback);
         }
       } finally {
         if (cancelled) {
@@ -128,7 +134,7 @@ export function GymLocatorSection() {
     };
 
     loadGyms().catch((reason) => {
-      globalThis.console?.error?.("Unhandled gym fetch error", reason);
+      globalThis.console?.warn?.("Unhandled gym fetch error", reason);
     });
 
     return () => {
