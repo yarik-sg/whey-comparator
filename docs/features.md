@@ -1,49 +1,53 @@
 # Fonctionnalités clés FitIdion
 
+Cette synthèse relie chaque fonctionnalité aux fichiers front (`frontend/`) et back (`apps/api/`, `main.py`) correspondants.
+
 ## 1. Comparateur intelligent
-- Résolution multi-sources (scrapers internes + SerpAPI) avec normalisation des offres.
-- Calcul automatique du meilleur deal (prix total, livraison, ratio protéines/prix).
-- Comparaison multi-produits : pré-sélection, scores nutritionnels, historique de prix.
-- Mode sombre natif et badges FitIdion pour mettre en avant les alertes actives.
-- Graphique d'historique (Recharts) basé sur les 30 derniers relevés stockés en base ou via fallback,
-  avec statistiques (min/max/moyenne/tendance) injectées par l'API.
+
+- Résolution multi-sources : `main.py` (`collect_serp_deals`, `collect_scraper_deals`) + micro-service `services/scraper`.
+- Calcul du meilleur deal : `main.py` (`mark_best_price`) et `frontend/src/components/PriceComparison.tsx`.
+- Comparaison multi-produits : endpoint `GET /comparison` (`main.py`) consommé par `frontend/src/app/comparison/page.tsx`.
+- Graphique d'historique : `main.py` (`/products/{id}/price-history`) + `frontend/src/components/PriceHistoryChart.tsx`.
+- Mode sombre natif : `frontend/src/components/ThemeProvider.tsx` + tokens `globals.css`.
 
 ## 2. Catalogue FitIdion
-- Filtres dynamiques (marques, catégories, prix, disponibilité, objectifs nutrition).
-- Cartes vitrées `card-surface` avec surbrillance FitIdion (`bg-orange-50` → `bg-fitidion-orange/10`).
-- Skeletons oranges doux pour les chargements (`animate-pulse`).
-- CTA « Ajouter au comparateur » et « Activer l’alerte » directement accessibles.
 
-## 3. Alertes prix FitIdion
-- Interface dédiée (`/alerts`) avec recherche email, statut actif/inactif, actions rapides.
-- Notifications gérées par l’API (FastAPI + Celery) et suivies côté frontend (TanStack Query).
-- Expérience visuelle sombre/néon pour mettre en avant l’aspect monitoring 24/7.
+- Filtres dynamiques : `frontend/src/app/catalogue/page.tsx` (hooks `useProductList`) + endpoint `GET /products` (`main.py`).
+- Cartes vitrées : `frontend/src/components/ProductCard.tsx` + classes `fitidion-theme.css`.
+- Skeletons : `frontend/src/components/ProductCardSkeleton.tsx`.
+- CTA comparateur/alerte : `CompareLinkButton.tsx`, `CreatePriceAlert.tsx`.
 
-## 4. Gym Locator & expériences terrain
-- Section d’accueil immersive : cartes vitrées, halos FitIdion, CTA « Découvrir autour de moi ».
-- Filtres rayon + ville + recherche libre, géolocalisation opt-in.
-- Cartes `GymCard` revisitées avec boutons FitIdion et badges équipements.
-- Connecteur Basic-Fit temps réel (`services/gyms_scraper.py`) consommé par `/gyms` pour alimenter les
-  listings live et la recherche unifiée.
+## 3. Alertes prix
+
+- Gestion UI : `frontend/src/app/alerts/page.tsx`, `PriceAlertForm.tsx`, `CreatePriceAlert.tsx`.
+- Backend : `apps/api/app/routers/price_alerts.py` (CRUD) + `app/tasks.py`/`app/email.py` pour la notification.
+- Recherche des alertes : `frontend/src/lib/queries.ts` (`usePriceAlerts`).
+
+## 4. Gym Locator & expérience terrain
+
+- Section landing : `frontend/src/components/GymLocatorSection.tsx`.
+- Page dédiée : `frontend/src/app/gyms/page.tsx` + hook `useGyms.ts`.
+- Scraper Basic-Fit : `services/gyms_scraper.py` (consommé par `GET /api/gyms` dans `main.py`).
 
 ## 5. Programmes dynamiques
-- Page `/programmes` Next.js branchée sur `GET /programmes` (JSON partagé `data/programmes.json`).
-- Cartes responsive avec icône Dumbbell, durée, niveau et objectif.
-- Section programmes intégrée à la recherche globale (`/search`) afin de proposer des routines en plus des
-  produits et salles.
+
+- Endpoint `GET /programmes` (`main.py`) alimenté par `data/programmes.json`.
+- Page frontend : `frontend/src/app/programmes/page.tsx` + `ProgramCard.tsx`.
+- Recherche unifiée : `GET /search` (`main.py`) retourne également les programmes.
 
 ## 6. Sections marketing réimaginées
-- `HeroSection` : gradient FitIdion, CTA duo, suggestions de recherche en pilules.
-- `StatsSection`, `WhyChooseUsSection`, `PartnerLogos` : typographie Poppins, badges uppercase,
-  animations Framer Motion et ombres FitIdion.
-- `DealsShowcase` : cartes stackées, bandeau highlight FitIdion, CTA comparateur.
+
+- Hero, Stats, WhyChooseUs, Deals : `HeroSection.tsx`, `StatsSection.tsx`, `WhyChooseUsSection.tsx`, `DealsShowcase.tsx`.
+- Animations : `Framer Motion` dans les fichiers précités (pattern `initial`/`animate`).
+- Partenaires & témoignages : `PartnerLogos.tsx`, `TestimonialsSection.tsx`.
 
 ## 7. API & data layer
-- Endpoints agrégés : catalogue, comparateur, fiches produit, alertes prix, gyms.
-- Webhooks (refresh produits/offres/alertes) sécurisés par signature FitIdion.
-- Historique de prix persisté (SQL + fallback JSON) exposé sous forme de points + statistiques.
-- Fallback catalogue synchronisé front/back pour résilience offline.
+
+- CRUD principal : `apps/api/app/routers/*.py` (produits, offres, fournisseurs, alertes).
+- Agrégation temps réel : `main.py` (`/products`, `/compare`, `/comparison`, `/search`).
+- Webhooks : `main.py` (`/webhooks/*`) + `services/scraper`.
+- Fallbacks : `fallback_catalogue.py` + `frontend/src/lib/fallbackCatalogue.ts`.
 
 ---
 
-🚀 *FitIdion combine data, design et personnalisation pour guider les sportifs vers les meilleurs choix.*
+🚀 *FitIdion conjugue collecte de données, design premium et personnalisation pour guider les sportifs vers les meilleurs choix.*
