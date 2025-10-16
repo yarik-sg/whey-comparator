@@ -1,62 +1,58 @@
 # Design guidelines FitIdion
 
-Ces recommandations encadrent l'identité visuelle FitIdion (palette, typographie, motions,
-composants UI) afin d'assurer une expérience cohérente entre catalogue, comparateur et
-communication marketing.
+Ces recommandations alignent la charte FitIdion avec la structure du code (voir `frontend/src/app/globals.css` et `frontend/src/styles/fitidion-theme.css`). Elles guident la construction des composants présents dans `frontend/src/components` et `frontend/src/components/ui`.
 
 ## Palette
 
-| Usage                 | Couleur                          | Token CSS                  |
-|-----------------------|----------------------------------|----------------------------|
-| Fond clair            | `#F9FAFB`                        | `--fitidion-light`         |
-| Texte principal       | `#111827`                        | `--fitidion-dark`          |
-| Accent primaire       | `#FF6600`                        | `--fitidion-orange`        |
-| Accent secondaire     | `#FDDC8E`                        | `--fitidion-gold`          |
-| Fond sombre           | `#050915`                        | `data-theme="dark"`        |
+| Usage | Couleur | Token CSS | Emplacement |
+|-------|---------|-----------|-------------|
+| Fond clair | `#F9FAFB` | `--fitidion-light` | `globals.css` → `:root {}` |
+| Texte principal | `#111827` | `--fitidion-dark` | `globals.css` & `fitidion-theme.css` |
+| Accent primaire | `#FF6600` | `--fitidion-orange` | Utilisé par `button.tsx` (`variant="primary"`) |
+| Accent secondaire | `#FDDC8E` | `--fitidion-gold` | Ombres vitrées (cards, CTA) |
+| Fond sombre | `#050915` | `data-theme="dark"` | Appliqué via `ThemeProvider.tsx` |
 
-- Utiliser des gradients combinant orange/or et des halos doux (`bg-fitidion-radial`).
-- Les overlays vitrées appliquent `background: rgba(255,255,255,0.8)` + `backdrop-filter: blur(18px)`.
-- Les cartes « analytics » et CTA utilisent les ombres `shadow-glass` / `shadow-glow` définies dans
-  `globals.css`.
+- Les gradients sont déclarés dans `globals.css` (`.bg-fitidion-hero`, `.bg-fitidion-radial`).
+- Les surfaces vitrées utilisent `background: rgba(255, 255, 255, 0.85)` + `backdrop-filter: blur(18px)` (voir `fitidion-theme.css`).
+- Les ombres `shadow-glass` et `shadow-glow` sont injectées via `tailwind.config.ts` (tokens `boxShadow`).
 
 ## Typographie
 
-- **Sans principale** : Poppins (via `next/font`) — titres, CTA, badges.
-- **Sans de lecture** : Inter — paragraphes, textes longs.
-- Titles : `text-4xl` sur desktop (Hero), `text-3xl` sur mobile. Sous-titres `text-xl`.
-- Labels & métadonnées : uppercase `tracking-[0.3em]`, `text-xs`.
-- Toujours utiliser `font-semibold` minimum pour les CTA.
+- **Sans principale** : Poppins (chargée dans `src/app/layout.tsx` via `next/font`).
+- **Sans de lecture** : Inter (également dans `layout.tsx`).
+- Titres : `text-4xl` desktop (`HeroSection.tsx`), `text-3xl` mobile.
+- Sous-titres : `text-xl` avec `font-semibold`.
+- Labels & métadonnées : uppercase, `tracking-[0.3em]`, `text-xs` (ex. `StatsSection.tsx`).
 
 ## Composants
 
-- **Boutons** : arrondis (`btn-pill`), variantes `primary` (orange plein), `secondary`
-  (orange 10%), `outline` (surfaces vitrées). Ombres `shadow-glow`.
-- **Inputs** : bordures translucides `border-white/50`, focus `ring-fitidion-orange/40`.
-- **Cartes** : `card-surface` + `rounded-3xl`, transitions `hover:shadow-fitidion`.
-- **Badges** : `bg-fitidion-orange/10` + texte orange, uppercase pour les labels.
-- **Mode sombre** : classes Tailwind automatiques (`dark:*`).
+- **Boutons (`components/ui/button.tsx`)** : variantes `primary` (fond orange), `secondary` (orange 10 %), `ghost` (surfaces vitrées). Toujours `rounded-full` + `shadow-glow`.
+- **Inputs (`components/ui/input.tsx`)** : `border-white/50`, focus `ring-2 ring-fitidion-orange/40`.
+- **Cartes (`components/ui/card.tsx`)** : `rounded-3xl`, `border-white/20`, transition `hover:shadow-fitidion`.
+- **Checkbox/slider** : suivre les classes définies dans `checkbox.tsx` et `slider.tsx` (handles arrondis, accent orange).
+- **Sections marketing** : `HeroSection.tsx`, `DealsShowcase.tsx`, `GymLocatorSection.tsx` utilisent Framer Motion (`initial`, `animate`) et doivent rester cohérentes (durée 0.4 s, easing `easeOut`).
 
 ## Layout
 
-- Conteneurs centraux `max-w-6xl` (landing) ou `max-w-5xl` (pages listées).
-- Sections majeures : `py-20` à `py-24`, séparées par légers dégradés.
-- Héros : gradient `bg-fitidion-hero`, halos radiaux, call-to-action en duo.
-- Grilles : `md:grid-cols-2` pour les comparaisons, `lg:grid-cols-4` pour les stats.
+- Conteneurs : `max-w-6xl` (`page.tsx`) pour la landing, `max-w-5xl` sur les pages listées (`catalogue/page.tsx`, `comparison/page.tsx`).
+- Sections majeures : `py-20` → `py-24` avec dégradés légers (`bg-fitidion-radial`) séparant les blocs.
+- Hero : gradient `bg-fitidion-hero`, halos radiaux (`after:blur-3xl`), CTA duo (`CompareLinkButton.tsx`, `CreatePriceAlert.tsx`).
+- Grilles : `md:grid-cols-2` pour comparaisons, `lg:grid-cols-4` pour statistiques (`StatsSection.tsx`).
 
 ## Motion & interaction
 
-- Transitions 200-250ms (`transition-all`), `scale-105` léger sur hover pour cartes.
-- Framer Motion : fade/slide (`initial { opacity: 0, y: 32 }`).
-- Focus visible obligatoire (`focus-visible:ring-2` + `ring-offset-fitidion-light`).
-- Micro-interactions : shimmer sur skeletons, `animate-pulse` en orange clair.
+- Transitions 200-250 ms (`transition-all`) pour les cartes (`ProductCard.tsx`, `ProgramCard.tsx`).
+- Framer Motion (`HeroSection.tsx`, `TestimonialsSection.tsx`) : pattern `initial={{ opacity: 0, y: 32 }}` → `animate={{ opacity: 1, y: 0 }}`.
+- Focus visibles systématiques (`focus-visible:ring-2`) grâce à `fitidion-theme.css`.
+- Skeletons (`ProductCardSkeleton.tsx`) en `bg-fitidion-orange/10` + `animate-pulse`.
 
 ## Contenu & ton
 
-- Positionner FitIdion comme copilote intelligent (lexique : « analyse », « suivi », « alerte »).
-- CTA dynamiques (« Lancer FitIdion », « Suivre cette marque », « Activer mon alerte »).
-- Mettre en avant chiffres clés (+900 produits, 70 marques, actualisation 24/7).
-- Pour la section « Pourquoi FitIdion » : 3 ou 4 piliers maximum, chacun structuré en icône +
-  titre court + paragraphe 2 lignes.
+- Positionner FitIdion comme copilote intelligent (`HeroSection.tsx`, `WhyChooseUsSection.tsx`).
+- CTA dynamiques : « Lancer FitIdion », « Activer mon alerte », « Ajouter au comparateur » (voir `PriceAlertForm.tsx`, `CompareLinkButton.tsx`).
+- Mettre en avant chiffres clés (ex. `StatsSection.tsx` → +900 produits, 70 marques, actualisation 24/7).
+- Pour la section « Pourquoi FitIdion » : maximum 4 piliers, format icône (`lucide-react`), titre court, paragraphe ≤ 2 lignes.
 
-Respecter ces principes garantit une identité FitIdion homogène quelle que soit la surface
-(frontend, docs, slides, emails).
+---
+
+Respecter ces principes garantit une identité FitIdion homogène entre le frontend (`frontend/`), les docs (`docs/`) et la communication marketing.

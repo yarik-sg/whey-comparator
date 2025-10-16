@@ -42,22 +42,64 @@ FitIdion met à disposition une API publique accessible en local sur `http://loc
 
 La liste exhaustive des routes (CRUD FastAPI + agrégation) est détaillée dans `docs/api_endpoints.md`.
 
-## 🏗️ Structure du dépôt
+## 🏗️ Cartographie du dépôt
 
 ```
 whey-comparator/
-├── README.md                 # Ce document (identité FitIdion)
-├── docs/                     # Guides produit, design system, roadmap FitIdion
-├── data/                     # Jeux de données (catalogue fallback, programmes dynamiques…)
-├── frontend/                 # Application Next.js 15 (React 19)
-│   ├── src/app/              # Pages App Router + layout FitIdion
-│   ├── src/components/       # Composants UI thématisés FitIdion
-│   └── src/lib/              # Clients API, helpers, fallback catalogue
-├── apps/api/                 # API FastAPI complète (Poetry, SQLAlchemy, Celery)
-├── services/                 # Scrapers & intégrations externes
-├── tailwind.config.ts        # Palette FitIdion partagée (Vite + Next)
-└── docker-compose.yml        # Orchestration locale (Postgres, Redis, API, Front)
+├── README.md                        # Vue d'ensemble FitIdion + démarrage rapide
+├── docs/                            # Documentation produit & technique
+│   ├── architecture.md              # Schéma détaillé des couches (frontend, API, services)
+│   ├── api_endpoints.md             # Référence des routes FastAPI & agrégation
+│   ├── design_guidelines.md         # Charte graphique & tokens Tailwind
+│   ├── features.md                  # Parcours et modules principaux
+│   ├── next_steps.md                # Roadmap produit & technique
+│   └── recommandations-ameliorees.md# Recommandations stratégiques
+├── data/
+│   └── programmes.json              # Référentiel des programmes sportifs (endpoint `/programmes`)
+├── apps/
+│   └── api/                         # Backend FastAPI (Poetry)
+│       ├── README.md                # Guide d'exploitation backend
+│       ├── app/
+│       │   ├── main.py              # Point d'entrée FastAPI + montage des routeurs
+│       │   ├── config.py            # Paramètres Pydantic (`API_*`)
+│       │   ├── database.py          # Session SQLAlchemy & dépendances FastAPI
+│       │   ├── models.py            # ORM (Product, Offer, Supplier, PriceHistory, PriceAlert…)
+│       │   ├── schemas.py           # Schémas Pydantic v2 (payloads & réponses)
+│       │   ├── routers/             # Routes REST modulaires (products, offers, suppliers, price_alerts)
+│       │   ├── celery_app.py        # Configuration Celery/Redis
+│       │   ├── tasks.py             # Tâches d’ingestion & notifications
+│       │   ├── scheduler.py         # Planification de rafraîchissement (APScheduler)
+│       │   └── email.py             # Templates d’alertes et envoi via SMTP/API
+│       ├── alembic/                 # Migrations base de données
+│       ├── tests/                   # Suite Pytest + HTTPX (produits, offres, alertes)
+│       └── pyproject.toml           # Dépendances Poetry (FastAPI, SQLAlchemy, Celery…)
+├── frontend/                        # Application Next.js 15 (React 19)
+│   ├── README.md                    # Guide frontend + structure App Router
+│   ├── next.config.ts               # Configuration Next.js (App Router, images, headers)
+│   ├── tailwind.config.ts           # Config Tailwind spécifique frontend
+│   ├── src/
+│   │   ├── app/                     # Pages App Router (`page.tsx`, `/catalogue`, `/comparison`, `/alerts`…)
+│   │   ├── components/              # Sections métier (HeroSection, PriceComparison…) & primitives UI
+│   │   ├── data/                    # Données statiques (catégories populaires)
+│   │   ├── hooks/                   # Hooks maison (ex : `useGyms`)
+│   │   ├── lib/                     # Clients API, queries TanStack, catalogue fallback partagé
+│   │   ├── styles/                  # Utilitaires CSS additionnels
+│   │   └── types/                   # Types TypeScript pour les réponses API
+│   ├── public/                      # Assets (logos, manifest, favicon placeholders)
+│   └── vendor/                      # Bundles TanStack vendored (query-core & react-query)
+├── services/
+│   ├── gyms_scraper.py              # Scraper Basic-Fit pour `/gyms`
+│   └── scraper/                     # Micro-service Python (collecte prix) + package Poetry
+├── src/                             # Ancienne POC Vite (conservée pour tests UI rapides)
+├── main.py                          # API FastAPI légère (agrégation temps réel)
+├── fallback_catalogue.py            # Catalogue de secours partagé
+├── docker-compose.yml               # Orchestration locale (Postgres, Redis, API, Frontend)
+├── tailwind.config.ts               # Tokens partagés (design FitIdion)
+├── package.json / package-lock.json # Scripts Node racine (lint, build Vite historique)
+└── requirements.txt                 # Dépendances Python pour l’API légère
 ```
+
+> 💡 Pour une description exhaustive de chaque répertoire, consultez `docs/architecture.md`.
 
 ## 🚀 Démarrage rapide
 

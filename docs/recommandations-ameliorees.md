@@ -1,37 +1,34 @@
 # Recommandations stratégiques FitIdion
 
-Objectif : dépasser les comparateurs historiques en combinant intelligence des données,
-expérience utilisateur premium et confiance.
+Objectif : dépasser les comparateurs historiques en combinant intelligence des données, expérience utilisateur premium et confiance.
 
 ## 1. Fiabilité & performance
-- **Cache & résilience** : activer Redis pour `/products`, `/comparison`, `/alerts` et conserver le
-  dernier snapshot sain en cas de panne scraping.
-- **Pipelines scraping** : orchestrer la collecte via Celery (priorisation par popularité, monitoring
-  Prometheus, alerts Slack quand un marchand décroche).
-- **Alertes industrialisées** : stocker les seuils dans Postgres, traiter via worker (envoi email/sms),
-  exposer historique des notifications dans `/alerts`.
+
+- **Cache & résilience** : activer Redis sur `apps/api` (`app/celery_app.py`, `app/tasks.py`) pour `/products`, `/comparison`, `/alerts` avec fallback `fallback_catalogue.py`.
+- **Pipelines scraping** : orchestrer la collecte via `services/scraper/scheduler.py` (priorisation par popularité, monitoring Prometheus, alertes Slack).
+- **Alertes industrialisées** : stocker les seuils dans Postgres (`PriceAlert`), traiter via Celery (`app/tasks.py`), exposer l’historique dans `/price-alerts` (`routers/price_alerts.py`).
 
 ## 2. Expérience FitIdion
-- **Badge dynamique** sur les fiches produit (« -12 % vs 30 jours », « Prix stable ») pour donner du contexte.
-- **Comparateur augmenté** : section « Palmarès FitIdion » (meilleur prix, score nutrition, fiabilité
-  vendeur) + export partageable.
-- **Catalogue mémorisé** : conserver filtres/sélections en localStorage et proposer un bouton « Copier mon setup FitIdion ».
-- **Guides FitIdion** : ajouter sur la landing des guides rapides (formats Whey, usage créatine, etc.) en carrousel.
+
+- **Badges dynamiques** : enrichir `PriceComparison.tsx` et `ProductCard.tsx` avec indicateurs (« -12 % vs 30 jours ») calculés côté backend (`main.py`).
+- **Comparateur augmenté** : ajouter un module `Palmarès FitIdion` dans `frontend/src/app/comparison/page.tsx` (meilleur prix, score nutrition, fiabilité vendeur).
+- **Catalogue mémorisé** : persister filtres/sélections dans `frontend/src/app/catalogue/page.tsx` (URL + `localStorage`).
+- **Guides FitIdion** : alimenter un carrousel de guides (nouveau composant dans `frontend/src/components`) connectés à `docs/`.
 
 ## 3. Data & différenciation
-- **Score FitIdion** : calculer un indicateur synthétique (nutrition, transparence, avis) et l'afficher
-  dans le comparateur + fiches.
-- **Analyse livraison** : stocker frais d'expédition + délais estimés, proposer un graphe comparatif.
-- **Avis agrégés** : combiner avis SerpAPI/Amazon et mettre en avant top positif/négatif.
-- **Flux de données** : afficher clairement l'heure de dernière collecte par source, statut (OK, retard, en
-  échec) et prochain refresh.
+
+- **Score FitIdion** : calcul dans `apps/api/app/models.py`/`schemas.py`, affichage dans `ProductCard.tsx` et `PriceComparison.tsx`.
+- **Analyse livraison** : enrichir `Offer` (ajouter frais/délais), exposer via `GET /offers` et `main.py`, afficher graphiques dans `frontend/src/components/OfferTable.tsx`.
+- **Avis agrégés** : centraliser dans `main.py` (`/products/{id}/reviews`) et surfaces `ReviewsSection.tsx`.
+- **Flux de données** : ajouter un composant `DataStatus` (frontend) affichant heure de collecte (données `services/scraper`, `apps/api/app/tasks.py`).
 
 ## 4. KPI & succès
-- SLA API > 99 % grâce au cache/fallback.
-- Temps de réponse `/products` < 500 ms p95.
-- +20 % de clics vers le comparateur après introduction du palmarès FitIdion.
-- ≥30 % des utilisateurs d’alertes reviennent via un email FitIdion.
-- Adoption du mode sombre > 40 % (cible noctambules / crossfit).
+
+- SLA API > 99 % (observabilité `apps/api/app/main.py`, `docker-compose.yml`).
+- Temps de réponse `/products` < 500 ms p95 (monitoring Prometheus + traces `X-Request-ID`).
+- +20 % de clics comparateur après introduction du Palmarès FitIdion.
+- ≥30 % des utilisateurs d’alertes reviennent via un email FitIdion (`app/email.py`).
+- Adoption du mode sombre > 40 % (`ThemeProvider.tsx`).
 
 ---
 

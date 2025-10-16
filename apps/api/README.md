@@ -6,29 +6,40 @@ Ce dossier contient l'API qui alimente la plateforme FitIdion. Elle centralise l
 
 ```
 apps/api/
-├── app/
-│   ├── main.py              # Initialisation FastAPI + middlewares
-│   ├── config.py            # Chargement des variables d'environnement (préfixe API_)
-│   ├── database.py          # Session SQLAlchemy + gestion du moteur
-│   ├── models.py            # Modèles ORM (Product, Supplier, Offer, PriceHistory, PriceAlert, ScrapeJob)
-│   ├── schemas.py           # Schémas Pydantic v2 pour les payloads/retours
-│   ├── routers/             # Routes REST (products, suppliers, offers, price_alerts)
-│   ├── celery_app.py        # Configuration Celery (broker/result Redis)
-│   ├── scheduler.py         # Gestionnaire de tâches planifiées (rafraîchissement scraping)
-│   └── tasks.py             # Tâches d'ingestion & scraping simulé
-├── alembic/                 # Scripts de migrations
-├── alembic.ini              # Configuration Alembic
-├── tests/                   # Jeux de tests Pytest + HTTPX
-└── pyproject.toml           # Dépendances Poetry
+├── README.md                     # Ce guide backend
+├── pyproject.toml                # Dépendances Poetry (FastAPI, SQLAlchemy, Celery, APScheduler…)
+├── alembic.ini                   # Config migrations Alembic
+├── alembic/                      # Scripts de migration (versions générées)
+├── tests/                        # Suite Pytest + HTTPX
+│   ├── conftest.py               # Fixtures (client FastAPI, session DB en mémoire)
+│   ├── test_products.py          # Tests CRUD produits & historique de prix
+│   ├── test_offers.py            # Tests CRUD offres + filtres
+│   └── test_price_alerts.py      # Tests création/mise à jour des alertes
+└── app/
+    ├── __init__.py
+    ├── main.py                   # Application FastAPI + middlewares + montage routers
+    ├── config.py                 # Paramétrage Pydantic Settings (préfixe `API_`)
+    ├── database.py               # Session SQLAlchemy + Base declarative + dépendance `get_db`
+    ├── models.py                 # ORM (Product, Supplier, Offer, PriceHistory, PriceAlert, ScrapeJob)
+    ├── schemas.py                # Modèles Pydantic v2 (lecture/écriture + pagination standardisée)
+    ├── routers/
+    │   ├── products.py           # Endpoints `/products` + `/products/{id}/price-history`
+    │   ├── offers.py             # Endpoints `/offers`
+    │   ├── suppliers.py          # Endpoints `/suppliers`
+    │   └── price_alerts.py       # Endpoints `/price-alerts`
+    ├── celery_app.py             # Initialisation Celery (broker/result Redis)
+    ├── tasks.py                  # Tâches Celery (scraping simulé, traitement alertes)
+    ├── scheduler.py              # APScheduler pour rafraîchir la collecte
+    └── email.py                  # Envoi d’emails & gabarits de notifications
 ```
 
 ## ⚙️ Fonctionnement
 
-1. **Application FastAPI** : `app/main.py` installe CORS et monte les routeurs `products`, `suppliers`, `offers`, `price_alerts` ainsi que la route de healthcheck. Chaque endpoint renvoie des schémas Pydantic typés (pagination incluse).
-2. **Accès base de données** : `database.py` expose `SessionLocal` et une dépendance `get_db` pour injecter une session SQLAlchemy dans les routes. Les modèles couvrent produits, fournisseurs, offres, historiques de prix et alertes.
-3. **Migrations & data lifecycle** : Alembic gère la structure SQL. Les mises à jour CRUD se propagent via SQLAlchemy avec rafraîchissement automatique.
-4. **Tâches asynchrones** : `celery_app.py` configure Celery (Redis). Le module `tasks.py` simule une exécution de scraping, alimente la table `scrape_jobs` et stocke les logs horodatés.
-5. **Interopérabilité frontend** : les routes paginées et filtrables exposent les mêmes champs que consommés par l'App Router (résumés produits, offres filtrées, listes de marchands, historiques de prix et alertes actives).
+1. **Application FastAPI** : `app/main.py` installe CORS, configure les middlewares (logging, `X-Request-ID`) et monte les routeurs `products`, `offers`, `suppliers`, `price_alerts` ainsi que `/health`.
+2. **Couche persistence** : `database.py` fournit `SessionLocal`/`engine` et la dépendance `get_db`. `models.py` couvre `Product`, `Supplier`, `Offer`, `PriceHistory`, `PriceAlert`, `ScrapeJob` tandis que `schemas.py` expose les DTO lecture/écriture et enveloppes paginées.
+3. **Migrations & seed** : Alembic orchestre les évolutions SQL. Les répertoires `alembic/versions` contiennent les migrations alignées avec les modèles.
+4. **Tâches asynchrones** : `celery_app.py` déclare l’application Celery (Redis). `tasks.py` et `scheduler.py` alimentent le scraping, actualisent les offres et planifient les jobs récurrents. `email.py` centralise l’envoi des notifications d’alertes.
+5. **Interopérabilité frontend** : les routeurs exposent des réponses paginées cohérentes avec le frontend Next.js. Les conversions (ratio protéines/prix, meilleure offre) sont déléguées aux schémas et au service d’agrégation.
 
 ## 📚 Bibliothèques principales
 

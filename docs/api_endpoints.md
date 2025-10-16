@@ -1,126 +1,126 @@
 # FitIdion API — Référence des endpoints
 
-La plateforme FitIdion expose deux couches complémentaires :
+La plateforme expose deux couches complémentaires :
 
-1. **API d'orchestration (FastAPI, dossier `apps/api`)** pour la gestion CRUD des produits,
-   offres, marchands et alertes prix.
-2. **API d'agrégation temps réel (`main.py`)** qui combine scrapers, caches et fallback catalogue
-   afin d'alimenter le frontend Next.js 15 (pages catalogue, comparateur, fiches produit, alertes).
+1. **API d'orchestration (`apps/api/app`)** pour la gestion CRUD des produits, offres, marchands et alertes prix.
+2. **API d'agrégation (`main.py`)** qui combine scrapers, caches et fallback pour alimenter le frontend Next.js et les intégrations externes.
 
-Toutes les routes sont servies depuis `http://localhost:8000` en environnement de développement.
+Toutes les routes sont servies depuis `http://localhost:8000` en développement (voir `docker-compose.yml`).
 
-## 1. API d'orchestration (`apps/api/app`)
+## 1. API d'orchestration — `apps/api/app`
 
-### Santé
+| Ressource | Fichier | Routes | Notes |
+|-----------|---------|--------|-------|
+| Healthcheck | `app/main.py` | `GET /health` | Retour `{ "status": "ok" }`. |
+| Produits | `app/routers/products.py` | `GET /products`, `POST /products`, `GET /products/{id}`, `PUT /products/{id}`, `DELETE /products/{id}` | Champs nutritionnels, tags, meilleure offre, timestamps. |
+| Historique de prix | `app/routers/products.py` | `GET /products/{id}/price-history` | 30 relevés max + stats (`current`, `lowest`, `highest`, `trend`). |
+| Offres | `app/routers/offers.py` | `GET /offers`, `POST /offers`, `GET /offers/{id}`, `PUT /offers/{id}`, `DELETE /offers/{id}` | Filtres prix, disponibilité, marchands, devise. |
+| Fournisseurs | `app/routers/suppliers.py` | `GET /suppliers`, `POST /suppliers`, `GET /suppliers/{id}`, `PUT /suppliers/{id}`, `DELETE /suppliers/{id}` | Gestion des marchands et URLs d’affiliation. |
+| Alertes prix | `app/routers/price_alerts.py` | `GET /price-alerts`, `POST /price-alerts`, `PATCH /price-alerts/{id}`, `DELETE /price-alerts/{id}` | Activation/désactivation, seuils personnalisés, statut. |
 
-| Méthode | Route     | Description                              |
-|---------|-----------|------------------------------------------|
-| `GET`   | `/health` | Vérifie l'état de l'API (payload `{status: "ok"}`). |
-
-### Ressources principales
-
-| Ressource  | Routes CRUD                                                                                             | Notes clés                                            |
-|------------|---------------------------------------------------------------------------------------------------------|-------------------------------------------------------|
-| Produits   | `GET /products`, `POST /products`, `GET /products/{id}`, `PUT /products/{id}`, `DELETE /products/{id}`  | Champs nutritifs, tags, best-offer, timestamps.       |
-| Offres     | `GET /offers`, `POST /offers`, `GET /offers/{id}`, `PUT /offers/{id}`, `DELETE /offers/{id}`            | Filtrage prix, disponibilité, fournisseur, devise.    |
-| Fournisseurs | `GET /suppliers`, `POST /suppliers`, `GET /suppliers/{id}`, `PUT /suppliers/{id}`, `DELETE /suppliers/{id}` | Gestion des marchands & URL d'affiliation.           |
-| Alertes prix | `GET /price-alerts`, `POST /price-alerts`, `PATCH /price-alerts/{id}`, `DELETE /price-alerts/{id}`     | Activation / désactivation, seuils personnalisés.     |
-| Historique de prix | `GET /products/{id}/price-history`                                                               | 30 relevés max + stats (tendance, moyenne, min/max).  |
-
-Les payloads sont définis dans `apps/api/app/schemas.py` (Pydantic v2). Toutes les listes renvoient
-le wrapper :
+Les schémas Pydantic utilisés par ces routes sont définis dans `apps/api/app/schemas.py`. Les listes suivent une enveloppe standard :
 
 ```json
 {
   "total": 120,
-  "items": [...],
+  "items": [ ... ],
   "limit": 10,
   "offset": 0
 }
 ```
 
-### Paramètres usuels
+### Paramètres communs
 
 - `limit` *(1-100, défaut 10)* et `offset` *(≥0)* pour la pagination.
 - `search` sur les champs textuels (`name`, `brand`, `supplier`).
 - `sort_by` + `sort_order` (`asc`/`desc`).
-- Filtres spécifiques (`available`, `min_price`, `max_price`, `supplier_id`, etc.).
+- Filtres spécifiques (`available`, `min_price`, `max_price`, `supplier_id`, `category`, etc.).
 
-## 2. API d'agrégation FitIdion (`main.py`)
+### Traitements asynchrones
 
-Cette couche intègre :
+- `app/tasks.py` gère l’ingestion (scraping simulé, synchronisation d’offres) et le traitement des alertes.
+- `app/email.py` envoie les notifications suite aux alertes déclenchées.
+- `app/scheduler.py` (APScheduler) planifie les rafraîchissements périodiques.
 
-- récupération SerpAPI + scrapers internes,
-- enrichissement (ratio protéines/prix, notation, disponibilité temps réel),
-- fallback catalogue (`fallback_catalogue.py`) pour résilience offline,
-- fusion intelligente des résultats pour le comparateur multiréférences.
+## 2. API d'agrégation FitIdion — `main.py`
+
+Cette API combine :
+
+- Résultats SerpAPI + scrapers internes (`services/scraper`).
+- Enrichissement FitIdion (ratio protéines/prix, notation, disponibilité temps réel).
+- Fallback catalogue (`fallback_catalogue.py`) pour la résilience offline.
+- Scraper gyms (`services/gyms_scraper.py`).
 
 ### Catalogue enrichi — `GET /products`
 
-Paramètres : `search`, `page` (défaut 1), `per_page` (1-60), `min_price`, `max_price`, `brands[]`,
-`category`, `in_stock`, `sort` (`price_asc`, `price_desc`, `rating`, `protein_ratio`).
+Paramètres : `search`, `page` (défaut 1), `per_page` (1-60), `min_price`, `max_price`, `brands[]`, `category`, `in_stock`, `sort` (`price_asc`, `price_desc`, `rating`, `protein_ratio`).
 
-Réponse : `{ products: ProductCard[], page, perPage, total, totalPages, hasPrevious, hasNext }`.
+Réponse :
 
-### Détail produit — `GET /products/{productId}`
+```json
+{
+  "products": [ProductCard],
+  "page": 1,
+  "perPage": 24,
+  "total": 240,
+  "totalPages": 10,
+  "hasPrevious": false,
+  "hasNext": true
+}
+```
 
-Retourne : fiche enrichie (média, nutrition, description), offres actuelles, meilleure offre,
-produits similaires, historique de prix.
+### Détail produit (agrégation)
 
-Endpoints associés :
+- `GET /products/{productId}/offers` — Offre principale + offres alternatives (structure `{ product, offers, sources }`).
+- `GET /products/{productId}/similar` — Suggestions par marque/catégorie.
+- `GET /products/{productId}/related` — Produits complémentaires.
+- `GET /products/{productId}/price-history` — Historique agrégé (points + statistiques).
+- `GET /products/{productId}/reviews` — Synthèse avis (moyenne, distribution, highlights).
 
-- `GET /products/{id}/offers` — top offres triées (limite 24).
-- `GET /products/{id}/price-history` — données agrégées par jour.
-- `GET /products/{id}/similar` — suggestions par marque/catégorie/ratio.
+### Comparateur & deals
 
-### Historique des prix — `GET /products/{productId}/price-history`
+- `GET /compare` — Recherche textuelle (paramètres `q`, `marque`, `categorie`, `limit`) fusionnant SerpAPI + scrapers pour générer une liste de deals normalisés.
+- `GET /comparison` — Comparaison multi-produits par identifiants (`ids=1,2,3`, `limit`). Retourne `{ products: [{ product, offers }], summary: DealItem[] }`.
 
-Paramètres : `period` (`7d`, `1m`, `3m`, `6m`, `1y`, `all`). Retourne `points[]` (prix + source + date)
-et `statistics` (current/lowest/highest/average) normalisées en `{ amount, currency, formatted }` avec
-agrégation fallback si le scraping échoue.
+### Historique de prix — `GET /products/{productId}/price-history`
 
-### Comparateur multiréférences — `POST /comparison`
-
-Payload : `{ products: string[] }` (identifiants FitIdion ou textes libres). L'API résout les items,
-pré-sélectionne les meilleures offres, fusionne fallback + données live et retourne un résumé
-prêt à afficher (scores, métriques nutritionnelles, liens marchands).
-
-### Alertes prix — `POST /price-alerts`
-
-Payload : `{ email, productId, targetPrice }`. Les alertes sont stockées via l'API CRUD puis le
-backend orchestre l'envoi (worker Celery).
+Paramètre `period` (`7d`, `1m`, `3m`, `6m`, `1y`, `all`). Réponse : `points[]` (prix + source + date) et `statistics` (`current`, `lowest`, `highest`, `average`).
 
 ### Programmes — `GET /programmes`
 
-Retourne la liste structurée de programmes (`data/programmes.json`) exposée au frontend et à la recherche
-globale.
+Expose `data/programmes.json` (nom, durée, objectif, niveau, focus musculaire). Utilisé par `frontend/src/app/programmes/page.tsx` et la recherche unifiée.
 
-### Salles Basic-Fit — `GET /gyms`
+### Gym Locator — `GET /api/gyms`
 
-Endpoint léger consommant `services/gyms_scraper.get_basicfit_gyms()` pour diffuser les clubs actualisés.
-Accepte `query` (nom) et `limit`.
+Consomme `services/gyms_scraper.get_basicfit_gyms()` avec fallback JSON. Paramètres : `query`, `limit`, `city`. Retourne `gyms[]` enrichis (coordonnées, équipements, lien partenaire).
 
 ### Recherche unifiée — `GET /search`
 
-Paramètres : `q` (texte libre) + `limit`. Retourne un objet `{ products[], gyms[], programmes[] }` en
-aggrégeant SerpAPI (produits), scraping Basic-Fit (gyms) et données `programmes.json` filtrées par nom.
+Paramètres : `q` (texte libre) + `limit`. Retourne `{ products[], gyms[], programmes[] }` en combinant catalogue agrégé, gyms et programmes.
+
+### Accueil — `GET /`
+
+Réponse de vérification rapide : `{ "message": "API OK ✅ — utilise /compare?q=whey protein" }`.
+
+> ℹ️ Les créations/updates d’alertes continuent de passer par l’API d’orchestration (`POST /price-alerts`). L’agrégation consomme ensuite ces données pour enrichir les vues.
 
 ## 3. Webhooks & intégrations
 
-- `POST /webhooks/products/refresh` : déclenche la synchronisation complète catalogue.
-- `POST /webhooks/offers/refresh` : relance les scrapers pour les offres actives.
-- `POST /webhooks/alerts/process` : traitement batch des alertes en file.
+| Route | Description | Source |
+|-------|-------------|--------|
+| `POST /webhooks/products/refresh` | Déclenche la synchronisation catalogue complète. | `services/scraper` ou partenaires. |
+| `POST /webhooks/offers/refresh` | Rafraîchit les offres actives. | Cron / partenaires. |
+| `POST /webhooks/alerts/process` | Lance le traitement batch des alertes en file. | Worker Celery. |
 
-Ces webhooks sont sécurisés via signature HMAC (`X-FitIdion-Signature`). Le secret est défini dans
-`FITIDION_WEBHOOK_SECRET`.
+Les webhooks sont sécurisés par signature HMAC (`X-FitIdion-Signature`) configurée via `FITIDION_WEBHOOK_SECRET`.
 
-## 4. Conventions & monitoring
+## 4. Observabilité & conventions
 
-- Toutes les réponses suivent `application/json; charset=utf-8`.
-- Codes d'erreur standardisés (`400`, `401`, `404`, `422`, `429`, `500`).
-- Tracing via `X-Request-ID` (injecté côté FastAPI et logué par le frontend).
-- Metrics Prometheus activables via l'option `--enable-metrics` (expose `/metrics`).
+- Toutes les réponses sont JSON (`application/json; charset=utf-8`).
+- Codes d’erreur normalisés (`400`, `401`, `404`, `422`, `429`, `500`).
+- Tracing via `X-Request-ID` généré par FastAPI (`apps/api/app/main.py`).
+- Exposition Prometheus optionnelle (`/metrics`) si `ENABLE_METRICS=1` (configurable dans `app/config.py`).
 
 ---
 
-📡 *FitIdion API — bâtie pour l'observabilité et la résilience de la donnée fitness.*
+📡 *FitIdion API — orchestrée pour la résilience des données fitness et la cohérence avec le frontend Next.js.*
