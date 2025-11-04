@@ -10,7 +10,6 @@ out/
 # Logs & environment files
 *.log
 .env*
-!.env.example
 
 # Editor metadata
 .DS_Store
