@@ -1,0 +1,47 @@
+[
+  {
+    "id": "prise-masse-8s",
+    "titre": "Prise de Masse",
+    "duree": "8 semaines",
+    "niveau": "Intermédiaire",
+    "description": "Programme orienté hypertrophie : développer la masse musculaire avec des exercices polyarticulaires et un suivi progressif.",
+    "image_url": "/images/programmes/prise-masse.jpg",
+    "liste_exercices": [
+      { "nom": "Squat barre", "series": "4 séries de 8-10 répétitions" },
+      { "nom": "Développé couché", "series": "4 séries de 8 répétitions" },
+      { "nom": "Rowing barre", "series": "4 séries de 10 répétitions" },
+      { "nom": "Soulevé de terre", "series": "3 séries de 6-8 répétitions" },
+      { "nom": "Pompes lestées", "series": "3 séries de 12 répétitions" }
+    ]
+  },
+  {
+    "id": "seche-musculaire-6s",
+    "titre": "Sèche Musculaire",
+    "duree": "6 semaines",
+    "niveau": "Avancé",
+    "description": "Programme intensif pour réduire la masse grasse tout en conservant du muscle grâce à un mix musculation, HIIT et cardio.",
+    "image_url": "/images/programmes/seche-musculaire.jpg",
+    "liste_exercices": [
+      { "nom": "Burpees", "series": "4 séries de 15 répétitions" },
+      { "nom": "Fentes sautées", "series": "4 séries de 12 répétitions par jambe" },
+      { "nom": "Kettlebell swings", "series": "3 séries de 20 répétitions" },
+      { "nom": "Mountain climbers", "series": "4 séries de 30 secondes" },
+      { "nom": "Gainage", "series": "3 séries de 1 minute" }
+    ]
+  },
+  {
+    "id": "full-body-debutant-4s",
+    "titre": "Full Body Débutant",
+    "duree": "4 semaines",
+    "niveau": "Débutant",
+    "description": "Programme global pour débuter en musculation et renforcer tout le corps sans surcharger les articulations.",
+    "image_url": "/images/programmes/full-body-debutant.jpg",
+    "liste_exercices": [
+      { "nom": "Pompes sur genoux", "series": "3 séries de 10 répétitions" },
+      { "nom": "Tirage élastique", "series": "3 séries de 12 répétitions" },
+      { "nom": "Squat poids du corps", "series": "4 séries de 15 répétitions" },
+      { "nom": "Crunchs abdominaux", "series": "3 séries de 15 répétitions" },
+      { "nom": "Planche", "series": "3 séries de 30 secondes" }
+    ]
+  }
+]
