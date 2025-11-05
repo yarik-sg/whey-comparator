@@ -7,7 +7,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn, type ClassValue } from "@/lib/utils";
 
 const baseStyles =
-  "inline-flex items-center justify-center rounded-full font-semibold transition-all duration-200 shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 hover:-translate-y-0.5 hover:shadow-lg";
+  "inline-flex items-center justify-center rounded-full font-semibold transition-all duration-200 shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 hover:-translate-y-0.5 hover:shadow-soft";
 
 export type ButtonVariant =
   | "primary"
@@ -19,13 +19,13 @@ export type ButtonSize = "default" | "sm" | "lg" | "icon";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-white hover:bg-primary/90 focus-visible:ring-primary dark:bg-primary-d dark:text-dark dark:hover:bg-primary",
+    "bg-primary text-white shadow-strong hover:bg-[color:var(--primary-strong)] dark:text-[color:#050505] dark:hover:bg-[color:var(--primary)]",
   secondary:
-    "bg-secondary text-dark hover:bg-secondary/80 focus-visible:ring-primary/40 dark:bg-[var(--secondary)] dark:text-[var(--text)]",
+    "bg-secondary text-dark hover:bg-secondary/85 focus-visible:ring-[color:var(--ring)]/60 dark:bg-[color:var(--secondary)]/80 dark:text-[var(--text)]",
   ghost:
-    "bg-transparent text-dark hover:bg-accent focus-visible:ring-primary/30 dark:text-[var(--text)] dark:hover:bg-[var(--secondary)]/40",
+    "bg-transparent text-dark hover:bg-accent focus-visible:ring-[color:var(--ring)]/50 dark:text-[var(--text)] dark:hover:bg-[color:var(--secondary)]/30",
   outline:
-    "border border-accent text-dark hover:bg-accent focus-visible:ring-primary dark:border-[var(--text)]/20 dark:text-[var(--text)] dark:hover:bg-[var(--secondary)]/30",
+    "border border-[color:var(--border-soft)] text-dark hover:border-primary hover:bg-accent focus-visible:ring-[color:var(--ring)] dark:border-[color:var(--border-soft)]/80 dark:text-[var(--text)] dark:hover:bg-[color:var(--secondary)]/35",
 };
 
 const sizes: Record<ButtonSize, string> = {

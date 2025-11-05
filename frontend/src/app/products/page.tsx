@@ -238,7 +238,7 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-16 pb-20">
-      <section className="bg-accent py-12">
+      <section className="bg-[color:var(--accent)]/85 py-12">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <Breadcrumb
             items={[
@@ -249,7 +249,7 @@ export default function ProductsPage() {
           />
           <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-3">
-              <h1 className="text-3xl font-bold text-dark sm:text-4xl">Catalogue des produits</h1>
+              <h1 className="text-3xl font-bold text-[color:var(--text)] sm:text-4xl">Catalogue des produits</h1>
               <p className="max-w-2xl text-base text-muted">
                 Données consolidées depuis notre scraper interne (Amazon, MyProtein…) et SerpAPI. Filtrez par marque,
                 disponibilité ou budget pour trouver la référence parfaite.
@@ -283,7 +283,7 @@ export default function ProductsPage() {
           />
 
           <section className="space-y-6">
-            <div className="flex flex-col gap-4 rounded-3xl border border-accent/70 bg-background px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] px-4 py-3 shadow-soft sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted">
                 {isBusy ? "Chargement…" : `${totalCount.toLocaleString("fr-FR")} produits`}
               </p>
@@ -301,7 +301,7 @@ export default function ProductsPage() {
                 ))}
 
               {!isBusy && products.length === 0 && (
-                <p className="col-span-full rounded-3xl border border-accent/70 bg-accent p-8 text-center text-muted">
+                <p className="col-span-full rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--accent)] p-8 text-center text-muted">
                   Aucun produit n&apos;a été trouvé. Essayez un autre filtre.
                 </p>
               )}

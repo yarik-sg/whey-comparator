@@ -7,6 +7,7 @@ import { CheckCircle2, ExternalLink, Search, Store } from "lucide-react";
 
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -128,14 +129,14 @@ export default function Comparateur() {
 
   return (
     <div className="space-y-16 pb-20">
-      <section className="bg-accent py-12">
+      <section className="bg-[color:var(--accent)]/80 py-12">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-4">
               <p className="text-xs font-semibold uppercase tracking-[0.4em] text-primary">
                 Comparateur en temps réel
               </p>
-              <h1 className="text-3xl font-bold text-dark sm:text-4xl">
+              <h1 className="text-3xl font-bold text-[color:var(--text)] sm:text-4xl">
                 Affinez votre recherche de compléments
               </h1>
               <p className="max-w-2xl text-base text-muted">
@@ -144,7 +145,7 @@ export default function Comparateur() {
                 port et disponibilité.
               </p>
             </div>
-            <Card className="w-full max-w-md border-accent/70 bg-background/80 backdrop-blur">
+            <Card className="w-full max-w-md bg-[color:var(--surface)]/90 backdrop-blur">
               <form className="space-y-4" onSubmit={handleSearchSubmit}>
                 <label htmlFor="search" className="text-sm font-medium text-muted">
                   Produit ou référence à comparer
@@ -171,9 +172,9 @@ export default function Comparateur() {
       </section>
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 space-y-10">
-        <Card className="border-accent/70">
+        <Card>
           <div className="flex flex-col gap-2">
-            <h2 className="text-xl font-semibold text-dark">Filtres rapides</h2>
+            <h2 className="text-xl font-semibold text-[color:var(--text)]">Filtres rapides</h2>
             <p className="text-sm text-muted">
               Combinez marque, catégorie et budget pour épurer les offres affichées ci-dessous.
             </p>
@@ -207,21 +208,21 @@ export default function Comparateur() {
             />
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted">
-            <div className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 font-semibold text-primary">
+            <Badge className="items-center gap-2 text-[0.7rem] font-semibold">
               <Store className="h-4 w-4" />
               Sources multi-marchands vérifiées
-            </div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-600">
+            </Badge>
+            <Badge variant="primary" className="items-center gap-2 text-[0.7rem]">
               <CheckCircle2 className="h-4 w-4" />
               Statut de stock actualisé
-            </div>
+            </Badge>
           </div>
         </Card>
 
         <section className="space-y-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-dark">Résultats</h2>
+              <h2 className="text-2xl font-semibold text-[color:var(--text)]">Résultats</h2>
               <p className="text-sm text-muted">
                 {loading
                   ? "Analyse des offres en cours…"
@@ -234,7 +235,9 @@ export default function Comparateur() {
           </div>
 
           {apiError && (
-            <div className="rounded-3xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">{apiError}</div>
+            <div className="rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--accent)]/70 p-4 text-sm text-[color:var(--primary-strong)]">
+              {apiError}
+            </div>
           )}
 
           {loading ? (
@@ -242,13 +245,13 @@ export default function Comparateur() {
               {Array.from({ length: 8 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-80 animate-pulse rounded-3xl border border-accent/70 bg-accent/70"
+                  className="h-80 animate-pulse rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--accent)]/70"
                   aria-hidden
                 />
               ))}
             </div>
           ) : produitsFiltres.length === 0 ? (
-            <div className="rounded-3xl border border-accent/70 bg-accent p-8 text-center text-sm text-primary">
+            <div className="rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--accent)] p-8 text-center text-sm text-primary">
               Aucun résultat ne correspond aux filtres sélectionnés. Essayez d&apos;élargir votre recherche.
             </div>
           ) : (
@@ -261,9 +264,9 @@ export default function Comparateur() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 24 }}
                     transition={{ duration: 0.25, delay: index * 0.04 }}
-                    className="group flex h-full flex-col rounded-3xl border border-accent/70 bg-background p-5 shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
+                    className="group flex h-full flex-col rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-5 shadow-soft transition hover:-translate-y-1 hover:border-primary/35 hover:shadow-strong"
                   >
-                    <div className="relative flex items-center justify-center rounded-2xl bg-accent p-6">
+                    <div className="relative flex items-center justify-center rounded-2xl bg-[color:var(--accent)] p-6">
                       {/* eslint-disable-next-line @next/next/no-img-element -- remote images */}
                       <img
                         src={buildDisplayImageUrl(p.image) || "/placeholder.png"}
@@ -276,16 +279,16 @@ export default function Comparateur() {
                     <div className="mt-4 space-y-3">
                       <div className="space-y-1">
                         <p className="text-xs uppercase tracking-wide text-primary">{p.vendor ?? "Marchand"}</p>
-                        <h3 className="line-clamp-2 text-lg font-semibold text-dark">{p.title}</h3>
+                        <h3 className="line-clamp-2 text-lg font-semibold text-[color:var(--text)]">{p.title}</h3>
                       </div>
                       {(p.isBestPrice || p.bestPrice) && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        <Badge variant="primary" className="items-center gap-1">
                           <CheckCircle2 className="h-4 w-4" />
                           Meilleur prix détecté
-                        </span>
+                        </Badge>
                       )}
                       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <span className="text-2xl font-bold text-dark">{formatPriceValue(p.price)}</span>
+                        <span className="text-2xl font-bold text-[color:var(--text)]">{formatPriceValue(p.price)}</span>
                         <span className="text-sm text-muted">Total : {formatPriceValue(p.totalPrice ?? p.price)}</span>
                       </div>
                       {typeof p.pricePerKg === "number" && (
@@ -294,7 +297,7 @@ export default function Comparateur() {
                       <p className="text-xs text-muted">{formatShipping(p)}</p>
                       <p className="flex items-center gap-2 text-xs text-muted">
                         <CheckCircle2
-                          className={`h-4 w-4 ${p.inStock ? "text-emerald-500" : "text-muted/80"}`}
+                          className={`h-4 w-4 ${p.inStock ? "text-primary" : "text-[color:var(--muted)]"}`}
                           aria-hidden
                         />
                         <span>
@@ -303,9 +306,9 @@ export default function Comparateur() {
                             : p.stockStatus ?? (p.inStock ? "Disponible" : "Vérifier le stock")}
                         </span>
                       </p>
-                      <span className="inline-flex items-center rounded-full bg-accent/70 px-3 py-1 text-xs font-medium text-muted">
+                      <Badge variant="muted" className="text-xs font-medium">
                         {p.source}
-                      </span>
+                      </Badge>
                     </div>
                     <div className="mt-6 pt-4">
                       {p.link ? (
@@ -313,13 +316,13 @@ export default function Comparateur() {
                           href={p.link}
                           target="_blank"
                           rel="noopener noreferrer nofollow"
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary/30 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/40 hover:text-primary"
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary/35 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/45 hover:text-[color:var(--primary-strong)]"
                         >
                           Voir l&apos;offre
                           <ExternalLink className="h-4 w-4" aria-hidden />
                         </a>
                       ) : (
-                        <span className="inline-flex w-full items-center justify-center rounded-full bg-accent/70 px-4 py-2 text-sm font-medium text-muted/80">
+                        <span className="inline-flex w-full items-center justify-center rounded-full bg-[color:var(--accent)]/70 px-4 py-2 text-sm font-medium text-muted">
                           Lien indisponible
                         </span>
                       )}
