@@ -6,7 +6,7 @@ Interface officielle de FitIdion. Elle présente le catalogue, les comparateurs,
 
 ```
 frontend/
-├── Dockerfile                     # Image Node 20 + Next.js avec Turbopack
+├── Dockerfile                     # Image Next.js avec Turbopack optimisée pour le déploiement
 ├── README.md                      # Ce guide
 ├── next.config.ts                 # Config Next.js (headers, images, transpilePackages)
 ├── package.json                   # Scripts & dépendances UI

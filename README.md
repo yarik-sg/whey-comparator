@@ -1,7 +1,7 @@
 # ⚡️ FitIdion — La plateforme du fitness intelligent
 
 FitIdion est la nouvelle identité de Whey Comparator. La plateforme combine une API de collecte de prix,
-un comparateur Next.js 15 (React 19) et une documentation produit unifiée pour aider les sportifs à
+un comparateur Next.js 15 (React 19) basé sur l’architecture `app/` et une documentation produit unifiée pour aider les sportifs à
 identifier les meilleures offres de compléments, équipements et abonnements. L'expérience a été
 rethinkée pour refléter le langage visuel FitIdion : palette orange & or, typographie Poppins et
 interfaces lumineuses/dynamiques avec bascule automatique clair/sombre.
@@ -26,6 +26,15 @@ interfaces lumineuses/dynamiques avec bascule automatique clair/sombre.
   page salles avec des liens marchands officiels.
 - **Recherche unifiée FitIdion** : endpoint `/search` combinant catalogue, gyms et programmes pour proposer
   des résultats multi-verticales depuis une seule barre.
+
+## 🧱 Stack technique
+
+- **Frontend** : Next.js 15 (architecture `app/`, composants serveur et client) avec Tailwind CSS 4 pour le
+  design system FitIdion.
+- **Backend** : FastAPI (Python) via l’API légère (`main.py`) et le projet complet `apps/api` (SQLAlchemy,
+  Celery, APScheduler).
+- **Intégrations** : SerpAPI pour l’agrégation prix, APIs/scrapers de salles de sport (`services/gyms_scraper.py`)
+  et données locales de secours (`fallback_catalogue.py`, `data/programmes.json`).
 
 ## 🔌 API & données exposées
 
@@ -90,12 +99,11 @@ whey-comparator/
 ├── services/
 │   ├── gyms_scraper.py              # Scraper Basic-Fit pour `/gyms`
 │   └── scraper/                     # Micro-service Python (collecte prix) + package Poetry
-├── src/                             # Ancienne POC Vite (conservée pour tests UI rapides)
 ├── main.py                          # API FastAPI légère (agrégation temps réel)
 ├── fallback_catalogue.py            # Catalogue de secours partagé
 ├── docker-compose.yml               # Orchestration locale (Postgres, Redis, API, Frontend)
 ├── tailwind.config.ts               # Tokens partagés (design FitIdion)
-├── package.json / package-lock.json # Scripts Node racine (lint, build Vite historique)
+├── package.json / package-lock.json # Scripts racine (proxy vers le frontend Next.js)
 └── requirements.txt                 # Dépendances Python pour l’API légère
 ```
 
@@ -170,9 +178,8 @@ backend conteneurisé, utilisez `API_BASE_URL=http://api:8000`.
 |---------------------------------|----------------------------------------------------------------|
 | `docker compose up --build`     | Démarre la stack complète FitIdion.                            |
 | `docker compose logs -f api`    | Suit les logs FastAPI.                                         |
-| `npm run lint`                  | Exécute ESLint (config partagée, sans conflit Next flat config).|
-| `npm run build`                 | Build production du frontend FitIdion.                         |
-| `npm run preview`               | Prévisualisation Vite (app historique).                        |
+| `npm run lint`                  | Exécute ESLint du frontend Next.js.                            |
+| `npm run build`                 | Build production du frontend FitIdion (Next.js).               |
 | `uvicorn main:app --reload`     | API FastAPI standalone avec rechargement.                      |
 
 ## 📘 Documentation FitIdion
@@ -186,8 +193,8 @@ Les dossiers `docs/` et `frontend/public/README_Branding.txt` détaillent :
 
 ## 🧪 Qualité & tests
 
-- **ESLint / TypeScript** : `npm run lint` au niveau racine et dans `frontend/` exploite les nouvelles
-  configurations `.eslintrc.js` (séparation Vite / Next).
+- **ESLint / TypeScript** : `npm run lint` au niveau racine ou dans `frontend/` utilise la configuration
+  Next.js (App Router) et les règles TypeScript partagées.
 - **Tests API** : `pytest` dans `apps/api/tests` (exemples fournis pour la couche FastAPI).
 - **CI/CD** : workflows à compléter (lint + tests) avant déploiement automatique.
 - **Scraping gyms** : `python -m services.gyms_scraper` pour valider la collecte Basic-Fit et détecter les
