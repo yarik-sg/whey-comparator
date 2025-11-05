@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
+import "@/styles/fitidion-theme.css";
 import "./globals.css";
 import { QueryProvider } from "@/components/QueryProvider";
 import { SiteHeader } from "@/components/SiteHeader";

@@ -96,10 +96,10 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           </span>
 
           <div className="space-y-5">
-            <h1 className="font-heading text-4xl font-semibold leading-tight text-dark dark:text-text-1 sm:text-5xl lg:text-6xl">
+            <h1 className="font-heading text-4xl font-semibold leading-tight text-[color:var(--text)] sm:text-5xl lg:text-6xl">
               Trouvez les meilleurs produits, au meilleur prix.
             </h1>
-            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-dark/80 dark:text-text-2">
+            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-[color:var(--text)]/80">
               Comparez des centaines de compléments, suivez les variations de prix et économisez sur chacune de vos commandes fitness.
             </p>
           </div>
@@ -114,7 +114,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           />
 
           <div className="flex w-full flex-col items-center gap-6">
-            <div className="flex flex-wrap items-center justify-center gap-4 rounded-2xl border border-white/30 bg-white/60 px-6 py-4 text-xs uppercase tracking-[0.28em] text-muted shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-text-2">
+            <div className="flex flex-wrap items-center justify-center gap-4 rounded-2xl border border-white/30 bg-white/60 px-6 py-4 text-xs uppercase tracking-[0.28em] text-muted shadow-sm backdrop-blur">
               {heroLogos.map(({ name, logo }) => (
                 <span key={name} className="flex items-center gap-3">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
@@ -133,18 +133,14 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <Button
-              size="lg"
-              onClick={onViewDeals}
-              className="group inline-flex items-center gap-3 rounded-full bg-primary px-8 py-3 text-base font-semibold text-white shadow-lg transition hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-transparent"
-            >
+            <Button size="lg" onClick={onViewDeals} className="group inline-flex items-center gap-3 px-8 py-3 text-base">
               Voir toutes les offres
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
             </Button>
             <button
               type="button"
               onClick={onStartComparison}
-              className="text-sm font-semibold text-dark/70 underline-offset-4 transition hover:text-primary hover:underline dark:text-text-2"
+              className="text-sm font-semibold text-[color:var(--text)]/70 underline-offset-4 transition hover:text-primary hover:underline"
             >
               Lancer le comparateur intelligent
             </button>
@@ -186,14 +182,14 @@ function HeroCounter({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
       transition={{ duration: 0.5 }}
-      className="rounded-2xl border border-white/40 bg-accent/90 p-5 text-center shadow-neo backdrop-blur dark:border-white/10 dark:bg-[rgba(30,41,59,0.72)]"
+      className="rounded-2xl border border-white/40 bg-[color:var(--accent)]/90 p-5 text-center shadow-soft backdrop-blur"
     >
-      <motion.span className="text-3xl font-semibold text-dark dark:text-text-1">
+      <motion.span className="text-3xl font-semibold text-[color:var(--text)]">
         {prefix}
         {displayValue}
         {suffix}
       </motion.span>
-      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.32em] text-muted dark:text-text-2">{label}</p>
+      <p className="mt-2 text-xs font-semibold uppercase tracking-[0.32em] text-muted">{label}</p>
     </motion.div>
   );
 }

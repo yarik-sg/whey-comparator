@@ -42,18 +42,20 @@ export function Slider({
   const trackStyles = cn(
     "pointer-events-none absolute inset-x-0 h-0 w-full appearance-none focus:outline-none",
     "[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4",
-    "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white",
-    "[&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-accent/70",
+    "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-background",
+    "[&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-[color:var(--border-soft)]",
+    "dark:[&::-webkit-slider-thumb]:bg-[color:var(--surface)]",
     "[&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4",
-    "[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white",
-    "[&::-moz-range-thumb]:shadow [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-accent/70",
+    "[&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-background",
+    "[&::-moz-range-thumb]:shadow [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-[color:var(--border-soft)]",
+    "dark:[&::-moz-range-thumb]:bg-[color:var(--surface)]",
   );
 
   return (
     <div className={cn("relative flex h-10 items-center", disabled && "opacity-60", className)}>
-      <div className="absolute left-0 right-0 h-1 rounded-full bg-white/30 dark:bg-white/10" />
+      <div className="absolute left-0 right-0 h-1 rounded-full bg-[color:var(--border-soft)]/60 dark:bg-white/10" />
       <div
-        className="absolute h-1 rounded-full bg-fitidion-orange shadow-glow"
+        className="absolute h-1 rounded-full bg-primary shadow-soft"
         style={{ left: `${startPercent}%`, width: `${Math.max(endPercent - startPercent, 0)}%` }}
       />
       <input
