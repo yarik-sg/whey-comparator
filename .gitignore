@@ -15,3 +15,6 @@ out/
 .DS_Store
 .idea/
 *.swp
+__pycache__/
+*.pyc
+.gitignore.bak
