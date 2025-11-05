@@ -16,7 +16,25 @@ whey-comparator/
 ├── main.py                        # API d’agrégation « lite » (FastAPI)
 ├── fallback_catalogue.py          # Catalogue de secours partagé
 ├── docker-compose.yml             # Stack locale (Postgres, Redis, API, Front)
-└── src/                           # Ancienne POC Vite (rétro-compatibilité)
+└── src/                           # Prototype UI historique (archivée)
+```
+
+## Schéma d’architecture
+
+```mermaid
+flowchart TD
+  user((Utilisateur))
+  next[Frontend Next.js\nApp Router (SSR)]
+  fastapi[API FastAPI\nAgrégation & CRUD]
+  serp[SerpAPI]
+  gyms[APIs / Scraper gyms]
+  fallback[(Données locales\nfallback)]
+
+  user --> next
+  next -->|Requêtes SSR & client| fastapi
+  fastapi --> serp
+  fastapi --> gyms
+  fastapi --> fallback
 ```
 
 Chaque sous-dossier possède son propre README ou est documenté dans les sections ci-dessous.
@@ -34,6 +52,7 @@ Chaque sous-dossier possède son propre README ou est documenté dans les sectio
 | Hooks | `src/hooks/useGyms.ts` | Accès aux gyms (API + fallback `services/gyms_scraper.py`). |
 | Types | `src/types/api.ts` | Typages TypeScript des entités (Product, Offer, PriceAlert, Gym, Programme). |
 | Data statique | `src/data/popularCategories.ts` | Catégories mise en avant sur la page catalogue. |
+| SSR & comparaison | `src/app/comparison/page.tsx` | Composant serveur `async` avec `cache: "no-store"` pour pré-rendre les comparaisons et hydrater les interactions côté client. |
 | Legacy API | `src/pages/api/*.ts` | Routes API historiques (comparateurs partenaires, proxys marchands) conservées pour compatibilité Vercel. |
 | Vendor | `vendor/tanstack-query-core/`, `vendor/tanstack-react-query/` | Bundles TanStack Query vendored pour garantir un fonctionnement offline/stable. |
 
@@ -72,8 +91,8 @@ Chaque sous-dossier possède son propre README ou est documenté dans les sectio
 ## Orchestration & environnements
 
 - `docker-compose.yml` : orchestrateur Postgres, Redis, API FastAPI (`apps/api`), worker Celery et frontend Next.js (`frontend`).
-- `tailwind.config.ts` (racine) : tokens FitIdion partagés pour la POC Vite (`src/`) et les outils design.
-- `package.json` & `requirements.txt` (racine) : scripts historiques (Vite) et dépendances de l’API légère.
+- `tailwind.config.ts` (racine) : tokens FitIdion partagés pour le design system commun (frontend Next.js + outils).
+- `package.json` & `requirements.txt` (racine) : scripts de pilotage (frontend Next.js) et dépendances de l’API légère.
 - Les environnements `.env` attendus sont détaillés dans les README dédiés (frontend, backend).
 
 ## Flux fonctionnel FitIdion
