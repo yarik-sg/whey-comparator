@@ -101,13 +101,12 @@ function normalizeLink(link: unknown): string | null {
         if (redirected.protocol === "http:" || redirected.protocol === "https:") {
           return redirected.toString();
         }
-      } catch (error) {
-        console.warn("catalogue-serp: invalid redirect url", redirect, error);
+      } catch {
+        return url.toString();
       }
     }
     return url.toString();
-  } catch (error) {
-    console.warn("catalogue-serp: invalid url", trimmed, error);
+  } catch {
     return null;
   }
 }
@@ -252,8 +251,7 @@ async function querySerpApi(query: string, limit: number, apiKey: string) {
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    console.error("catalogue-serp: unexpected status", response.status, text);
+    await response.text();
     throw new Error(`SerpAPI request failed with status ${response.status}`);
   }
 
@@ -277,7 +275,6 @@ export async function GET(request: Request) {
 
   const apiKey = process.env.SERPAPI_KEY ?? process.env.NEXT_PUBLIC_SERPAPI_KEY;
   if (!apiKey) {
-    console.error("catalogue-serp: missing SERPAPI_KEY environment variable");
     return NextResponse.json(
       { error: "SerpAPI key is not configured" },
       { status: 500, headers: { "Cache-Control": "no-store" } },
@@ -288,7 +285,6 @@ export async function GET(request: Request) {
     const payload = await querySerpApi(query, limit, apiKey);
 
     if (payload && typeof payload === "object" && "error" in payload) {
-      console.error("catalogue-serp: SerpAPI returned error", payload.error);
       return NextResponse.json(
         { error: String(payload.error ?? "SerpAPI error") },
         { status: 502, headers: { "Cache-Control": "no-store" } },
@@ -345,9 +341,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("catalogue-serp: request failed", error);
+    const message = error instanceof Error ? error.message : "Unable to load SerpAPI promotions";
     return NextResponse.json(
-      { error: "Unable to load SerpAPI promotions" },
+      { error: message },
       { status: 502, headers: { "Cache-Control": "no-store" } },
     );
   }

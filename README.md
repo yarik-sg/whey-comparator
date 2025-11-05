@@ -1,205 +1,92 @@
-# ⚡️ FitIdion — La plateforme du fitness intelligent
+# FitIdion — Plateforme du fitness intelligent
 
-FitIdion est la nouvelle identité de Whey Comparator. La plateforme combine une API de collecte de prix,
-un comparateur Next.js 15 (React 19) basé sur l’architecture `app/` et une documentation produit unifiée pour aider les sportifs à
-identifier les meilleures offres de compléments, équipements et abonnements. L'expérience a été
-rethinkée pour refléter le langage visuel FitIdion : palette orange & or, typographie Poppins et
-interfaces lumineuses/dynamiques avec bascule automatique clair/sombre.
+## Aperçu du projet
+FitIdion est la nouvelle version de Whey Comparator. La plateforme rassemble un comparateur de prix Next.js, une API FastAPI et une bibliothèque de données communes pour aider les sportifs à identifier les meilleurs compléments, équipements et abonnements. L'expérience utilisateur repose sur un design system Tailwind moderne, un mode sombre natif et des sections éditoriales mettant en avant les partenaires FitIdion.
 
-## ✨ Points forts
+Parmi les fonctionnalités clés :
+- Comparateur intelligent avec agrégation multi-marchands, scoring nutritionnel et repérage automatique du meilleur prix.
+- Catalogue produit enrichi avec filtres avancés, alertes e-mail et historique de prix visualisé sur les fiches produits.
+- Moteur de recherche unifié couvrant produits, salles et programmes d'entraînement.
+- Gym Locator connecté (scraping Basic-Fit et partenaires) pour trouver rapidement une salle proche.
+- Documentation technique et produit centralisée (`docs/`).
 
-- **Catalogue enrichi FitIdion** : agrégation multi-marchands, scores nutritionnels et filtres intelligents
-  (marque, forme, rapport protéines/prix) avec fallback local lorsque le scraping échoue.
-- **Comparateur en temps réel** : juxtaposition de produits, surlignage automatique du meilleur deal et
-  historique des prix synchronisé avec les alertes.
-- **Analyse d'historique des prix** : collecte quotidienne (PostgreSQL + fallback) avec statistiques
-  auto-calculées (min/moyenne/tendance) et visualisation Recharts sur les fiches produit.
-- **Alertes FitIdion** : interface dédiée pour activer/mettre en pause les notifications de baisse de prix
-  avec onboarding simplifié et suivi par e-mail.
-- **Dashboard visuel** : sections « Pourquoi FitIdion », « Gym Locator » et « Insights » aux cartes vitrées,
-  gradients FitIdion et ombres douces pour un rendu premium.
-- **Système de design unifié** : Tailwind CSS 4, composants boutons/inputs/checkbox/slider optimisés pour
-  la palette FitIdion et un ThemeProvider maison avec stockage local du mode sombre.
-- **Programmes dynamiques** : page `/programmes` connectée à l'API (JSON partagé) et intégrée à la recherche
-  globale pour orienter les utilisateurs vers les routines adaptées.
-- **Gym Locator connecté** : scraping Basic-Fit temps réel via `services/gyms_scraper.py` pour alimenter la
-  page salles avec des liens marchands officiels.
-- **Recherche unifiée FitIdion** : endpoint `/search` combinant catalogue, gyms et programmes pour proposer
-  des résultats multi-verticales depuis une seule barre.
+## Stack technique
+- **Frontend** : Next.js 15 (App Router), React 19, Tailwind CSS 4, TanStack Query et composants animés Framer Motion.
+- **Backend** : FastAPI (API légère `main.py`) et projet complet `apps/api` (SQLAlchemy, Celery, APScheduler) pour l’ingestion et les alertes.
+- **Données & services** : SerpAPI, scrapers Python (`services/gyms_scraper.py`), catalogue de secours (`fallback_catalogue.py`, `data/programmes.json`).
+- **Outillage** : TypeScript 5, ESLint 9, Docker Compose, Poetry (backend) et PNPM/NPM pour le frontend.
 
-## 🧱 Stack technique
-
-- **Frontend** : Next.js 15 (architecture `app/`, composants serveur et client) avec Tailwind CSS 4 pour le
-  design system FitIdion.
-- **Backend** : FastAPI (Python) via l’API légère (`main.py`) et le projet complet `apps/api` (SQLAlchemy,
-  Celery, APScheduler).
-- **Intégrations** : SerpAPI pour l’agrégation prix, APIs/scrapers de salles de sport (`services/gyms_scraper.py`)
-  et données locales de secours (`fallback_catalogue.py`, `data/programmes.json`).
-
-## 🔌 API & données exposées
-
-FitIdion met à disposition une API publique accessible en local sur `http://localhost:8000` :
-
-- `GET /products/{id}/price-history` — agrégation des 30 derniers relevés avec statistiques (min/moyenne/
-  tendance) consommée par les graphiques Recharts.
-- `GET /programmes` — JSON structuré (`data/programmes.json`) partagé entre le frontend et la recherche
-  unifiée pour afficher les routines dynamiques.
-- `GET /gyms` — données Basic-Fit/partenaires actualisées via `services/gyms_scraper.py` avec fallback
-  catalogue.
-- `GET /search` — recherche instantanée (produits, gyms, programmes) avec pondération sur la pertinence.
-- `POST /price-alerts` — enregistrement et activation des alertes (workflow géré par Celery/Redis).
-
-La liste exhaustive des routes (CRUD FastAPI + agrégation) est détaillée dans `docs/api_endpoints.md`.
-
-## 🏗️ Cartographie du dépôt
-
+## Installation locale
+### 1. Démarrer toute la stack avec Docker (recommandé)
+```bash
+git clone https://github.com/<votre-organisation>/fitidion.git
+cd fitidion
+docker compose up --build
 ```
-whey-comparator/
-├── README.md                        # Vue d'ensemble FitIdion + démarrage rapide
-├── docs/                            # Documentation produit & technique
-│   ├── architecture.md              # Schéma détaillé des couches (frontend, API, services)
-│   ├── api_endpoints.md             # Référence des routes FastAPI & agrégation
-│   ├── design_guidelines.md         # Charte graphique & tokens Tailwind
-│   ├── features.md                  # Parcours et modules principaux
-│   ├── next_steps.md                # Roadmap produit & technique
-│   └── recommandations-ameliorees.md# Recommandations stratégiques
-├── data/
-│   └── programmes.json              # Référentiel des programmes sportifs (endpoint `/programmes`)
-├── apps/
-│   └── api/                         # Backend FastAPI (Poetry)
-│       ├── README.md                # Guide d'exploitation backend
-│       ├── app/
-│       │   ├── main.py              # Point d'entrée FastAPI + montage des routeurs
-│       │   ├── config.py            # Paramètres Pydantic (`API_*`)
-│       │   ├── database.py          # Session SQLAlchemy & dépendances FastAPI
-│       │   ├── models.py            # ORM (Product, Offer, Supplier, PriceHistory, PriceAlert…)
-│       │   ├── schemas.py           # Schémas Pydantic v2 (payloads & réponses)
-│       │   ├── routers/             # Routes REST modulaires (products, offers, suppliers, price_alerts)
-│       │   ├── celery_app.py        # Configuration Celery/Redis
-│       │   ├── tasks.py             # Tâches d’ingestion & notifications
-│       │   ├── scheduler.py         # Planification de rafraîchissement (APScheduler)
-│       │   └── email.py             # Templates d’alertes et envoi via SMTP/API
-│       ├── alembic/                 # Migrations base de données
-│       ├── tests/                   # Suite Pytest + HTTPX (produits, offres, alertes)
-│       └── pyproject.toml           # Dépendances Poetry (FastAPI, SQLAlchemy, Celery…)
-├── frontend/                        # Application Next.js 15 (React 19)
-│   ├── README.md                    # Guide frontend + structure App Router
-│   ├── next.config.ts               # Configuration Next.js (App Router, images, headers)
-│   ├── tailwind.config.ts           # Config Tailwind spécifique frontend
-│   ├── src/
-│   │   ├── app/                     # Pages App Router (`page.tsx`, `/catalogue`, `/comparison`, `/alerts`…)
-│   │   ├── components/              # Sections métier (HeroSection, PriceComparison…) & primitives UI
-│   │   ├── data/                    # Données statiques (catégories populaires)
-│   │   ├── hooks/                   # Hooks maison (ex : `useGyms`)
-│   │   ├── lib/                     # Clients API, queries TanStack, catalogue fallback partagé
-│   │   ├── styles/                  # Utilitaires CSS additionnels
-│   │   └── types/                   # Types TypeScript pour les réponses API
-│   ├── public/                      # Assets (logos, manifest, favicon placeholders)
-│   └── vendor/                      # Bundles TanStack vendored (query-core & react-query)
-├── services/
-│   ├── gyms_scraper.py              # Scraper Basic-Fit pour `/gyms`
-│   └── scraper/                     # Micro-service Python (collecte prix) + package Poetry
-├── main.py                          # API FastAPI légère (agrégation temps réel)
-├── fallback_catalogue.py            # Catalogue de secours partagé
-├── docker-compose.yml               # Orchestration locale (Postgres, Redis, API, Frontend)
-├── tailwind.config.ts               # Tokens partagés (design FitIdion)
-├── package.json / package-lock.json # Scripts racine (proxy vers le frontend Next.js)
-└── requirements.txt                 # Dépendances Python pour l’API légère
+- Frontend Next.js : http://localhost:3000
+- API FastAPI : http://localhost:8000 (Swagger disponible sur `/docs`).
+
+Pour arrêter et nettoyer :
+```bash
+docker compose down
+# Purge des volumes si nécessaire
+docker compose down -v
 ```
 
-> 💡 Pour une description exhaustive de chaque répertoire, consultez `docs/architecture.md`.
+### 2. Lancer les services manuellement
+#### Frontend Next.js
+```bash
+# Installer les dépendances
+npm install --prefix frontend
 
-## 🚀 Démarrage rapide
+# Lancer le serveur de développement
+npm run dev --prefix frontend
+```
+Le site est disponible sur http://localhost:3000.
 
-### Option 1 — Docker Compose (recommandé)
-
-1. Installer Docker + Docker Compose.
-2. Lancer la stack complète :
-
-   ```bash
-   docker compose up --build
-   ```
-
-   Cette commande provisionne Postgres, Redis, l'API FastAPI, le worker Celery et le frontend Next.js
-   FitIdion (Turbopack). Les volumes conservent base de données et dépendances.
-
-3. Accéder aux services :
-   - Frontend FitIdion : [http://localhost:3000](http://localhost:3000)
-   - API agrégation : [http://localhost:8000](http://localhost:8000) (`/docs` pour Swagger)
-
-4. Arrêt / reset :
-
-   ```bash
-   docker compose down
-   docker compose down -v  # purge volumes
-   ```
-
-Les variables (`API_BASE_URL`, `NEXT_PUBLIC_API_BASE_URL`, etc.) sont injectées automatiquement par
-`docker-compose.yml` pour relier le frontend FitIdion à l'API.
-
-### Option 2 — Lancer les services manuellement
-
-#### API FastAPI
-
+#### API FastAPI légère (`main.py`)
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn main:app --reload
+uvicorn main:app --reload --port 8000
 ```
+Variables utiles : `SERPAPI_KEY`, `SCRAPER_BASE_URL`.
 
-Variables utiles :
-
-- `SERPAPI_KEY` : clé SerpAPI (valeur de dev fournie).
-- `SCRAPER_BASE_URL` : URL du service scraper (`http://localhost:8001` par défaut).
-
-#### Backend complet (apps/api)
-
+#### Backend complet (`apps/api`)
 ```bash
 cd apps/api
 poetry install
-poetry run uvicorn app.main:app --reload
+poetry run uvicorn app.main:app --reload --port 8100
+```
+Lancer les workers Celery : `poetry run celery -A app.celery_app worker -l info` et le scheduler : `poetry run python -m app.scheduler`.
+
+## Déploiement
+- **Frontend** : compatible Vercel/Netlify. Exposer les variables `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SITE_URL`, `SERPAPI_KEY`.
+- **API FastAPI** : hébergement sur Fly.io, Render ou un conteneur Docker (voir `Dockerfile` et `docker-compose.yml`). Prévoir PostgreSQL et Redis pour la stack complète (`apps/api`).
+- **Workers & scraping** : exécuter `services/gyms_scraper.py` et les tâches Celery via un orchestrateur (Docker Compose, Kubernetes ou services managés).
+
+## Structure des répertoires
+```
+.
+├── README.md                     # Ce guide
+├── frontend/                     # Application Next.js (App Router)
+│   ├── src/app/                  # Pages, layouts, API routes app/
+│   ├── src/components/           # Composants UI et sections marketing
+│   ├── src/lib/                  # Clients API, metadata, helpers
+│   └── public/                   # Assets (logos, manifest, captures)
+├── apps/
+│   └── api/                      # Backend FastAPI complet (Poetry)
+├── services/                     # Scripts de scraping & ingestion Python
+├── data/                         # Données statiques partagées
+├── docs/                         # Documentation produit & technique
+├── main.py / requirements.txt    # API FastAPI légère
+├── docker-compose.yml            # Orchestration locale (Postgres, Redis, API, Frontend)
+└── fallback_catalogue.py         # Catalogue de secours partagé
 ```
 
-#### Frontend FitIdion (Next.js 15)
+## Captures ou GIF de démonstration
+- ![Interface FitIdion](frontend/public/FitIdion_Banner.png)
+- ![Dashboard lumineux](frontend/public/FitIdionLogo_Light.png)
 
-```bash
-cd frontend
-npm install
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 npm run dev
-```
-
-Le thème FitIdion est injecté globalement (gradients, mode sombre, typographie Poppins). Pour lier le
-backend conteneurisé, utilisez `API_BASE_URL=http://api:8000`.
-
-### Scripts utiles
-
-| Commande                         | Description                                                    |
-|---------------------------------|----------------------------------------------------------------|
-| `docker compose up --build`     | Démarre la stack complète FitIdion.                            |
-| `docker compose logs -f api`    | Suit les logs FastAPI.                                         |
-| `npm run lint`                  | Exécute ESLint du frontend Next.js.                            |
-| `npm run build`                 | Build production du frontend FitIdion (Next.js).               |
-| `uvicorn main:app --reload`     | API FastAPI standalone avec rechargement.                      |
-
-## 📘 Documentation FitIdion
-
-Les dossiers `docs/` et `frontend/public/README_Branding.txt` détaillent :
-
-- la charte FitIdion (palette, typographies, composants UI),
-- le parcours utilisateur (comparateur, alertes, catalogue),
-- la roadmap produit et les intégrations prévues (nouveaux marchands, IA pricing),
-- les guidelines éditoriales (ton FitIdion, voix de marque).
-
-## 🧪 Qualité & tests
-
-- **ESLint / TypeScript** : `npm run lint` au niveau racine ou dans `frontend/` utilise la configuration
-  Next.js (App Router) et les règles TypeScript partagées.
-- **Tests API** : `pytest` dans `apps/api/tests` (exemples fournis pour la couche FastAPI).
-- **CI/CD** : workflows à compléter (lint + tests) avant déploiement automatique.
-- **Scraping gyms** : `python -m services.gyms_scraper` pour valider la collecte Basic-Fit et détecter les
-  changements de markup.
-
----
-
-✨ *FitIdion — Augmentez votre impact sportif avec des décisions guidées par la donnée.*
+> Ajoutez vos propres captures (PNG ou GIF) dans `frontend/public/images/` pour illustrer des parcours spécifiques.

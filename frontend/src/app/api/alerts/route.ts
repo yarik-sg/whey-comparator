@@ -11,8 +11,7 @@ export async function POST(request: Request) {
 
   try {
     payload = await request.json();
-  } catch (error) {
-    console.error("Erreur JSON alerts:", error);
+  } catch {
     return NextResponse.json({ message: "Format JSON invalide." }, { status: 400 });
   }
 
@@ -35,13 +34,6 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-
-  console.info("[PriceAlert]", {
-    email,
-    product,
-    priceThreshold,
-    timestamp: new Date().toISOString(),
-  });
 
   return NextResponse.json(
     {
