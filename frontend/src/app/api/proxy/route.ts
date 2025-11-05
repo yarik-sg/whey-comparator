@@ -10,10 +10,19 @@ function buildQuery(searchParams: URLSearchParams) {
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
-  const target = url.searchParams.get("target");
+  const rawTarget = url.searchParams.get("target")?.trim();
 
-  if (!target) {
+  if (!rawTarget) {
     return NextResponse.json({ error: "Missing target parameter" }, { status: 400 });
+  }
+
+  if (/^https?:\/\//i.test(rawTarget) || rawTarget.startsWith("//")) {
+    return NextResponse.json({ error: "Invalid target" }, { status: 400 });
+  }
+
+  const target = rawTarget.replace(/^\/+/, "");
+  if (!target || target.startsWith("..")) {
+    return NextResponse.json({ error: "Invalid target" }, { status: 400 });
   }
 
   try {
