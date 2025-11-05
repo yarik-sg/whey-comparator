@@ -275,11 +275,7 @@ export function DealsShowcase() {
           setUsingFallback(false);
           setState("success");
         }
-      } catch (error) {
-        console.warn(
-          "Impossible de charger les promotions depuis l'API, utilisation des données de secours.",
-          error,
-        );
+      } catch {
         if (mounted) {
           if (fallbackDeals.length > 0) {
             setDeals(fallbackDeals);

@@ -22,8 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const data = JSON.parse(text);
     res.status(200).json(data);
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Erreur inconnue";
-    console.error("Erreur proxy:", message);
-    res.status(500).json({ error: message });
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ error: "Impossible de récupérer les données comparatif.", details: message });
   }
 }

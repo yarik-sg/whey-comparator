@@ -1,7 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import ComingSoon from "@/components/ComingSoon";
 import { Button } from "@/components/ui/button";
+import { createMetadata } from "@/lib/siteMetadata";
+
+export const metadata: Metadata = createMetadata({
+  title: "Analyse des performances",
+  description: "Explorez les tableaux de bord FitIdion et préparez-vous aux prochaines fonctionnalités d'analyse personnalisée.",
+  path: "/analyse",
+});
 
 export default function AnalysePage() {
   return (

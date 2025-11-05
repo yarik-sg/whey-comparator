@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { OfferTable } from "@/components/OfferTable";
 import { ProductCard } from "@/components/ProductCard";
@@ -7,12 +8,20 @@ import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import apiClient from "@/lib/apiClient";
 import { getFallbackComparison, getFallbackProductSummaries } from "@/lib/fallbackCatalogue";
+import { createMetadata } from "@/lib/siteMetadata";
 import {
   getCanonicalProductId,
   normalizeProductIdentifier,
   type ProductIdentifierCandidate,
 } from "@/lib/productIdentifiers";
 import type { ComparisonEntry, ComparisonResponse, DealItem, ProductListResponse, ProductSummary } from "@/types/api";
+
+
+export const metadata: Metadata = createMetadata({
+  title: "Comparaison de produits",
+  description: "Comparez plusieurs références FitIdion côte à côte pour identifier l'offre la plus pertinente selon vos critères.",
+  path: "/comparison",
+});
 
 interface ComparisonPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -201,7 +210,6 @@ async function fetchComparison(ids: string) {
 
     return mergeWithFallback(sanitized, fallback, requestedIds);
   } catch (error) {
-    console.error("Erreur chargement comparaison", error);
     return fallback;
   }
 }
@@ -243,7 +251,6 @@ async function fetchDefaultComparisonProducts(
 
     return supplemented;
   } catch (error) {
-    console.error("Erreur chargement sélection par défaut", error);
     return fallbackProducts;
   }
 }

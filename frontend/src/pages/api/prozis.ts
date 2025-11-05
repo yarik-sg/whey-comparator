@@ -8,7 +8,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).json(data);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("Erreur proxy Prozis:", message);
-    res.status(500).json({ error: "Impossible de récupérer les données Prozis." });
+    res.status(500).json({ error: "Impossible de récupérer les données Prozis.", details: message });
   }
 }

@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { BrandHeader } from "@/components/BrandHeader";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
+import { siteMetadata } from "@/lib/siteMetadata";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -21,8 +22,37 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "FitIdion — La plateforme du Fitness Intelligent",
-  description: "Comparez les meilleures offres fitness, produits et salles de sport.",
+  metadataBase: new URL(siteMetadata.url),
+  title: {
+    default: "FitIdion — La plateforme du Fitness Intelligent",
+    template: "%s — FitIdion",
+  },
+  description: siteMetadata.description,
+  keywords: [
+    "comparateur fitness",
+    "compléments sportifs",
+    "prix protéines",
+    "alertes prix",
+    "salles de sport",
+  ],
+  applicationName: siteMetadata.name,
+  authors: [{ name: siteMetadata.name }],
+  openGraph: {
+    title: "FitIdion — La plateforme du Fitness Intelligent",
+    description: siteMetadata.description,
+    url: siteMetadata.url,
+    siteName: siteMetadata.name,
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FitIdion — La plateforme du Fitness Intelligent",
+    description: siteMetadata.description,
+  },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export const viewport: Viewport = {

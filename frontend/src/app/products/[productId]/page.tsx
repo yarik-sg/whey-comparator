@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Breadcrumb } from "@/components/Breadcrumb";
@@ -10,6 +11,7 @@ import { ReviewsSection } from "@/components/ReviewsSection";
 import { PriceComparison } from "@/components/PriceComparison";
 import { SimilarProducts } from "@/components/SimilarProducts";
 import apiClient, { ApiError } from "@/lib/apiClient";
+import { createMetadata } from "@/lib/siteMetadata";
 import {
   getFallbackProductOffers,
   getFallbackSimilarProducts,
@@ -90,6 +92,23 @@ function buildGalleryImages(product: ProductOffersResponse["product"], offers: D
   return Array.from(unique.values());
 }
 
+interface ProductDetailPageParams {
+  params: Promise<{ productId: string }>;
+}
+
+export async function generateMetadata({ params }: ProductDetailPageParams): Promise<Metadata> {
+  const { productId } = await params;
+  const rawId = (productId ?? "").trim();
+  const readable = rawId.replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+  const title = readable ? `Fiche produit ${readable}` : "Fiche produit";
+  const pathSegment = rawId ? `/products/${encodeURIComponent(rawId)}` : "/products";
+  return createMetadata({
+    title,
+    description: "Analysez le détail du produit, comparez les offres et suivez l'historique de prix avec FitIdion.",
+    path: pathSegment,
+  });
+}
+
 async function fetchProductOffers(productId: string, fallbackId: number | null) {
   const encodedId = encodeURIComponent(productId);
   try {
@@ -100,10 +119,6 @@ async function fetchProductOffers(productId: string, fallbackId: number | null) 
 
     return data;
   } catch (error) {
-    const isNotFound = error instanceof ApiError && error.status === 404;
-    const logger = isNotFound ? console.warn : console.error;
-    logger("Erreur chargement offre produit", error);
-
     if (fallbackId !== null) {
       const fallback = getFallbackProductOffers(fallbackId);
       if (fallback) {
@@ -131,10 +146,6 @@ async function fetchSimilarProducts(
 
     return related;
   } catch (error) {
-    const isNotFound = error instanceof ApiError && error.status === 404;
-    const logger = isNotFound ? console.warn : console.error;
-    logger("Erreur chargement produits similaires", error);
-
     if (fallbackId !== null) {
       const fallback = getFallbackSimilarProducts(fallbackId, limit);
       if (fallback) {
@@ -170,9 +181,6 @@ async function fetchPriceHistoryData(
         currency: entry.currency ?? fallbackCurrency ?? "EUR",
       }));
   } catch (error) {
-    const isNotFound = error instanceof ApiError && error.status === 404;
-    const logger = isNotFound ? console.warn : console.error;
-    logger("Erreur chargement historique prix", error);
     return [];
   }
 }

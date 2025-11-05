@@ -72,10 +72,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     if (asChild) {
       if (!React.isValidElement(children)) {
-        if (process.env.NODE_ENV !== "production") {
-          console.warn("Button with `asChild` requires a single React element as a child.");
-        }
-        return null;
+        throw new Error("Button with `asChild` requires a single React element as a child.");
       }
 
       const child = React.Children.only(children) as React.ReactElement;
