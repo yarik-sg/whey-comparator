@@ -8,12 +8,12 @@ import os, re
 import requests
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs, quote
-from functools import lru_cache
 from math import atan2, cos, radians, sin, sqrt
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from fallback_catalogue import get_fallback_product, get_fallback_products
-from services.gyms_scraper import get_basicfit_gyms
+from services.gyms_scraper import get_partner_gyms
+from services.local_cache import local_cache
 
 app = FastAPI()
 
@@ -2014,33 +2014,51 @@ def collect_scraper_deals(q: str, limit: int = 12) -> List[Dict[str, Any]]:
 
     return deals
 
-@lru_cache(maxsize=64)
 def serpapi_shopping(q: str, hl: str = "fr", gl: str = "fr") -> Dict[str, Any]:
+    cache_key = f"serpapi:shopping:{hl}:{gl}:{q.strip().lower()}"
+    cached = local_cache.get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+
     params = {"engine": "google_shopping", "q": q, "hl": hl, "gl": gl, "api_key": SERPAPI_KEY}
     try:
         r = requests.get(SERPAPI_BASE, params=params, timeout=30)
         try:
-            return r.json()
+            payload = r.json()
         except Exception:
-            return {"error": "Réponse non JSON de SerpAPI", "text": r.text, "status": r.status_code}
+            payload = {"error": "Réponse non JSON de SerpAPI", "text": r.text, "status": r.status_code}
     except requests.exceptions.Timeout:
-        return {"error": "Timeout SerpAPI (google_shopping)"}
+        payload = {"error": "Timeout SerpAPI (google_shopping)"}
     except requests.exceptions.RequestException as exc:
-        return {"error": f"Erreur SerpAPI (google_shopping): {exc}"}
+        payload = {"error": f"Erreur SerpAPI (google_shopping): {exc}"}
 
-@lru_cache(maxsize=128)
+    if isinstance(payload, dict) and "error" not in payload:
+        local_cache.set(cache_key, payload, ttl=60 * 60)
+
+    return payload
+
 def serpapi_product_offers(product_id: str, hl: str = "fr", gl: str = "fr") -> Dict[str, Any]:
+    cache_key = f"serpapi:product:{hl}:{gl}:{product_id}"
+    cached = local_cache.get(cache_key)
+    if isinstance(cached, dict):
+        return cached
+
     params = {"engine": "google_product", "product_id": product_id, "offers": "1", "hl": hl, "gl": gl, "api_key": SERPAPI_KEY}
     try:
         r = requests.get(SERPAPI_BASE, params=params, timeout=30)
         try:
-            return r.json()
+            payload = r.json()
         except Exception:
-            return {"error": "Réponse non JSON (google_product)", "text": r.text, "status": r.status_code}
+            payload = {"error": "Réponse non JSON (google_product)", "text": r.text, "status": r.status_code}
     except requests.exceptions.Timeout:
-        return {"error": "Timeout SerpAPI (google_product)"}
+        payload = {"error": "Timeout SerpAPI (google_product)"}
     except requests.exceptions.RequestException as exc:
-        return {"error": f"Erreur SerpAPI (google_product): {exc}"}
+        payload = {"error": f"Erreur SerpAPI (google_product): {exc}"}
+
+    if isinstance(payload, dict) and "error" not in payload:
+        local_cache.set(cache_key, payload, ttl=3 * 60 * 60)
+
+    return payload
 
 def pick_best_offer(offers: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     if not offers:
@@ -2064,15 +2082,21 @@ def pick_best_offer(offers: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
 
 # Lightweight endpoint used by the Next.js frontend to fetch live gym listings.
 @app.get("/gyms")
-def get_gyms(query: str = Query("", description="Filtrer par nom"), limit: int = Query(20, ge=1, le=100)):
-    try:
-        gyms = get_basicfit_gyms()
-    except requests.RequestException as exc:  # pragma: no cover - network failure path
-        raise HTTPException(status_code=502, detail=f"Impossible de récupérer les salles: {exc}") from exc
+def get_gyms(
+    query: str = Query("", description="Filtrer par nom, ville ou marque"),
+    limit: int = Query(20, ge=1, le=100),
+):
+    gyms = get_partner_gyms(limit=None)
 
     normalized_query = query.strip().lower()
     if normalized_query:
-        gyms = [g for g in gyms if normalized_query in g["name"].lower()]
+        gyms = [
+            g
+            for g in gyms
+            if normalized_query in (g.get("name") or "").lower()
+            or normalized_query in (g.get("city") or "").lower()
+            or normalized_query in (g.get("brand") or "").lower()
+        ]
 
     return gyms[:limit]
 
@@ -2397,26 +2421,18 @@ async def search_all(q: str, limit: int = 10):
         except (requests.RequestException, ValueError):
             results["products"] = []
 
-    gym_params = {"limit": effective_limit}
-    if normalized_query:
-        gym_params["query"] = normalized_query
-
     try:
-        gyms_response = requests.get(
-            "http://localhost:8000/gyms",
-            params=gym_params,
-            timeout=5,
-        )
-        gyms_response.raise_for_status()
-        gyms_payload = gyms_response.json()
-        if isinstance(gyms_payload, list):
-            gyms_results = gyms_payload
-        elif isinstance(gyms_payload, dict):
-            gyms_results = gyms_payload.get("gyms") or []
-        else:
-            gyms_results = []
-        results["gyms"] = gyms_results[:effective_limit]
-    except (requests.RequestException, ValueError):
+        gyms_directory = get_partner_gyms(limit=None)
+        if normalized_query:
+            gyms_directory = [
+                gym
+                for gym in gyms_directory
+                if lowercase_query in (gym.get("name") or "").lower()
+                or lowercase_query in (gym.get("city") or "").lower()
+                or lowercase_query in (gym.get("brand") or "").lower()
+            ]
+        results["gyms"] = gyms_directory[:effective_limit]
+    except Exception:
         results["gyms"] = []
 
     programmes_source: List[Dict[str, Any]] = []

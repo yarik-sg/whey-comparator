@@ -29,22 +29,51 @@ export default function SearchPage() {
     setIsError(false);
     setResults(null);
 
-    fetch(`/api/proxy?target=search&q=${encodeURIComponent(query)}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error("Erreur réseau");
+    const fetchResults = async () => {
+      try {
+        const compareResponse = await fetch(
+          `/api/proxy?target=compare&q=${encodeURIComponent(query)}&limit=12`,
+          { cache: "no-store" },
+        );
+        if (!compareResponse.ok) {
+          throw new Error("Erreur réseau compare");
         }
-        return res.json();
-      })
-      .then((payload: SearchResults) => {
-        if (!isMounted) return;
-        setResults(payload);
-      })
-      .catch(() => {
-        if (!isMounted) return;
+
+        const comparePayload = await compareResponse.json();
+        const products = Array.isArray(comparePayload) ? comparePayload : [];
+
+        let supporting: SearchResults = {};
+        try {
+          const searchResponse = await fetch(`/api/proxy?target=search&q=${encodeURIComponent(query)}`, {
+            cache: "no-store",
+          });
+          if (searchResponse.ok) {
+            supporting = await searchResponse.json();
+          }
+        } catch (error) {
+          console.warn("Failed to load supplementary search data", error);
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        setResults({
+          products,
+          gyms: Array.isArray(supporting.gyms) ? supporting.gyms : [],
+          programmes: Array.isArray(supporting.programmes) ? supporting.programmes : [],
+        });
+      } catch (error) {
+        console.error("Search request failed", error);
+        if (!isMounted) {
+          return;
+        }
         setIsError(true);
         setResults({ error: true });
-      });
+      }
+    };
+
+    fetchResults();
 
     return () => {
       isMounted = false;
@@ -80,12 +109,25 @@ export default function SearchPage() {
                   (item["title"] as string | undefined) ||
                   (item["nom"] as string | undefined) ||
                   (item["name"] as string | undefined);
-                const price = item["price"] as string | undefined;
-                const link = item["link"] as string | undefined;
+                const priceObject = item["price"] as
+                  | { formatted?: string; amount?: number }
+                  | string
+                  | undefined;
+                const totalPrice = item["totalPrice"] as { formatted?: string } | undefined;
+                const price =
+                  typeof priceObject === "string"
+                    ? priceObject
+                    : priceObject?.formatted || totalPrice?.formatted;
+                const link =
+                  (item["link"] as string | undefined) ||
+                  (item["url"] as string | undefined) ||
+                  (item["website"] as string | undefined);
+                const vendor = item["vendor"] as string | undefined;
 
                 return (
                   <Card key={`${section}-${index}`} className="p-4">
                     <h3 className="font-semibold">{title || "Résultat"}</h3>
+                    {vendor ? <p className="text-sm text-muted">{vendor}</p> : null}
                     {price ? <p>{price}</p> : null}
                     {link ? (
                       <a href={link} className="text-primary">
