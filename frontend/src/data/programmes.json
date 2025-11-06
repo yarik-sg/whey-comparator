@@ -1,47 +1,119 @@
 [
   {
-    "id": "prise-masse-8s",
-    "titre": "Prise de Masse",
-    "duree": "8 semaines",
+    "id": "force-hypertrophie-8s",
+    "nom": "Blueprint Hypertrophie",
+    "objectif": "Prise de masse",
     "niveau": "Intermédiaire",
-    "description": "Programme orienté hypertrophie : développer la masse musculaire avec des exercices polyarticulaires et un suivi progressif.",
-    "image_url": "/images/programmes/prise-masse.jpg",
-    "liste_exercices": [
-      { "nom": "Squat barre", "series": "4 séries de 8-10 répétitions" },
-      { "nom": "Développé couché", "series": "4 séries de 8 répétitions" },
-      { "nom": "Rowing barre", "series": "4 séries de 10 répétitions" },
-      { "nom": "Soulevé de terre", "series": "3 séries de 6-8 répétitions" },
-      { "nom": "Pompes lestées", "series": "3 séries de 12 répétitions" }
+    "duree_programme": "8 semaines",
+    "description": "Une progression structurée pour développer force et volume musculaire grâce aux mouvements polyarticulaires et au suivi de charges.",
+    "image": "/images/prise-masse.jpg",
+    "exercices": [
+      {
+        "nom": "Squat barre",
+        "duree": "12 minutes",
+        "series": "4",
+        "repetitions": "8-10",
+        "image": null
+      },
+      {
+        "nom": "Développé couché",
+        "duree": "10 minutes",
+        "series": "4",
+        "repetitions": "6-8",
+        "image": null
+      },
+      {
+        "nom": "Rowing barre",
+        "duree": "8 minutes",
+        "series": "4",
+        "repetitions": "10-12",
+        "image": null
+      },
+      {
+        "nom": "Soulevé de terre jambes tendues",
+        "duree": "8 minutes",
+        "series": "3",
+        "repetitions": "8-10",
+        "image": null
+      }
     ]
   },
   {
-    "id": "seche-musculaire-6s",
-    "titre": "Sèche Musculaire",
-    "duree": "6 semaines",
+    "id": "defi-seche-6s",
+    "nom": "Défi Sèche Fonctionnelle",
+    "objectif": "Sèche",
     "niveau": "Avancé",
-    "description": "Programme intensif pour réduire la masse grasse tout en conservant du muscle grâce à un mix musculation, HIIT et cardio.",
-    "image_url": "/images/programmes/seche-musculaire.jpg",
-    "liste_exercices": [
-      { "nom": "Burpees", "series": "4 séries de 15 répétitions" },
-      { "nom": "Fentes sautées", "series": "4 séries de 12 répétitions par jambe" },
-      { "nom": "Kettlebell swings", "series": "3 séries de 20 répétitions" },
-      { "nom": "Mountain climbers", "series": "4 séries de 30 secondes" },
-      { "nom": "Gainage", "series": "3 séries de 1 minute" }
+    "duree_programme": "6 semaines",
+    "description": "Un mélange de HIIT et de circuits métaboliques pour réduire le taux de masse grasse tout en conservant de la tonicité musculaire.",
+    "image": "/images/seche-musculaire.jpg",
+    "exercices": [
+      {
+        "nom": "Burpees explosifs",
+        "duree": "6 minutes",
+        "series": "5",
+        "repetitions": "12",
+        "image": null
+      },
+      {
+        "nom": "Kettlebell swings",
+        "duree": "6 minutes",
+        "series": "4",
+        "repetitions": "20",
+        "image": null
+      },
+      {
+        "nom": "Mountain climbers",
+        "duree": "5 minutes",
+        "series": "4",
+        "repetitions": "45 secondes",
+        "image": null
+      },
+      {
+        "nom": "Gainage planche",
+        "duree": "4 minutes",
+        "series": "4",
+        "repetitions": "60 secondes",
+        "image": null
+      }
     ]
   },
   {
     "id": "full-body-debutant-4s",
-    "titre": "Full Body Débutant",
-    "duree": "4 semaines",
+    "nom": "Full Body Essentiels",
+    "objectif": "Full body",
     "niveau": "Débutant",
-    "description": "Programme global pour débuter en musculation et renforcer tout le corps sans surcharger les articulations.",
-    "image_url": "/images/programmes/full-body-debutant.jpg",
-    "liste_exercices": [
-      { "nom": "Pompes sur genoux", "series": "3 séries de 10 répétitions" },
-      { "nom": "Tirage élastique", "series": "3 séries de 12 répétitions" },
-      { "nom": "Squat poids du corps", "series": "4 séries de 15 répétitions" },
-      { "nom": "Crunchs abdominaux", "series": "3 séries de 15 répétitions" },
-      { "nom": "Planche", "series": "3 séries de 30 secondes" }
+    "duree_programme": "4 semaines",
+    "description": "Le socle idéal pour démarrer : séances courtes et équilibrées sur l’ensemble du corps pour construire technique et régularité.",
+    "image": "/images/full-body-debutant.jpg",
+    "exercices": [
+      {
+        "nom": "Squat poids du corps",
+        "duree": "6 minutes",
+        "series": "3",
+        "repetitions": "15",
+        "image": null
+      },
+      {
+        "nom": "Pompes inclinées",
+        "duree": "5 minutes",
+        "series": "3",
+        "repetitions": "10-12",
+        "image": null
+      },
+      {
+        "nom": "Tirage élastique",
+        "duree": "5 minutes",
+        "series": "3",
+        "repetitions": "12",
+        "image": null
+      },
+      {
+        "nom": "Planche",
+        "duree": "4 minutes",
+        "series": "3",
+        "repetitions": "30 secondes",
+        "image": null
+      }
     ]
   }
 ]
