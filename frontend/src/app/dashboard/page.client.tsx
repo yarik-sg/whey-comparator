@@ -393,10 +393,9 @@ percase tracking-[0.35em] text-primary">
                 ))}
               </div>
             ) : priceHistoryItems.length === 0 ? (
-              <Card className="border-accent/60 bg-background/95 p-10 text-center text-muted shadow-sm dark:border-accent-d/40 d
-ark:bg-dark/80">
+              <Card className="border-accent/60 bg-background/95 p-10 text-center text-muted shadow-sm dark:border-accent-d/40 dark:bg-dark/80">
                 <CardHeader className="space-y-3">
-                  <CardTitle className="flex flex-col items-center gap-3 text-2xl font-semibold text-dark dark:text-[var(--text)"]">
+                  <CardTitle className="flex flex-col items-center gap-3 text-2xl font-semibold text-dark dark:text-[var(--text)]">
                     <LineChart className="h-8 w-8 text-primary" aria-hidden />
                     Aucun suivi de prix pour le moment
                   </CardTitle>
