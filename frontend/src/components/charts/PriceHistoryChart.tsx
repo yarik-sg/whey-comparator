@@ -79,7 +79,7 @@ function PriceHistoryChartComponent({ data, className }: PriceHistoryChartProps)
           <p className="text-sm text-muted">Dernières variations (30 relevés maximum).</p>
         </div>
         <p className="rounded-xl border border-dashed border-accent/70 p-6 text-center text-sm text-muted">
-          Aucune donnée d&apos;historique disponible pour ce produit.
+          Pas encore d’historique pour ce produit.
         </p>
       </section>
     );

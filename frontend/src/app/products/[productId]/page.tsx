@@ -5,7 +5,9 @@ import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { CreatePriceAlert } from "@/components/CreatePriceAlert";
-import PriceHistoryChart, { type PriceHistoryChartDatum } from "@/components/PriceHistoryChart";
+import PriceHistoryChart, {
+  type PriceHistoryChartDatum,
+} from "@/components/charts/PriceHistoryChart";
 import { ProductMediaCarousel } from "@/components/ProductMediaCarousel";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { PriceComparison } from "@/components/PriceComparison";
@@ -164,7 +166,7 @@ async function fetchPriceHistoryData(
 
   try {
     const response = await apiClient.get<PriceHistoryResponse>(
-      `/products/${encodedId}/price-history`,
+      `/api/prices/history/${encodedId}`,
       {
         cache: "no-store",
       },
