@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -267,13 +268,13 @@ export default function Comparateur() {
                     className="group flex h-full flex-col rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-5 shadow-soft transition hover:-translate-y-1 hover:border-primary/35 hover:shadow-strong"
                   >
                     <div className="relative flex items-center justify-center rounded-2xl bg-[color:var(--accent)] p-6">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- remote images */}
-                      <img
+                      <Image
                         src={buildDisplayImageUrl(p.image) || "/placeholder.png"}
                         alt={p.title}
+                        width={160}
+                        height={160}
                         className="h-40 w-40 object-contain"
                         loading="lazy"
-                        decoding="async"
                       />
                     </div>
                     <div className="mt-4 space-y-3">

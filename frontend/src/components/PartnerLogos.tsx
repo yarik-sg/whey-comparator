@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 const partnerLogos: Array<{
   name: string;
   alt: string;
@@ -69,12 +71,13 @@ export function PartnerLogos() {
                   key={`${name}-${index}`}
                   className="flex items-center justify-center rounded-2xl bg-accent/90 px-10 py-5 shadow-sm transition hover:shadow-md dark:bg-white/5"
                 >
-                  <img
+                  <Image
                     src={logoUrl}
                     alt={alt}
+                    width={150}
+                    height={48}
                     className="h-12 w-full max-w-[150px] object-contain opacity-80 transition duration-300 hover:opacity-100"
                     loading="lazy"
-                    decoding="async"
                   />
                 </div>
               ))}

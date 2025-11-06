@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -45,12 +46,13 @@ export function ProductMediaCarousel({ images, alt, className }: ProductMediaCar
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="relative overflow-hidden rounded-3xl border border-accent/70 bg-background shadow-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element -- remote catalog images */}
-        <img
+      <div className="relative h-80 w-full overflow-hidden rounded-3xl border border-accent/70 bg-background shadow-sm">
+        <Image
           src={activeImage}
           alt={alt}
-          className="h-80 w-full object-cover"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 60vw, 40vw"
+          className="object-cover"
           loading="lazy"
         />
         {normalizedImages.length > 1 && (
@@ -92,8 +94,16 @@ export function ProductMediaCarousel({ images, alt, className }: ProductMediaCar
                 )}
                 aria-label={`Afficher l'image ${index + 1}`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- remote catalog images */}
-                <img src={image} alt="" className="h-20 w-full object-cover" loading="lazy" />
+                <span className="relative block h-20 w-full overflow-hidden">
+                  <Image
+                    src={image}
+                    alt=""
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                    loading="lazy"
+                  />
+                </span>
               </button>
             );
           })}

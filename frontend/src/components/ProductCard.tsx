@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type MouseEvent, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Award, Heart } from "lucide-react";
 
@@ -141,13 +142,14 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
               </div>
             )}
           </div>
-          <div className="flex aspect-[4/3] w-full items-center justify-center p-6">
+          <div className="relative flex aspect-[4/3] w-full items-center justify-center p-6">
             {showImage ? (
-              // eslint-disable-next-line @next/next/no-img-element -- remote catalogue assets
-              <img
+              <Image
                 src={productImage.src}
                 alt={productImage.alt}
-                className="h-full w-full object-contain"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                className="object-contain"
                 loading="lazy"
                 onError={() => setImageFailed(true)}
               />

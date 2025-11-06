@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 
 import programmes from "@/data/programmes.json";
-import { ProgramCard, type Programme } from "@/components/programs/ProgramCard";
+import type { Programme } from "@/components/programs/ProgramCard";
 import { createMetadata } from "@/lib/siteMetadata";
 
 export const metadata: Metadata = createMetadata({
@@ -12,6 +13,16 @@ export const metadata: Metadata = createMetadata({
 });
 
 const programmesData = programmes as Programme[];
+
+const ProgramCard = dynamic(
+  () => import("@/components/programs/ProgramCard").then((mod) => mod.ProgramCard),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 animate-pulse rounded-3xl border border-accent/60 bg-accent/40" />
+    ),
+  },
+);
 
 export default function ProgrammesPage() {
   return (

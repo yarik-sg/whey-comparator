@@ -1,13 +1,12 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { CreatePriceAlert } from "@/components/CreatePriceAlert";
-import PriceHistoryChart, {
-  type PriceHistoryChartDatum,
-} from "@/components/charts/PriceHistoryChart";
+import type { PriceHistoryChartDatum } from "@/components/charts/PriceHistoryChart";
 import { ProductMediaCarousel } from "@/components/ProductMediaCarousel";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { PriceComparison } from "@/components/PriceComparison";
@@ -30,6 +29,18 @@ import type {
   ProductOffersResponse,
   SimilarProductsResponse,
 } from "@/types/api";
+
+const PriceHistoryChart = dynamic(
+  () => import("@/components/charts/PriceHistoryChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <section className="space-y-4 rounded-3xl border border-accent/70 bg-background p-6 text-sm text-muted">
+        Chargement du graphique…
+      </section>
+    ),
+  },
+);
 
 
 const datetimeFormatter = new Intl.DateTimeFormat("fr-FR", {

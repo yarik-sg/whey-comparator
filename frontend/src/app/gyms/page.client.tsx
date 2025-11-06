@@ -1,9 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { MapPin } from "lucide-react";
 
-import GymsMap from "@/components/GymsMap";
+const GymsMap = dynamic(() => import("@/components/GymsMap"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="h-80 w-full animate-pulse rounded-3xl border border-accent/60 bg-accent/40"
+      aria-label="Chargement de la carte des salles"
+    />
+  ),
+});
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Star } from "lucide-react";
@@ -313,12 +314,13 @@ function PromoDealCard({ deal }: { deal: DealItem }) {
   return (
     <Card className="flex h-full flex-col overflow-hidden border-accent/70 p-0 shadow-glass transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-fitidion dark:border-primary/30">
       <div className="relative h-48 w-full overflow-hidden bg-accent">
-        <img
+        <Image
           src={imageUrl}
           alt={deal.title}
-          className="h-full w-full object-cover transition duration-500 hover:scale-105"
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover transition duration-500 hover:scale-105"
           loading="lazy"
-          decoding="async"
         />
         {discount && discount > 0 && (
           <div className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow">
