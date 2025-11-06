@@ -12,6 +12,7 @@ import {
   isProductFavorite,
   useFavoritesStore,
 } from "@/store/favoritesStore";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 function pickImageUrl(
   ...candidates: Array<string | null | undefined>
@@ -79,6 +80,7 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
   const favorites = useFavoritesStore((state) => state.favorites);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const isFavorite = isProductFavorite(favorites, favoriteId);
+  const { trackButtonClick } = useAnalytics();
 
   const handleFavoriteClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -87,6 +89,15 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
       type: "product",
       id: favoriteId,
       product,
+    });
+
+    trackButtonClick({
+      action: "favorite",
+      label: `${product.brand ? `${product.brand} ` : ""}${product.name}`.trim() || null,
+      context: favoriteId,
+      metadata: {
+        isFavorite: !isFavorite,
+      },
     });
   };
 
