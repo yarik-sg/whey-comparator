@@ -7,7 +7,8 @@ import { createMetadata } from "@/lib/siteMetadata";
 
 export const metadata: Metadata = createMetadata({
   title: "Équipements connectés",
-  description: "Découvrez la prochaine sélection d'équipements intelligents FitIdion, pensée pour booster vos entraînements.",
+  description:
+    "Découvrez la prochaine sélection d'équipements intelligents FitIdion pour booster vos entraînements à domicile ou en salle.",
   path: "/equipements",
 });
 

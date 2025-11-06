@@ -19,7 +19,8 @@ import type { ComparisonEntry, ComparisonResponse, DealItem, ProductListResponse
 
 export const metadata: Metadata = createMetadata({
   title: "Comparaison de produits",
-  description: "Comparez plusieurs références FitIdion côte à côte pour identifier l'offre la plus pertinente selon vos critères.",
+  description:
+    "Comparez plusieurs références FitIdion côte à côte pour identifier l'offre la plus pertinente selon vos critères.",
   path: "/comparison",
 });
 

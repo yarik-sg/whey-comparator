@@ -4,8 +4,9 @@ import { createMetadata } from "@/lib/siteMetadata";
 import SearchPageClient from "./page.client";
 
 export const metadata: Metadata = createMetadata({
-  title: "Recherche", 
-  description: "Recherchez un produit, une salle ou un programme via le moteur unifié FitIdion et accédez à des résultats contextualisés.",
+  title: "Recherche",
+  description:
+    "Recherchez un produit, une salle ou un programme via le moteur unifié FitIdion et accédez à des résultats contextualisés.",
   path: "/search",
 });
 

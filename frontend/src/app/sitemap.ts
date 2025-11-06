@@ -1,23 +1,34 @@
 import type { MetadataRoute } from "next";
 
-const DEFAULT_BASE_URL = "https://whey-comparator.example.com";
+const DEFAULT_BASE_URL = "https://fitidion.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? DEFAULT_BASE_URL;
   const now = new Date();
 
-  const staticRoutes: Array<MetadataRoute.Sitemap[number]> = [
+  const paths = [
     "",
     "/products",
+    "/catalogue",
+    "/comparateur",
     "/comparison",
     "/alerts",
+    "/analyse",
     "/gyms",
+    "/equipements",
+    "/programmes",
+    "/search",
     "/favoris",
-  ].map((path) => ({
+    "/dashboard",
+    "/about",
+    "/legal",
+  ];
+
+  const staticRoutes: Array<MetadataRoute.Sitemap[number]> = paths.map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: now,
-    changeFrequency: "daily",
-    priority: path === "" ? 1 : 0.7,
+    changeFrequency: path === "" ? "weekly" : "daily",
+    priority: path === "" ? 1 : path === "/legal" ? 0.5 : 0.7,
   }));
 
   return staticRoutes;
