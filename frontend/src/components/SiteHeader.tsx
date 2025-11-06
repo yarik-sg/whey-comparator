@@ -14,6 +14,7 @@ const navItems = [
   { label: "Programmes", href: "/programmes" },
   { label: "Équipements", href: "/equipements" },
   { label: "Salles", href: "/gyms" },
+  { label: "Tableau de bord", href: "/dashboard" },
   { label: "Favoris", href: "/favoris" },
   { label: "Analyse", href: "/analyse" },
 ];
