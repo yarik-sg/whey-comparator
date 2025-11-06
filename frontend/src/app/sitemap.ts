@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/comparison",
     "/alerts",
     "/gyms",
+    "/favoris",
   ].map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: now,

@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { Award } from "lucide-react";
+import { Award, Heart } from "lucide-react";
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCanonicalProductId } from "@/lib/productIdentifiers";
 import type { ProductSummary } from "@/types/api";
+import {
+  isProductFavorite,
+  useFavoritesStore,
+} from "@/store/favoritesStore";
 
 function pickImageUrl(
   ...candidates: Array<string | null | undefined>
@@ -46,7 +50,7 @@ function getProductImage(product: ProductSummary): { src: string; alt: string } 
 interface ProductCardProps {
   product: ProductSummary;
   href?: string;
-  footer?: React.ReactNode;
+  footer?: ReactNode;
 }
 
 function formatQuantity(value?: number | null, unit?: string) {
@@ -69,6 +73,21 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
 
   const canonicalId = getCanonicalProductId(product);
   const resolvedHref = href ?? (canonicalId ? `/products/${encodeURIComponent(canonicalId)}` : undefined);
+
+  const favoriteId = canonicalId ?? String(product.id);
+  const favorites = useFavoritesStore((state) => state.favorites);
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const isFavorite = isProductFavorite(favorites, favoriteId);
+
+  const handleFavoriteClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleFavorite({
+      type: "product",
+      id: favoriteId,
+      product,
+    });
+  };
 
   const productImage = getProductImage(product);
   const [imageFailed, setImageFailed] = useState(false);
@@ -101,12 +120,27 @@ export function ProductCard({ product, href, footer }: ProductCardProps) {
               <span aria-label="Meilleur prix">Meilleur prix</span>
             </span>
           )}
-          {discountValue !== null && (
-            <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-dark/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-lg dark:bg-[var(--accent)]/80">
-              <span aria-hidden>🔥</span>
-              -{discountValue}%
-            </div>
-          )}
+          <div className="absolute right-3 top-3 flex flex-col items-end gap-2">
+            <button
+              type="button"
+              onClick={handleFavoriteClick}
+              aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+              aria-pressed={isFavorite}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-accent/60 bg-background/95 text-muted shadow-sm transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:border-accent-d/40 dark:bg-[var(--background)]/80 ${isFavorite ? "text-primary" : ""}`}
+            >
+              <Heart
+                className="h-5 w-5"
+                aria-hidden
+                fill={isFavorite ? "currentColor" : "none"}
+              />
+            </button>
+            {discountValue !== null && (
+              <div className="inline-flex items-center gap-1 rounded-full bg-dark/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-lg dark:bg-[var(--accent)]/80">
+                <span aria-hidden>🔥</span>
+                -{discountValue}%
+              </div>
+            )}
+          </div>
           <div className="flex aspect-[4/3] w-full items-center justify-center p-6">
             {showImage ? (
               // eslint-disable-next-line @next/next/no-img-element -- remote catalogue assets
