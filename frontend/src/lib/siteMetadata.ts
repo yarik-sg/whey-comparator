@@ -2,14 +2,22 @@ import type { Metadata } from "next";
 
 const DEFAULT_SITE_URL = "https://fitidion.com";
 const SITE_NAME = "FitIdion";
-const SITE_DESCRIPTION =
-  "La plateforme du fitness intelligent : comparez les prix, trouvez des salles et activez des alertes personnalisées.";
+const SITE_TAGLINE = "FitIdion — Comparez, progressez, performez dans le fitness.";
+const SITE_DESCRIPTION = `${SITE_TAGLINE} La plateforme du fitness intelligent : comparez les prix, trouvez des salles et activez des alertes personnalisées.`;
 
 export interface MetadataParams {
   title: string;
   description?: string;
   path?: string;
   image?: string;
+}
+
+function buildDescription(customDescription?: string) {
+  if (!customDescription) {
+    return SITE_TAGLINE;
+  }
+
+  return `${SITE_TAGLINE} ${customDescription}`;
 }
 
 function resolveUrl(path?: string | null) {
@@ -27,21 +35,22 @@ function resolveUrl(path?: string | null) {
 
 export function createMetadata({
   title,
-  description = SITE_DESCRIPTION,
+  description,
   path,
   image = "/FitIdion_Banner.png",
 }: MetadataParams): Metadata {
   const url = resolveUrl(path);
+  const resolvedDescription = buildDescription(description);
 
   return {
     title,
-    description,
+    description: resolvedDescription,
     alternates: {
       canonical: url,
     },
     openGraph: {
       title,
-      description,
+      description: resolvedDescription,
       type: "website",
       url,
       siteName: SITE_NAME,
@@ -57,7 +66,7 @@ export function createMetadata({
     twitter: {
       card: "summary_large_image",
       title,
-      description,
+      description: resolvedDescription,
       images: [image],
     },
   };

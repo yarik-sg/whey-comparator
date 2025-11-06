@@ -8,7 +8,7 @@ import { createMetadata } from "@/lib/siteMetadata";
 export const metadata: Metadata = createMetadata({
   title: "Programmes d'entraînement",
   description:
-    "Accédez aux programmes d'entraînement FitIdion selon votre niveau, votre durée disponible et vos objectifs.",
+    "Sélectionnez un programme FitIdion adapté à votre niveau, à votre temps disponible et à vos objectifs d'entraînement.",
   path: "/programmes",
 });
 

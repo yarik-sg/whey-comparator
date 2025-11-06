@@ -7,7 +7,8 @@ import { createMetadata } from "@/lib/siteMetadata";
 
 export const metadata: Metadata = createMetadata({
   title: "Analyse des performances",
-  description: "Explorez les tableaux de bord FitIdion et préparez-vous aux prochaines fonctionnalités d'analyse personnalisée.",
+  description:
+    "Explorez les tableaux de bord FitIdion et préparez-vous aux futures fonctionnalités d'analyse personnalisée.",
   path: "/analyse",
 });
 

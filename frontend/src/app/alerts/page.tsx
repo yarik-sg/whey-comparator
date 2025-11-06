@@ -4,8 +4,9 @@ import { createMetadata } from "@/lib/siteMetadata";
 import AlertsPageClient from "./page.client";
 
 export const metadata: Metadata = createMetadata({
-  title: "Alertes prix", 
-  description: "Configurez, gérez et suivez vos alertes de baisse de prix sur les produits fitness proposés par FitIdion.",
+  title: "Alertes prix",
+  description:
+    "Configurez, gérez et suivez vos alertes de baisse de prix sur les produits fitness proposés par FitIdion.",
   path: "/alerts",
 });
 

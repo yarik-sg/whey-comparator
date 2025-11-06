@@ -1,1 +1,1 @@
-# TODO: Upload favicon.ico manually via GitHub after merge
+Favicon géré manuellement après déploiement final.

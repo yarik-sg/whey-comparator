@@ -41,7 +41,8 @@ const milestones = [
 
 export const metadata: Metadata = createMetadata({
   title: "Vision FitIdion",
-  description: "Découvrez la mission de FitIdion et la vision produit derrière la plateforme du fitness intelligent.",
+  description:
+    "Découvrez la mission de FitIdion et la vision produit derrière la plateforme du fitness intelligent.",
   path: "/about",
 });
 
