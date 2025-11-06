@@ -21,6 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import programmesData from "@/data/programmes.json";
 import apiClient from "@/lib/apiClient";
+import { generateProductRecommendations } from "@/lib/recommendationEngine";
 import { resolveProductIdentifier } from "@/lib/productIdentifiers";
 import { cn } from "@/lib/utils";
 import {
@@ -94,6 +95,31 @@ export default function DashboardPageClient() {
   const [priceHistoryItems, setPriceHistoryItems] = useState<PriceHistoryItem[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [viewedProgramIds, setViewedProgramIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem("wc-viewed-programs");
+      if (!stored) {
+        setViewedProgramIds([]);
+        return;
+      }
+
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+
+      const normalized = parsed.filter((value): value is string => typeof value === "string");
+      setViewedProgramIds(normalized);
+    } catch (error) {
+      console.error("Unable to read viewed programs from storage", error);
+    }
+  }, []);
 
   const trackedProducts = useMemo(() => {
     const seen = new Set<string>();
@@ -120,6 +146,11 @@ export default function DashboardPageClient() {
 
     return result;
   }, [productFavorites]);
+
+  const consultedPrograms = useMemo(
+    () => programmes.filter((programme) => viewedProgramIds.includes(programme.id)),
+    [viewedProgramIds],
+  );
 
   useEffect(() => {
     if (trackedProducts.length === 0) {
@@ -234,6 +265,47 @@ export default function DashboardPageClient() {
     };
   }, [trackedProducts]);
 
+  const recommendationResult = useMemo(() => {
+    const favoriteProducts = productFavorites.map((favorite) => favorite.product);
+    const priceTrackedProducts = priceHistoryItems.map((item) => item.product);
+    const programInteractions = consultedPrograms.map((programme) => ({
+      id: programme.id,
+      objectif: programme.objectif,
+    }));
+
+    return generateProductRecommendations(
+      {
+        favoriteProducts,
+        priceTrackedProducts,
+        consultedPrograms: programInteractions,
+      },
+      { limit: 6 },
+    );
+  }, [consultedPrograms, priceHistoryItems, productFavorites]);
+
+  const recommendedProducts = recommendationResult.items;
+  const isUsingFallbackRecommendations = recommendationResult.usedFallback;
+  const hasRecommendations = recommendedProducts.length > 0;
+
+  const getRecommendationKey = (product: ProductSummary) => {
+    const identifiers: Array<string | number | undefined | null> = [
+      product.id,
+      product.product_id,
+      product.bestDeal?.productId,
+      product.name,
+    ];
+
+    for (const identifier of identifiers) {
+      if (identifier === undefined || identifier === null) {
+        continue;
+      }
+
+      return String(identifier);
+    }
+
+    return `${product.brand ?? "produit"}-${product.name}`;
+  };
+
   const hasFavorites = favorites.length > 0;
   const hasProductFavorites = productFavorites.length > 0;
   const hasGymFavorites = gymFavorites.length > 0;
@@ -241,7 +313,7 @@ export default function DashboardPageClient() {
   return (
     <div className="bg-gradient-to-b from-background via-background to-accent/40 py-12 text-dark dark:from-dark dark:via-dark d
 ark:to-[rgba(15,23,42,0.75)] dark:text-[var(--text)]">
-      <section className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <section className="mx-auto w-full max-w-6xl space-y-12 px-4 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-6 pb-12">
           <div className="inline-flex max-w-max items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-xs font-semibold up
 percase tracking-[0.35em] text-primary">
@@ -267,6 +339,44 @@ percase tracking-[0.35em] text-primary">
             </Badge>
           </div>
         </header>
+
+        <section className="space-y-6 rounded-3xl border border-accent/60 bg-background/95 p-8 shadow-sm dark:border-accent-d/40 dark:bg-dark/80">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-semibold text-dark dark:text-[var(--text)]">Suggestions pour vous</h2>
+              <p className="text-sm text-muted">
+                {isUsingFallbackRecommendations
+                  ? "Voici une sélection de produits populaires pour vous aider à démarrer."
+                  : "Sélection personnalisée basée sur vos favoris, suivis de prix et programmes consultés."}
+              </p>
+            </div>
+            <Link
+              href="/products"
+              className={buttonClassName({ variant: "outline", size: "sm", className: "gap-2" })}
+            >
+              Explorer le catalogue
+            </Link>
+          </div>
+
+          {hasRecommendations ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {recommendedProducts.map((product) => (
+                <ProductCard key={`recommendation-${getRecommendationKey(product)}`} product={product} />
+              ))}
+            </div>
+          ) : (
+            <Card className="border-accent/60 bg-background/95 p-8 text-center text-muted shadow-sm dark:border-accent-d/40 dark:bg-dark/80">
+              <CardHeader className="space-y-2">
+                <CardTitle className="text-lg font-semibold text-dark dark:text-[var(--text)]">
+                  Revenez après quelques interactions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm">
+                Ajoutez des favoris, consultez des programmes ou suivez un produit pour débloquer des suggestions personnalisées.
+              </CardContent>
+            </Card>
+          )}
+        </section>
 
         <Tabs defaultValue="favorites" className="space-y-12">
           <TabsList className="flex flex-col gap-2 rounded-3xl bg-accent/60 p-2 sm:flex-row">
