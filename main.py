@@ -1075,6 +1075,47 @@ def matches_query(name: str, query: Optional[str]) -> bool:
     return all(term in normalized for term in terms)
 
 
+def _normalize_filter(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return None
+    normalized = value.strip().lower()
+    return normalized or None
+
+
+def _value_matches_filter(value: Optional[str], filter_value: Optional[str]) -> bool:
+    if not filter_value:
+        return True
+    if not value:
+        return False
+    try:
+        normalized = value.strip().lower()
+    except AttributeError:
+        return False
+    return filter_value in normalized
+
+
+def _extract_category_values(payload: Dict[str, Any]) -> List[str]:
+    categories: List[str] = []
+    for key in ("category", "categories", "tags", "segments"):
+        raw_value = payload.get(key)
+        if isinstance(raw_value, str) and raw_value.strip():
+            categories.append(raw_value.strip())
+        elif isinstance(raw_value, list):
+            for item in raw_value:
+                if isinstance(item, str) and item.strip():
+                    categories.append(item.strip())
+    return categories
+
+
+def _categories_match(payload: Dict[str, Any], category_filter: Optional[str]) -> bool:
+    if not category_filter:
+        return True
+    categories = _extract_category_values(payload)
+    if not categories:
+        return False
+    return any(category_filter in category.lower() for category in categories)
+
+
 def tokenize_keywords(value: Optional[str]) -> set[str]:
     if not value:
         return set()
@@ -1976,22 +2017,54 @@ def find_related_products(
     return related_summaries
 
 
-def collect_scraper_deals(q: str, limit: int = 12) -> List[Dict[str, Any]]:
+def collect_scraper_deals(
+    q: str,
+    *,
+    limit: int = 12,
+    marque: Optional[str] = None,
+    categorie: Optional[str] = None,
+    name: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     deals: List[Dict[str, Any]] = []
     products = fetch_scraper_products()
     if not products:
         return deals
 
-    filtered_products = [
-        product
-        for product in products
-        if matches_query(product.get("name", ""), q)
-    ]
+    brand_filter = _normalize_filter(marque)
+    category_filter = _normalize_filter(categorie)
+    normalized_query = (q or "").strip()
+    normalized_name = (name or "").strip()
 
+    filtered_products = []
+    for product in products:
+        name_value = product.get("name", "")
+        brand_value = product.get("brand")
+        if normalized_query and not (
+            matches_query(name_value, normalized_query)
+            or matches_query(str(brand_value or ""), normalized_query)
+        ):
+            continue
+        if normalized_name and not matches_query(name_value, normalized_name):
+            continue
+        if not _value_matches_filter(brand_value, brand_filter):
+            continue
+        if not _categories_match(product, category_filter):
+            continue
+        filtered_products.append(product)
+
+    fallback_to_all = False
     if not filtered_products:
         filtered_products = products
+        fallback_to_all = True
 
     for product in filtered_products:
+        if fallback_to_all:
+            if normalized_name and not matches_query(product.get("name", ""), normalized_name):
+                continue
+            if not _value_matches_filter(product.get("brand"), brand_filter):
+                continue
+            if not _categories_match(product, category_filter):
+                continue
         product_id = product.get("id")
         if product_id is None:
             continue
@@ -2230,28 +2303,63 @@ def _format_price_payload(price: Optional[Dict[str, Any]]) -> Optional[Dict[str,
     }
 
 
-def search_products(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
+def search_products(
+    q: str,
+    *,
+    limit: int = 10,
+    name: Optional[str] = None,
+    brand: Optional[str] = None,
+    category: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     normalized_query = (q or "").strip()
+    normalized_name = (name or "").strip()
+    brand_filter = _normalize_filter(brand)
+    category_filter = _normalize_filter(category)
+
     products = fetch_scraper_products()
     collected: List[Dict[str, Any]] = []
 
     if products:
         for product in products:
-            name = product.get("name") or ""
-            brand = product.get("brand") or ""
-            if not matches_query(name, normalized_query) and not matches_query(brand, normalized_query):
+            name_value = product.get("name") or ""
+            brand_value = product.get("brand") or ""
+            if normalized_query and not (
+                matches_query(name_value, normalized_query)
+                or matches_query(brand_value, normalized_query)
+            ):
                 continue
+            if normalized_name and not matches_query(name_value, normalized_name):
+                continue
+            if not _value_matches_filter(brand_value, brand_filter):
+                continue
+            if not _categories_match(product, category_filter):
+                continue
+
             collected.append(build_product_summary(product))
             if len(collected) >= limit:
                 break
 
     if len(collected) < limit:
-        fallback_query = normalized_query or "whey protein"
+        fallback_query = (
+            normalized_name
+            or normalized_query
+            or brand
+            or category
+            or "whey protein"
+        )
         fallback_catalogue = build_serp_catalogue(
             fallback_query,
             limit=max(limit, 12),
+            marque=brand if brand_filter else None,
+            categorie=category if category_filter else None,
         )
         for summary in fallback_catalogue:
+            if normalized_name and not matches_query(summary.get("name") or "", normalized_name):
+                continue
+            if not _value_matches_filter(summary.get("brand"), brand_filter):
+                continue
+            if not _categories_match(summary, category_filter):
+                continue
             collected.append(summary)
             if len(collected) >= limit:
                 break
@@ -2259,11 +2367,27 @@ def search_products(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
     return collected[:limit]
 
 
-def search_gyms(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
+def search_gyms(
+    q: str,
+    *,
+    limit: int = 10,
+    name: Optional[str] = None,
+    brand: Optional[str] = None,
+    category: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     terms = [token for token in (q or "").lower().split() if token]
+    name_terms = [token for token in (name or "").lower().split() if token]
+    brand_filter = _normalize_filter(brand)
+    category_filter = _normalize_filter(category)
+
+    try:
+        gyms_directory = get_partner_gyms(limit=None)
+    except Exception:
+        gyms_directory = GYM_DIRECTORY
+
     results: List[Dict[str, Any]] = []
 
-    for item in GYM_DIRECTORY:
+    for item in gyms_directory:
         haystack_parts = [
             str(item.get("name") or ""),
             str(item.get("brand") or ""),
@@ -2273,6 +2397,17 @@ def search_gyms(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
         haystack = " ".join(haystack_parts).lower()
         if terms and not all(term in haystack for term in terms):
             continue
+        if name_terms and not all(term in haystack for term in name_terms):
+            continue
+        if not _value_matches_filter(item.get("brand"), brand_filter):
+            continue
+        if category_filter:
+            amenities = " ".join(
+                amenity.lower() for amenity in item.get("amenities", []) if isinstance(amenity, str)
+            )
+            city = str(item.get("city") or "").lower()
+            if category_filter not in amenities and category_filter not in city:
+                continue
 
         distance = item.get("distance_km")
         try:
@@ -2306,28 +2441,57 @@ def search_gyms(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
     return results[:limit]
 
 
-def search_programs(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
+def search_programs(
+    q: str,
+    *,
+    limit: int = 10,
+    name: Optional[str] = None,
+    brand: Optional[str] = None,
+    category: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     terms = [token for token in (q or "").lower().split() if token]
+    name_terms = [token for token in (name or "").lower().split() if token]
+    brand_filter = _normalize_filter(brand)
+    category_filter = _normalize_filter(category)
     results: List[Dict[str, Any]] = []
 
-    for program in FITNESS_PROGRAMS:
+    dataset: List[Dict[str, Any]] = []
+    try:
+        if PROGRAMMES_PATH.exists():
+            with PROGRAMMES_PATH.open("r", encoding="utf-8") as handle:
+                payload = json.load(handle)
+                if isinstance(payload, list):
+                    dataset.extend(item for item in payload if isinstance(item, dict))
+    except (OSError, json.JSONDecodeError):
+        pass
+
+    dataset.extend(FITNESS_PROGRAMS)
+
+    for program in dataset:
+        program_name = str(program.get("name") or program.get("nom") or "")
         haystack = " ".join(
             [
-                str(program.get("name") or ""),
-                str(program.get("focus") or ""),
-                str(program.get("level") or ""),
+                program_name,
+                str(program.get("focus") or program.get("categorie") or ""),
+                str(program.get("level") or program.get("niveau") or ""),
                 str(program.get("description") or ""),
                 " ".join(program.get("equipment_needed", [])),
             ]
         ).lower()
         if terms and not all(term in haystack for term in terms):
             continue
+        if name_terms and not all(term in haystack for term in name_terms):
+            continue
+        if brand_filter and not _value_matches_filter(program.get("coach"), brand_filter):
+            continue
+        if category_filter and category_filter not in haystack:
+            continue
 
         price_payload = _format_price_payload(program.get("price"))
         results.append(
             {
                 "id": program.get("id"),
-                "name": program.get("name"),
+                "name": program_name or program.get("name"),
                 "focus": program.get("focus"),
                 "level": program.get("level"),
                 "duration_weeks": program.get("duration_weeks"),
@@ -2389,99 +2553,42 @@ def search_equipments(q: str, *, limit: int = 10) -> List[Dict[str, Any]]:
 
 
 @app.get("/search")
-async def search_all(q: str, limit: int = 10):
+async def search_all(
+    q: str = Query(""),
+    limit: int = 10,
+    nom: Optional[str] = Query(None),
+    categorie: Optional[str] = Query(None),
+    marque: Optional[str] = Query(None),
+):
     normalized_query = (q or "").strip()
+    normalized_name = (nom or "").strip()
     effective_limit = max(1, min(int(limit or 0), 50))
-    lowercase_query = normalized_query.lower()
 
-    results: Dict[str, Any] = {"products": [], "gyms": [], "programmes": []}
+    products = search_products(
+        normalized_query,
+        limit=effective_limit,
+        name=normalized_name,
+        brand=marque,
+        category=categorie,
+    )
 
-    serp_api_key = os.getenv("SERPAPI_KEY")
-    if normalized_query and serp_api_key:
-        serp_params = {"q": normalized_query, "tbm": "shop", "api_key": serp_api_key}
-        try:
-            serp_response = requests.get(
-                SERPAPI_BASE,
-                params=serp_params,
-                timeout=8,
-            )
-            serp_response.raise_for_status()
-            serp_payload = serp_response.json()
-            shopping_results = (serp_payload.get("shopping_results") or [])[:effective_limit]
-            results["products"] = [
-                {
-                    "title": item.get("title"),
-                    "price": item.get("price"),
-                    "source": item.get("source"),
-                    "link": item.get("link"),
-                    "thumbnail": item.get("thumbnail"),
-                }
-                for item in shopping_results
-            ]
-        except (requests.RequestException, ValueError):
-            results["products"] = []
+    gyms = search_gyms(
+        normalized_query or normalized_name,
+        limit=effective_limit,
+        name=normalized_name,
+        brand=marque,
+        category=categorie,
+    )
 
-    try:
-        gyms_directory = get_partner_gyms(limit=None)
-        if normalized_query:
-            gyms_directory = [
-                gym
-                for gym in gyms_directory
-                if lowercase_query in (gym.get("name") or "").lower()
-                or lowercase_query in (gym.get("city") or "").lower()
-                or lowercase_query in (gym.get("brand") or "").lower()
-            ]
-        results["gyms"] = gyms_directory[:effective_limit]
-    except Exception:
-        results["gyms"] = []
+    programmes = search_programs(
+        normalized_query or normalized_name,
+        limit=effective_limit,
+        name=normalized_name,
+        brand=marque,
+        category=categorie,
+    )
 
-    programmes_source: List[Dict[str, Any]] = []
-    try:
-        if PROGRAMMES_PATH.exists():
-            with PROGRAMMES_PATH.open("r", encoding="utf-8") as handle:
-                programmes_payload = json.load(handle)
-                if isinstance(programmes_payload, list):
-                    programmes_source = programmes_payload
-    except (OSError, json.JSONDecodeError):
-        programmes_source = []
-
-    def format_program_price(raw_price: Union[str, float, int, Dict[str, Any], None]) -> Optional[str]:
-        if isinstance(raw_price, dict):
-            amount = raw_price.get("amount")
-            currency = raw_price.get("currency")
-            if amount is not None and currency:
-                try:
-                    return f"{float(amount):.2f} {currency}"
-                except (TypeError, ValueError):
-                    return None
-        elif isinstance(raw_price, (int, float)):
-            return f"{float(raw_price):.2f}"
-        elif isinstance(raw_price, str):
-            return raw_price.strip() or None
-        return None
-
-    filtered_programmes: List[Dict[str, Any]] = []
-    for programme in programmes_source:
-        name = str(programme.get("name") or programme.get("nom") or "").strip()
-        if lowercase_query and name and lowercase_query not in name.lower():
-            continue
-
-        formatted_price = format_program_price(programme.get("price"))
-        filtered_programmes.append(
-            {
-                "nom": name or normalized_query,
-                "price": formatted_price,
-                "link": programme.get("link"),
-                "focus": programme.get("focus"),
-                "niveau": programme.get("level") or programme.get("niveau"),
-            }
-        )
-        if len(filtered_programmes) >= effective_limit:
-            break
-
-    results["programmes"] = filtered_programmes
-
-    return results
+    return {"products": products, "gyms": gyms, "programmes": programmes}
 
 # --- Routes ---
 
@@ -2501,10 +2608,23 @@ def compare(
     q: str = Query("whey protein"),
     marque: Optional[str] = Query(None),
     categorie: Optional[str] = Query(None),
+    nom: Optional[str] = Query(None),
     limit: int = Query(12, ge=1, le=24)
 ):
-    serp_deals = collect_serp_deals(q, marque=marque, categorie=categorie, limit=limit)
-    scraper_deals = collect_scraper_deals(q, limit=limit)
+    search_term = (nom or q).strip() or "whey protein"
+    serp_deals = collect_serp_deals(
+        search_term,
+        marque=marque,
+        categorie=categorie,
+        limit=limit,
+    )
+    scraper_deals = collect_scraper_deals(
+        search_term,
+        limit=limit,
+        marque=marque,
+        categorie=categorie,
+        name=nom,
+    )
 
     combined = serp_deals + scraper_deals
     combined.sort(

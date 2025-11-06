@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { SearchBar } from "@/components/SearchBar";
+import { SearchModal } from "@/components/SearchModal";
 import { Button } from "@/components/ui/button";
 
 interface HeroSectionProps {
@@ -17,6 +18,7 @@ interface HeroSectionProps {
 export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   const popularSearches = useMemo(
     () => ["Whey isolate chocolat", "Protéine vegan", "Optimum Nutrition", "Créatine monohydrate"],
@@ -65,10 +67,32 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
         return;
       }
 
+      setIsSearchModalOpen(false);
       router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
     },
     [router, searchQuery],
   );
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    setIsSearchModalOpen(value.trim().length > 0);
+  }, []);
+
+  const handleSearchFocus = useCallback(() => {
+    if (searchQuery.trim()) {
+      setIsSearchModalOpen(true);
+    }
+  }, [searchQuery]);
+
+  const handleSearchModalClose = useCallback(() => {
+    setIsSearchModalOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setIsSearchModalOpen(false);
+    }
+  }, [searchQuery]);
 
   return (
     <section className="relative isolate overflow-hidden bg-background pb-24 pt-28 text-text transition-colors sm:pt-32">
@@ -106,12 +130,14 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
 
           <SearchBar
             value={searchQuery}
-            onChange={setSearchQuery}
+            onChange={handleSearchChange}
             suggestions={popularSearches}
             onSuggestionSelect={(suggestion) => handleSearch(suggestion)}
             onSubmit={(value) => handleSearch(value)}
+            onFocus={handleSearchFocus}
             placeholder="Rechercher un produit, un gym, un programme…"
           />
+          <SearchModal query={searchQuery} isOpen={isSearchModalOpen} onClose={handleSearchModalClose} />
 
           <div className="flex w-full flex-col items-center gap-6">
             <div className="flex flex-wrap items-center justify-center gap-4 rounded-2xl border border-white/30 bg-white/60 px-6 py-4 text-xs uppercase tracking-[0.28em] text-muted shadow-sm backdrop-blur">
