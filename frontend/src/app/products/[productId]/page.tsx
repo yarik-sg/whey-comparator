@@ -11,6 +11,8 @@ import { ProductMediaCarousel } from "@/components/ProductMediaCarousel";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { PriceComparison } from "@/components/PriceComparison";
 import { SimilarProducts } from "@/components/SimilarProducts";
+import { ProductAnalyticsTracker } from "@/components/ProductAnalyticsTracker";
+import { AnalyticsLink } from "@/components/AnalyticsLink";
 import apiClient, { ApiError } from "@/lib/apiClient";
 import { createMetadata } from "@/lib/siteMetadata";
 import {
@@ -222,6 +224,8 @@ export default async function ProductDetailPage({
   const canonicalProductId =
     getCanonicalProductId(product, { offers, fallback: rawProductId }) ?? rawProductId;
   const sectionAnchorId = canonicalProductId ?? String(product.id ?? rawProductId ?? "product");
+  const analyticsProductKey =
+    canonicalProductId ?? String(product.id ?? rawProductId ?? "product");
   const bestOffer = offers.find((offer) => offer.isBestPrice || offer.bestPrice) ?? offers[0];
 
   const similarProductId = canonicalProductId ?? String(rawProductId);
@@ -247,6 +251,11 @@ export default async function ProductDetailPage({
   return (
     <div className="bg-gradient-to-b from-white via-white to-slate-50 pb-16 pt-10">
       <div className="container mx-auto flex flex-col gap-10 px-6">
+        <ProductAnalyticsTracker
+          productId={analyticsProductKey}
+          name={product.name ?? "Produit"}
+          brand={product.brand ?? null}
+        />
         <Breadcrumb
           items={[
             { label: "Accueil", href: "/" },
@@ -359,14 +368,21 @@ export default async function ProductDetailPage({
                         : "Stock à confirmer"}
                   </p>
                 </div>
-                <a
+                <AnalyticsLink
                   href={bestOffer.link ?? undefined}
                   target={bestOffer.link ? "_blank" : undefined}
                   rel={bestOffer.link ? "noopener noreferrer" : undefined}
                   className="inline-flex w-full items-center justify-center rounded-full border border-primary/30 px-4 py-2 text-xs font-semibold text-primary transition hover:border-primary/40 hover:bg-accent hover:text-primary"
+                  analyticsAction="buy"
+                  analyticsLabel={`Consulter l'offre chez ${bestOffer.vendor ?? "vendeur"}`}
+                  analyticsMetadata={{
+                    vendor: bestOffer.vendor,
+                    price: bestOffer.price.formatted,
+                    productId: analyticsProductKey,
+                  }}
                 >
                   Consulter l&apos;offre chez {bestOffer.vendor} →
-                </a>
+                </AnalyticsLink>
               </section>
             )}
           </div>

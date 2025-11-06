@@ -5,6 +5,7 @@ import { ArrowRight, Clock3, ExternalLink, Heart, MapPin, PiggyBank } from "luci
 
 import type { GymLocation } from "@/lib/gymLocator";
 import { isGymFavorite, useFavoritesStore } from "@/store/favoritesStore";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
@@ -80,6 +81,7 @@ export const GymCard = memo(function GymCard({ gym, href = null }: GymCardProps)
   const favorites = useFavoritesStore((state) => state.favorites);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
   const isFavorite = isGymFavorite(favorites, favoriteId);
+  const { trackButtonClick } = useAnalytics();
 
   const handleFavoriteClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -88,6 +90,17 @@ export const GymCard = memo(function GymCard({ gym, href = null }: GymCardProps)
       type: "gym",
       id: favoriteId,
       gym,
+    });
+
+    trackButtonClick({
+      action: "favorite",
+      label: name,
+      context: favoriteId,
+      metadata: {
+        city,
+        brand,
+        isFavorite: !isFavorite,
+      },
     });
   };
 

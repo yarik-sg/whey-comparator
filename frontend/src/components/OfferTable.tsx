@@ -1,4 +1,5 @@
 import type { ApiPrice, DealItem } from "@/types/api";
+import { AnalyticsLink } from "@/components/AnalyticsLink";
 
 interface OfferTableProps {
   offers: DealItem[];
@@ -257,14 +258,21 @@ export function OfferTable({ offers, caption }: OfferTableProps) {
 
               <footer className="mt-4">
                 {offer.link ? (
-                  <a
+                  <AnalyticsLink
                     href={offer.link}
                     target="_blank"
                     rel="noopener noreferrer nofollow"
                     className="inline-flex w-full items-center justify-center rounded-full border border-primary/30 px-3 py-2 text-sm font-semibold text-primary transition hover:border-primary/40 hover:text-primary"
+                    analyticsAction="buy"
+                    analyticsLabel={`Consulter l'offre chez ${offer.vendor ?? "vendeur"}`}
+                    analyticsMetadata={{
+                      vendor: offer.vendor,
+                      price: offer.price.formatted,
+                      productId: offer.productId ?? offer.id,
+                    }}
                   >
                     Consulter l&apos;offre →
-                  </a>
+                  </AnalyticsLink>
                 ) : (
                   <span className="text-xs text-muted/80">Lien indisponible</span>
                 )}

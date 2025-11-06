@@ -8,6 +8,8 @@ import {
   useCallback,
 } from "react";
 
+import { useAnalytics } from "@/hooks/useAnalytics";
+
 interface CompareLinkButtonProps
   extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
   href: string;
@@ -22,17 +24,31 @@ export const CompareLinkButton = forwardRef<
     { href, stopPropagation = true, onClick, className, children, ...props },
     ref,
   ) => {
+    const { trackButtonClick } = useAnalytics();
+    const analyticsLabel =
+      typeof props["aria-label"] === "string"
+        ? props["aria-label"]
+        : typeof props.title === "string"
+          ? props.title
+          : undefined;
+
     const handleClick = useCallback(
       (event: MouseEvent<HTMLAnchorElement>) => {
         if (stopPropagation) {
           event.stopPropagation();
         }
 
+        trackButtonClick({
+          action: "compare",
+          label: analyticsLabel ?? null,
+          context: href,
+        });
+
         if (onClick) {
           onClick(event);
         }
       },
-      [onClick, stopPropagation],
+      [analyticsLabel, href, onClick, stopPropagation, trackButtonClick],
     );
 
     const normalizedClassName =

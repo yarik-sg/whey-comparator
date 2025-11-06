@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Inter, Poppins } from "next/font/google";
 import "@/styles/fitidion-theme.css";
 import "./globals.css";
@@ -8,6 +9,8 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { BrandHeader } from "@/components/BrandHeader";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
+import { AnalyticsProvider } from "@/components/AnalyticsProvider";
+import { getAnalyticsConfig } from "@/lib/analytics";
 import { siteMetadata } from "@/lib/siteMetadata";
 
 const inter = Inter({
@@ -59,6 +62,8 @@ export const viewport: Viewport = {
   themeColor: "#FF6600",
 };
 
+const analyticsConfig = getAnalyticsConfig();
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -67,20 +72,29 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <body className="min-h-screen bg-transparent font-sans antialiased">
+        {analyticsConfig.enabled && analyticsConfig.scriptUrl && analyticsConfig.websiteId ? (
+          <Script
+            src={analyticsConfig.scriptUrl}
+            data-website-id={analyticsConfig.websiteId}
+            strategy="lazyOnload"
+          />
+        ) : null}
         <ThemeProvider>
-          <QueryProvider>
-            <div className="flex min-h-screen flex-col">
-              <BrandHeader />
-              <SiteHeader />
-              <main className="flex-1">{children}</main>
-              <SiteFooter />
-            </div>
-            <Toaster
-              richColors
-              position="top-right"
-              toastOptions={{ style: { borderRadius: "9999px", fontFamily: "var(--font-poppins)" } }}
-            />
-          </QueryProvider>
+          <AnalyticsProvider>
+            <QueryProvider>
+              <div className="flex min-h-screen flex-col">
+                <BrandHeader />
+                <SiteHeader />
+                <main className="flex-1">{children}</main>
+                <SiteFooter />
+              </div>
+              <Toaster
+                richColors
+                position="top-right"
+                toastOptions={{ style: { borderRadius: "9999px", fontFamily: "var(--font-poppins)" } }}
+              />
+            </QueryProvider>
+          </AnalyticsProvider>
         </ThemeProvider>
       </body>
     </html>
