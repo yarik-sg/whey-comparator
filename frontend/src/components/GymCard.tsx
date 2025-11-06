@@ -1,9 +1,10 @@
 "use client";
 
-import { memo, useMemo } from "react";
-import { Clock3, ExternalLink, MapPin, PiggyBank } from "lucide-react";
+import { memo, useMemo, type MouseEvent, type ReactNode } from "react";
+import { ArrowRight, Clock3, ExternalLink, Heart, MapPin, PiggyBank } from "lucide-react";
 
 import type { GymLocation } from "@/lib/gymLocator";
+import { isGymFavorite, useFavoritesStore } from "@/store/favoritesStore";
 
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
@@ -18,13 +19,14 @@ const distanceFormatter = new Intl.NumberFormat("fr-FR", {
 
 export interface GymCardProps {
   gym: GymLocation;
+  href?: string | null;
 }
 
 const IconBadge = ({
   children,
   className,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }) => (
   <span
@@ -34,7 +36,7 @@ const IconBadge = ({
   </span>
 );
 
-export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
+export const GymCard = memo(function GymCard({ gym, href = null }: GymCardProps) {
   const {
     name,
     brand,
@@ -51,6 +53,9 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
   } = gym;
 
   const website = websiteFromApi ?? link ?? null;
+  const detailsUrl = href ?? website ?? link ?? null;
+  const isExternalLink = typeof detailsUrl === "string" && /^https?:/i.test(detailsUrl);
+  const ctaLabel = detailsUrl ? (isExternalLink ? "Voir le site" : "Voir la fiche") : null;
 
   const formattedPrice = useMemo(() => {
     if (typeof monthlyPrice === "number" && Number.isFinite(monthlyPrice)) {
@@ -71,8 +76,36 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
 
   const topAmenities = useMemo(() => amenities.slice(0, 3), [amenities]);
 
+  const favoriteId = gym.id;
+  const favorites = useFavoritesStore((state) => state.favorites);
+  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const isFavorite = isGymFavorite(favorites, favoriteId);
+
+  const handleFavoriteClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleFavorite({
+      type: "gym",
+      id: favoriteId,
+      gym,
+    });
+  };
+
   return (
-    <article className="group flex h-full flex-col justify-between rounded-3xl border border-accent/70 bg-background/95 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+    <article className="group relative flex h-full flex-col justify-between rounded-3xl border border-accent/70 bg-background/95 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
+      <button
+        type="button"
+        onClick={handleFavoriteClick}
+        aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
+        aria-pressed={isFavorite}
+        className={`absolute right-6 top-6 inline-flex h-9 w-9 items-center justify-center rounded-full border border-accent/60 bg-background/95 text-muted shadow-sm transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:border-accent-d/40 dark:bg-[var(--background)]/80 ${isFavorite ? "text-primary" : ""}`}
+      >
+        <Heart
+          className="h-5 w-5"
+          aria-hidden
+          fill={isFavorite ? "currentColor" : "none"}
+        />
+      </button>
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <IconBadge>
@@ -124,15 +157,19 @@ export const GymCard = memo(function GymCard({ gym }: GymCardProps) {
             <PiggyBank className="h-4 w-4 text-primary" aria-hidden="true" />
             {formattedPrice}
           </span>
-          {website ? (
+          {detailsUrl && ctaLabel ? (
             <a
-              href={website}
-              target="_blank"
-              rel="noreferrer"
+              href={detailsUrl}
+              target={isExternalLink ? "_blank" : undefined}
+              rel={isExternalLink ? "noreferrer" : undefined}
               className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition hover:text-primary"
             >
-              Voir le site
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              {ctaLabel}
+              {isExternalLink ? (
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              )}
             </a>
           ) : null}
         </div>
