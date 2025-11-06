@@ -1,21 +1,30 @@
-from fastapi import FastAPI, HTTPException, Query
+import asyncio
+import hashlib
+import time
 from datetime import datetime, timedelta
 
-from fastapi.middleware.cors import CORSMiddleware
 import html
 import json
 import os, re
-import requests
-from pathlib import Path
-from urllib.parse import urlparse, parse_qs, quote
 from math import atan2, cos, radians, sin, sqrt
-from typing import Any, Dict, List, Optional, Tuple, Union
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, Union
+from urllib.parse import parse_qs, quote, urlparse
+
+import httpx
+import requests
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
 
 from fallback_catalogue import get_fallback_product, get_fallback_products
 from services.gyms_scraper import get_partner_gyms
 from services.local_cache import local_cache
 
 app = FastAPI()
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # --- CORS (ok pour dev; en prod restreins à ton domaine) ---
 app.add_middleware(
@@ -63,6 +72,129 @@ PRICE_HISTORY_PERIODS = {
     "6m": timedelta(days=180),
     "1y": timedelta(days=365),
 }
+
+API_CACHE_TTL_SECONDS = int(os.getenv("API_CACHE_TTL_SECONDS", "120"))
+
+
+class _CacheEntry(TypedDict):
+    body: bytes
+    etag: str
+    expires_at: float
+    headers: Dict[str, str]
+    media_type: Optional[str]
+    status_code: int
+
+
+_response_cache: Dict[str, _CacheEntry] = {}
+_cache_lock: Optional[asyncio.Lock] = None
+
+
+async def _get_cache_lock() -> asyncio.Lock:
+    global _cache_lock
+    if _cache_lock is None:
+        _cache_lock = asyncio.Lock()
+    return _cache_lock
+
+
+def _cache_key_from_request(request: Request) -> str:
+    if request.query_params:
+        return f"{request.url.path}?{request.query_params}".lower()
+    return request.url.path.lower()
+
+
+def _filter_cache_headers(headers: Dict[str, str]) -> Dict[str, str]:
+    excluded = {"content-length", "date", "server", "x-cache"}
+    filtered: Dict[str, str] = {}
+    for name, value in headers.items():
+        if name.lower() in excluded:
+            continue
+        filtered[name] = value
+    return filtered
+
+
+def _build_etag(payload: bytes) -> str:
+    digest = hashlib.sha256(payload).hexdigest()
+    return f'W/"{digest}"'
+
+
+def _is_cacheable_response(response: Response) -> bool:
+    cache_control = response.headers.get("Cache-Control", "")
+    if "no-store" in cache_control.lower():
+        return False
+    return response.status_code == 200
+
+
+@app.middleware("http")
+async def simple_cache_middleware(request: Request, call_next):
+    if request.method not in {"GET", "HEAD"}:
+        return await call_next(request)
+
+    cache_key = _cache_key_from_request(request)
+    lock = await _get_cache_lock()
+    now = time.time()
+
+    async with lock:
+        cached = _response_cache.get(cache_key)
+        if cached and cached["expires_at"] > now:
+            etag = cached["etag"]
+            if etag and request.headers.get("if-none-match") == etag:
+                not_modified = Response(status_code=304)
+                not_modified.headers["ETag"] = etag
+                not_modified.headers["X-Cache"] = "HIT"
+                return not_modified
+
+            hit = Response(
+                content=cached["body"],
+                status_code=cached["status_code"],
+                media_type=cached["media_type"],
+            )
+            for name, value in cached["headers"].items():
+                hit.headers[name] = value
+            hit.headers["X-Cache"] = "HIT"
+            return hit
+        if cached:
+            _response_cache.pop(cache_key, None)
+
+    response = await call_next(request)
+    response_body = b"".join([chunk async for chunk in response.body_iterator])
+    etag = _build_etag(response_body)
+    headers = _filter_cache_headers(dict(response.headers))
+    headers["ETag"] = etag
+    headers.setdefault("Vary", "Accept-Encoding")
+    background = response.background
+
+    entry: _CacheEntry = {
+        "body": response_body,
+        "etag": etag,
+        "expires_at": now + max(API_CACHE_TTL_SECONDS, 0),
+        "headers": headers,
+        "media_type": response.media_type,
+        "status_code": response.status_code,
+    }
+
+    if _is_cacheable_response(response):
+        async with lock:
+            _response_cache[cache_key] = entry
+
+    if request.headers.get("if-none-match") == etag and response.status_code == 200:
+        not_modified = Response(status_code=304)
+        not_modified.headers["ETag"] = etag
+        not_modified.headers["X-Cache"] = "MISS"
+        if background:
+            not_modified.background = background
+        return not_modified
+
+    rebuilt = Response(
+        content=response_body,
+        status_code=response.status_code,
+        media_type=response.media_type,
+    )
+    for name, value in headers.items():
+        rebuilt.headers[name] = value
+    rebuilt.headers["X-Cache"] = "MISS"
+    if background:
+        rebuilt.background = background
+    return rebuilt
 
 # --- Gym directory (mock dataset ready for partner integrations) ---
 
@@ -1480,6 +1612,37 @@ def collect_serp_deals(
     if not isinstance(shopping_results, list):
         return []
 
+    prefetch_ids: List[str] = []
+    for item in shopping_results:
+        title = (item.get("title") or "").strip()
+        title_lower = title.lower()
+
+        if marque and marque.lower() not in title_lower:
+            continue
+        if categorie and categorie.lower() not in title_lower:
+            continue
+
+        raw_product_id = item.get("product_id") or item.get("productId")
+        if raw_product_id is None:
+            continue
+
+        try:
+            candidate = str(raw_product_id).strip()
+        except Exception:
+            candidate = ""
+
+        if candidate:
+            prefetch_ids.append(candidate)
+
+    offers_map: Dict[str, Dict[str, Any]] = {}
+    if prefetch_ids:
+        try:
+            offers_map = asyncio.run(fetch_serpapi_product_offers_bulk(prefetch_ids))
+        except RuntimeError:
+            offers_map = {}
+            for pid in prefetch_ids:
+                offers_map[pid] = serpapi_product_offers(pid)
+
     deals: List[Dict[str, Any]] = []
     for index, item in enumerate(shopping_results):
         best: Optional[Dict[str, Any]] = None
@@ -1526,9 +1689,11 @@ def collect_serp_deals(
         rating_val = parse_float(item.get("rating"))
         reviews_count = parse_int(item.get("reviews"))
 
-        prod: Optional[Dict[str, Any]] = None
-        if product_id:
+        prod: Optional[Dict[str, Any]] = offers_map.get(product_id) if product_id else None
+        if product_id and not prod:
             prod = serpapi_product_offers(product_id)
+
+        if isinstance(prod, dict) and prod:
             sellers_results = prod.get("sellers_results") or {}
             online_sellers = sellers_results.get("online_sellers")
             offers = online_sellers if isinstance(online_sellers, list) else []
@@ -2132,6 +2297,88 @@ def serpapi_product_offers(product_id: str, hl: str = "fr", gl: str = "fr") -> D
         local_cache.set(cache_key, payload, ttl=3 * 60 * 60)
 
     return payload
+
+
+async def fetch_serpapi_product_offers_bulk(
+    product_ids: List[str], *, hl: str = "fr", gl: str = "fr"
+) -> Dict[str, Dict[str, Any]]:
+    unique: List[str] = []
+    seen: set[str] = set()
+    for product_id in product_ids:
+        normalized = (product_id or "").strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        unique.append(normalized)
+
+    results: Dict[str, Dict[str, Any]] = {}
+    ids_to_fetch: List[str] = []
+
+    for product_id in unique:
+        cache_key = f"serpapi:product:{hl}:{gl}:{product_id}"
+        cached = local_cache.get(cache_key)
+        if isinstance(cached, dict):
+            results[product_id] = cached
+        else:
+            ids_to_fetch.append(product_id)
+
+    if not ids_to_fetch:
+        return results
+
+    timeout = httpx.Timeout(30.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        tasks = {
+            product_id: asyncio.create_task(
+                _fetch_serpapi_product_offer(client, product_id, hl=hl, gl=gl)
+            )
+            for product_id in ids_to_fetch
+        }
+
+        for product_id, task in tasks.items():
+            try:
+                payload = await task
+            except Exception as exc:  # pragma: no cover - defensive
+                payload = {"error": f"Erreur SerpAPI (google_product): {exc}"}
+
+            if isinstance(payload, dict) and "error" not in payload:
+                local_cache.set(
+                    f"serpapi:product:{hl}:{gl}:{product_id}",
+                    payload,
+                    ttl=3 * 60 * 60,
+                )
+            results[product_id] = payload if isinstance(payload, dict) else {}
+
+    return results
+
+
+async def _fetch_serpapi_product_offer(
+    client: httpx.AsyncClient, product_id: str, *, hl: str, gl: str
+) -> Dict[str, Any]:
+    params = {
+        "engine": "google_product",
+        "product_id": product_id,
+        "offers": "1",
+        "hl": hl,
+        "gl": gl,
+        "api_key": SERPAPI_KEY,
+    }
+
+    try:
+        response = await client.get(SERPAPI_BASE, params=params)
+        try:
+            payload = response.json()
+        except json.JSONDecodeError:
+            payload = {
+                "error": "Réponse non JSON (google_product)",
+                "text": response.text,
+                "status": response.status_code,
+            }
+    except httpx.TimeoutException:
+        payload = {"error": "Timeout SerpAPI (google_product)"}
+    except httpx.HTTPError as exc:
+        payload = {"error": f"Erreur SerpAPI (google_product): {exc}"}
+
+    return payload if isinstance(payload, dict) else {}
 
 def pick_best_offer(offers: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     if not offers:

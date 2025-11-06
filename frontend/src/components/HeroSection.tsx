@@ -144,7 +144,14 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
               {heroLogos.map(({ name, logo }) => (
                 <span key={name} className="flex items-center gap-3">
                   <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
-                    <img src={logo} alt={`Logo ${name}`} className="h-5 w-5 object-contain" loading="lazy" />
+                    <Image
+                      src={logo}
+                      alt={`Logo ${name}`}
+                      width={20}
+                      height={20}
+                      className="h-5 w-5 object-contain"
+                      loading="lazy"
+                    />
                   </span>
                   {name}
                 </span>

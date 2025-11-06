@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   BookmarkCheck,
   ClipboardList,
@@ -13,7 +14,7 @@ import {
 
 import { GymCard } from "@/components/GymCard";
 import { ProductCard } from "@/components/ProductCard";
-import { ProgramCard, type Programme } from "@/components/programs/ProgramCard";
+import type { Programme } from "@/components/programs/ProgramCard";
 import { Badge } from "@/components/ui/badge";
 import { buttonClassName } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +31,16 @@ import {
 import type { PriceHistoryPoint, PriceHistoryResponse, ProductSummary } from "@/types/api";
 
 const programmes = programmesData as Programme[];
+
+const ProgramCard = dynamic(
+  () => import("@/components/programs/ProgramCard").then((mod) => mod.ProgramCard),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 animate-pulse rounded-3xl border border-accent/60 bg-accent/40" />
+    ),
+  },
+);
 
 interface PriceHistoryItem {
   id: string;

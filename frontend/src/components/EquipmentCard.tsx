@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -63,10 +64,11 @@ export function EquipmentCard({ equipment }: EquipmentCardProps) {
       <CardContent className="flex flex-1 flex-col gap-4 text-sm text-muted">
         {image ? (
           <div className="overflow-hidden rounded-2xl border border-accent/60 bg-white/80 p-4 text-center dark:border-accent-d/40 dark:bg-white/10">
-            {/* eslint-disable-next-line @next/next/no-img-element -- remote asset */}
-            <img
+            <Image
               src={image}
               alt={name}
+              width={220}
+              height={144}
               className="mx-auto h-36 w-full max-w-[220px] object-contain"
               loading="lazy"
             />

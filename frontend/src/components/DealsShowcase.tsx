@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Award, Flame, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -124,13 +125,14 @@ function DealCard({
     >
       <Card className="group flex h-full flex-col overflow-hidden border-accent/40 bg-white shadow-neo transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.85)]">
         <CardHeader className="space-y-4">
-          <div className="relative overflow-hidden rounded-3xl">
-            <img
+          <div className="relative h-56 w-full overflow-hidden rounded-3xl">
+            <Image
               src={buildDisplayImageUrl(deal.image) || "/placeholder.png"}
               alt={deal.title}
-              className="h-56 w-full rounded-3xl object-cover transition duration-500 group-hover:scale-105"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="rounded-3xl object-cover transition duration-500 group-hover:scale-105"
               loading="lazy"
-              decoding="async"
             />
             {discountPercentage && (
               <div className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-accent/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary shadow">
