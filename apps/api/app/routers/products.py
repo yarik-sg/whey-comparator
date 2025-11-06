@@ -302,12 +302,9 @@ def delete_product(product_id: int, db: Annotated[Session, Depends(get_db)] = No
     return None
 
 
-@router.get("/{product_id}/price-history", response_model=schemas.PriceHistoryResponse)
-def get_price_history(
-    product_id: int,
-    period: str = Query("30d", pattern="^(7d|30d|90d|1y|all)$"),
-    db: Annotated[Session, Depends(get_db)] = None,
-):
+def build_price_history_response(
+    db: Session, product_id: int, period: str
+) -> schemas.PriceHistoryResponse:
     product = db.get(Product, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -378,6 +375,15 @@ def get_price_history(
         history=history,
         statistics=statistics,
     )
+
+
+@router.get("/{product_id}/price-history", response_model=schemas.PriceHistoryResponse)
+def get_price_history(
+    product_id: int,
+    period: str = Query("30d", pattern="^(7d|30d|90d|1y|all)$"),
+    db: Annotated[Session, Depends(get_db)] = None,
+):
+    return build_price_history_response(db, product_id, period)
 
 
 def _score_similar_product(base: Product, candidate: Product) -> float:

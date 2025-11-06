@@ -106,6 +106,10 @@ def test_price_history_endpoint(client, db_session):
     assert data["statistics"]["highest_price"] == 31.9
     assert data["statistics"]["data_points"] == 2
 
+    response_alt = client.get(f"/api/prices/history/{product.id}?period=7d")
+    assert response_alt.status_code == 200
+    assert response_alt.json() == data
+
 
 def test_get_product_details(client, db_session):
     product = Product(

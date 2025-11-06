@@ -1,6 +1,8 @@
 from decimal import Decimal
 
-from app.models import Offer, Product, Supplier
+from sqlalchemy import select
+
+from app.models import Offer, PriceHistory, Product, Supplier
 
 
 def seed_product_supplier(db_session):
@@ -39,6 +41,11 @@ def test_create_offer_and_filter(client, db_session):
     response = client.get("/offers/?sort_by=price&sort_order=asc")
     assert response.status_code == 200
 
+    history_entries = db_session.execute(select(PriceHistory)).scalars().all()
+    assert len(history_entries) == 1
+    assert float(history_entries[0].price) == 29.99
+    assert history_entries[0].product_id == product.id
+
 
 def test_offer_update(client, db_session):
     product, supplier = seed_product_supplier(db_session)
@@ -61,3 +68,7 @@ def test_offer_update(client, db_session):
     data = response.json()
     assert data["price"] == "21.50"
     assert data["available"] is False
+
+    history_entries = db_session.execute(select(PriceHistory)).scalars().all()
+    assert len(history_entries) == 1
+    assert float(history_entries[0].price) == 21.5

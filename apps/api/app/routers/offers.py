@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -6,9 +7,23 @@ from sqlalchemy.orm import Session
 
 from .. import schemas
 from ..database import get_db
-from ..models import Offer
+from ..models import Offer, PriceHistory
 
 router = APIRouter()
+
+
+def _record_price_history_snapshot(db: Session, offer: Offer) -> None:
+    if not offer.product_id:
+        return
+
+    entry = PriceHistory(
+        product_id=offer.product_id,
+        price=offer.price,
+        currency=offer.currency or "EUR",
+        in_stock=offer.available,
+        recorded_at=datetime.now(timezone.utc),
+    )
+    db.add(entry)
 
 
 @router.get("/", response_model=schemas.PaginatedOffers)
@@ -63,6 +78,8 @@ def create_offer(
 ):
     offer = Offer(**payload.model_dump())
     db.add(offer)
+    db.flush()
+    _record_price_history_snapshot(db, offer)
     db.commit()
     db.refresh(offer)
     return offer
@@ -86,9 +103,13 @@ def update_offer(
     if not offer:
         raise HTTPException(status_code=404, detail="Offer not found")
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
         setattr(offer, field, value)
     db.add(offer)
+    db.flush()
+    if "price" in update_data:
+        _record_price_history_snapshot(db, offer)
     db.commit()
     db.refresh(offer)
     return offer
