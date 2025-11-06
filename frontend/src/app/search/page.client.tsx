@@ -1,135 +1,107 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { Card } from "@/components/ui/card";
-
-interface SearchResults {
-  products?: Array<Record<string, unknown>>;
-  gyms?: Array<Record<string, unknown>>;
-  programmes?: Array<Record<string, unknown>>;
-  error?: boolean;
-}
+import {
+  type CombinedSearchResults,
+  type SearchSection,
+  fetchCombinedSearchResults,
+  isSearchResultsEmpty,
+  summarizeSearchItem,
+} from "@/lib/searchService";
 
 export default function SearchPage() {
   const params = useSearchParams();
   const query = params.get("q") || "";
-  const [results, setResults] = useState<SearchResults | null>(null);
-  const [isError, setIsError] = useState(false);
+  const [results, setResults] = useState<CombinedSearchResults | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!query) {
       setResults(null);
-      setIsError(false);
+      setIsLoading(false);
+      setError(null);
       return;
     }
 
-    let isMounted = true;
-    setIsError(false);
-    setResults(null);
+    const controller = new AbortController();
+    setIsLoading(true);
+    setError(null);
 
-    const fetchResults = async () => {
-      try {
-        const compareResponse = await fetch(
-          `/api/proxy?target=compare&q=${encodeURIComponent(query)}&limit=12`,
-          { cache: "no-store" },
-        );
-        if (!compareResponse.ok) {
-          throw new Error("Erreur réseau compare");
-        }
-
-        const comparePayload = await compareResponse.json();
-        const products = Array.isArray(comparePayload) ? comparePayload : [];
-
-        let supporting: SearchResults = {};
-        try {
-          const searchResponse = await fetch(`/api/proxy?target=search&q=${encodeURIComponent(query)}`, {
-            cache: "no-store",
-          });
-          if (searchResponse.ok) {
-            supporting = await searchResponse.json();
-          }
-        } catch {
-          // Ignored: fallback aux résultats principaux
-        }
-
-        if (!isMounted) {
+    fetchCombinedSearchResults(query, { signal: controller.signal, limit: 12 })
+      .then((payload) => {
+        setResults(payload);
+        setError(null);
+      })
+      .catch((cause) => {
+        if (controller.signal.aborted) {
           return;
         }
-
-        setResults({
-          products,
-          gyms: Array.isArray(supporting.gyms) ? supporting.gyms : [],
-          programmes: Array.isArray(supporting.programmes) ? supporting.programmes : [],
-        });
-      } catch {
-        if (!isMounted) {
-          return;
+        setError(cause instanceof Error ? cause.message : "Recherche indisponible");
+        setResults(null);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
         }
-        setIsError(true);
-        setResults({ error: true });
-      }
-    };
-
-    fetchResults();
+      });
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, [query]);
+
+  const sections = useMemo(
+    () => [
+      { key: "products" as SearchSection, label: "Produits" },
+      { key: "gyms" as SearchSection, label: "Salles" },
+      { key: "programmes" as SearchSection, label: "Programmes" },
+    ],
+    [],
+  );
 
   if (!query) {
     return <p className="mt-20 text-center">Entrez une recherche.</p>;
   }
 
-  if (!results && !isError) {
+  if (isLoading) {
     return <p className="mt-20 text-center">Chargement...</p>;
   }
 
-  if (isError || results?.error) {
-    return <p className="mt-20 text-center text-red-500">Impossible de charger les résultats.</p>;
+  if (error) {
+    return <p className="mt-20 text-center text-red-500">{error}</p>;
+  }
+
+  if (!results || isSearchResultsEmpty(results)) {
+    return <p className="mt-20 text-center">Aucun résultat pour «&nbsp;{query}&nbsp;».</p>;
   }
 
   return (
     <main className="mx-auto max-w-6xl space-y-12 px-6 py-10">
-      {["products", "gyms", "programmes"].map((section) => {
-        const items = (results?.[section as keyof SearchResults] as Array<Record<string, unknown>>) || [];
-        if (!items || items.length === 0) {
+      {sections.map(({ key, label }) => {
+        const items = results[key] ?? [];
+        if (items.length === 0) {
           return null;
         }
 
         return (
-          <section key={section}>
-            <h2 className="mb-4 text-2xl font-bold capitalize text-primary">{section}</h2>
+          <section key={key}>
+            <h2 className="mb-4 text-2xl font-bold capitalize text-primary">{label}</h2>
             <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
               {items.map((item, index) => {
-                const title =
-                  (item["title"] as string | undefined) ||
-                  (item["nom"] as string | undefined) ||
-                  (item["name"] as string | undefined);
-                const priceObject = item["price"] as
-                  | { formatted?: string; amount?: number }
-                  | string
-                  | undefined;
-                const totalPrice = item["totalPrice"] as { formatted?: string } | undefined;
-                const price =
-                  typeof priceObject === "string"
-                    ? priceObject
-                    : priceObject?.formatted || totalPrice?.formatted;
-                const link =
-                  (item["link"] as string | undefined) ||
-                  (item["url"] as string | undefined) ||
-                  (item["website"] as string | undefined);
-                const vendor = item["vendor"] as string | undefined;
+                const summary = summarizeSearchItem(key, item as Record<string, unknown>);
 
                 return (
-                  <Card key={`${section}-${index}`} className="p-4">
-                    <h3 className="font-semibold">{title || "Résultat"}</h3>
-                    {vendor ? <p className="text-sm text-muted">{vendor}</p> : null}
-                    {price ? <p>{price}</p> : null}
-                    {link ? (
-                      <a href={link} className="text-primary">
+                  <Card key={`${key}-${index}`} className="p-4">
+                    <h3 className="font-semibold">{summary.title}</h3>
+                    {summary.subtitle ? <p className="text-sm text-muted">{summary.subtitle}</p> : null}
+                    {summary.details ? <p className="text-xs text-muted">{summary.details}</p> : null}
+                    {summary.price ? <p className="mt-2 text-sm font-semibold">{summary.price}</p> : null}
+                    {summary.link ? (
+                      <a href={summary.link} className="text-primary" rel="noreferrer">
                         Voir
                       </a>
                     ) : null}

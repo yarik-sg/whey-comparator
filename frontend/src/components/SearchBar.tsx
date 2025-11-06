@@ -16,6 +16,8 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   onSubmit: (value: string) => void;
   onSuggestionSelect?: (value: string) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
 export function SearchBar({
@@ -27,6 +29,8 @@ export function SearchBar({
   onChange,
   onSubmit,
   onSuggestionSelect,
+  onFocus,
+  onBlur,
 }: SearchBarProps) {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -54,6 +58,8 @@ export function SearchBar({
             autoComplete="off"
             value={value}
             onChange={(event) => onChange(event.target.value)}
+            onFocus={onFocus}
+            onBlur={onBlur}
             placeholder={placeholder}
             className="h-14 w-full rounded-full border-none bg-transparent pl-14 pr-4 text-base text-dark placeholder:text-dark/60 focus-visible:ring-0 dark:text-white dark:placeholder:text-text-2"
           />
