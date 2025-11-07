@@ -1,5 +1,4 @@
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -13,6 +12,7 @@ import { PriceComparison } from "@/components/PriceComparison";
 import { SimilarProducts } from "@/components/SimilarProducts";
 import { ProductAnalyticsTracker } from "@/components/ProductAnalyticsTracker";
 import { AnalyticsLink } from "@/components/AnalyticsLink";
+import { PriceHistoryChartClient } from "@/components/charts/PriceHistoryChart.client";
 import apiClient, { ApiError } from "@/lib/apiClient";
 import { createMetadata } from "@/lib/siteMetadata";
 import {
@@ -31,19 +31,6 @@ import type {
   ProductOffersResponse,
   SimilarProductsResponse,
 } from "@/types/api";
-
-const PriceHistoryChart = dynamic(
-  () => import("@/components/charts/PriceHistoryChart"),
-  {
-    ssr: false,
-    loading: () => (
-      <section className="space-y-4 rounded-3xl border border-accent/70 bg-background p-6 text-sm text-muted">
-        Chargement du graphique…
-      </section>
-    ),
-  },
-);
-
 
 const datetimeFormatter = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -390,7 +377,7 @@ export default async function ProductDetailPage({
           <div className="space-y-6">
             <PriceComparison offers={offers} />
             {analyticsProductId !== null && (
-              <PriceHistoryChart data={priceHistoryData} />
+              <PriceHistoryChartClient data={priceHistoryData} />
             )}
             {analyticsProductId !== null && (
               <ReviewsSection productId={analyticsProductId} />
