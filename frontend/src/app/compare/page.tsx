@@ -7,6 +7,8 @@ const CTA_BUTTON_CLASSES =
 const CARD_BASE_CLASSES =
   "rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] shadow-sm";
 
+const PriceHistoryChart = dynamic(() => import("./PriceHistoryChart"), { ssr: false });
+
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
   currency: "EUR",
@@ -104,6 +106,8 @@ function computePriceStats(offers: CompareOffer[], basePrice: number | null) {
   if (typeof basePrice === "number" && Number.isFinite(basePrice)) {
     candidatePrices.push(basePrice);
   }
+  return "—";
+}
 
   if (candidatePrices.length === 0) {
     return {
