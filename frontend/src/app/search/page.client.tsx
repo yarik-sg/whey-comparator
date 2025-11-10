@@ -18,7 +18,8 @@ import {
 } from "@/lib/searchService";
 
 const DEFAULT_IMAGE = "/placeholder.png";
-const ORANGE_BUTTON_CLASSES = "bg-[#FF6600] text-white hover:bg-[#e65a00] focus-visible:ring-[#FF6600]/40";
+const ORANGE_BUTTON_CLASSES =
+  "bg-[#FF6600] text-white shadow hover:bg-[#e65a00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6600]/40";
 
 interface PriceInfo {
   amount?: number;
@@ -281,8 +282,8 @@ function ProductResultCard({ item }: { item: Record<string, unknown> }) {
       : null;
 
   return (
-    <Card className="group flex h-full flex-col overflow-hidden rounded-3xl border border-[#F3C8A5]/60 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
-      <div className="relative h-56 w-full overflow-hidden bg-[#FFF5EB]">
+    <Card className="group flex h-full flex-col overflow-hidden rounded-3xl border border-[color:var(--border-soft)]/80 bg-[color:var(--surface)] text-[color:var(--text)] shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="relative h-56 w-full overflow-hidden bg-[#FFF5EB] dark:bg-[color:var(--secondary)]/40">
         <Image
           src={imageUrl}
           alt={info.title}
@@ -298,21 +299,21 @@ function ProductResultCard({ item }: { item: Record<string, unknown> }) {
           </div>
         ) : null}
       </div>
-      <CardContent className="flex flex-1 flex-col justify-between space-y-4 p-6 text-slate-900">
+      <CardContent className="flex flex-1 flex-col justify-between space-y-4 p-6">
         <div className="space-y-2">
           {info.brand ? (
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#FF6600]/80">{info.brand}</p>
           ) : null}
-          <h3 className="text-lg font-semibold text-slate-900">{info.title}</h3>
+          <h3 className="text-lg font-semibold text-[color:var(--text)]">{info.title}</h3>
           {info.origin || info.source ? (
-            <p className="text-sm text-slate-600">{info.origin ?? info.source}</p>
+            <p className="text-sm text-[color:var(--muted)]">{info.origin ?? info.source}</p>
           ) : null}
           {showRating && rating !== undefined ? (
-            <p className="flex items-center gap-2 text-sm text-slate-700" aria-label={`Note ${rating.toFixed(1)} sur 5`}>
+            <p className="flex items-center gap-2 text-sm text-[color:var(--muted)]" aria-label={`Note ${rating.toFixed(1)} sur 5`}>
               {starDisplay ? <span aria-hidden>{starDisplay}</span> : null}
               <span className="font-semibold">{rating.toFixed(1)}</span>
               {typeof reviewsCount === "number" ? (
-                <span className="text-xs text-slate-500">({reviewsCount.toLocaleString("fr-FR")} avis)</span>
+                <span className="text-xs text-[color:var(--muted)]/80">({reviewsCount.toLocaleString("fr-FR")} avis)</span>
               ) : null}
             </p>
           ) : null}
@@ -320,16 +321,20 @@ function ProductResultCard({ item }: { item: Record<string, unknown> }) {
         <div className="space-y-2">
           <div className="flex items-baseline gap-3">
             {info.price?.text ? (
-              <p className="text-2xl font-bold text-slate-900">{info.price.text}</p>
+              <p className="text-2xl font-bold text-[color:var(--text)]">{info.price.text}</p>
             ) : (
-              <p className="text-2xl font-bold text-slate-500">Prix indisponible</p>
+              <p className="text-2xl font-bold text-[color:var(--muted)]">Prix indisponible</p>
             )}
             {hasOriginalPrice && info.originalPrice?.text ? (
-              <span className="text-sm text-slate-500 line-through">{info.originalPrice.text}</span>
+              <span className="text-sm text-[color:var(--muted)] line-through">{info.originalPrice.text}</span>
             ) : null}
           </div>
           {info.source ? (
-            <Badge variant="accent" size="sm" className="bg-[#FFF5EB] text-[#FF6600]">
+            <Badge
+              variant="accent"
+              size="sm"
+              className="bg-[#FFF5EB] text-[#FF6600] dark:bg-[#FF6600]/20 dark:text-[#FF6600]"
+            >
               {info.source}
             </Badge>
           ) : null}
@@ -366,14 +371,14 @@ function GenericResultCard({
   link?: string;
 }) {
   return (
-    <Card className="flex h-full flex-col justify-between rounded-3xl border border-[#F3C8A5]/60 bg-white p-6 text-slate-900 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <Card className="flex h-full flex-col justify-between rounded-3xl border border-[color:var(--border-soft)]/80 bg-[color:var(--surface)] p-6 text-[color:var(--text)] shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
       <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        {subtitle ? <p className="text-sm text-slate-600">{subtitle}</p> : null}
-        {details ? <p className="text-xs text-slate-500">{details}</p> : null}
+        <h3 className="text-lg font-semibold text-[color:var(--text)]">{title}</h3>
+        {subtitle ? <p className="text-sm text-[color:var(--muted)]">{subtitle}</p> : null}
+        {details ? <p className="text-xs text-[color:var(--muted)]/80">{details}</p> : null}
       </div>
       <div className="mt-4 space-y-3">
-        {price ? <p className="text-base font-semibold text-slate-900">{price}</p> : null}
+        {price ? <p className="text-base font-semibold text-[color:var(--text)]">{price}</p> : null}
         {link ? (
           <Button asChild className={`w-full ${ORANGE_BUTTON_CLASSES}`}>
             <Link href={link}>
@@ -445,12 +450,12 @@ export default function SearchPage() {
     : "Entrez un mot-clé pour comparer instantanément les meilleures offres.";
 
   return (
-    <main className="min-h-screen bg-[#FFF5EB] pb-20 pt-12 text-slate-900">
+    <main className="min-h-screen bg-[color:var(--accent)] pb-20 pt-12 text-[color:var(--text)] transition-colors">
       <div className="mx-auto max-w-6xl space-y-12 px-4 sm:px-6">
         <header className="space-y-2 text-center">
           <p className="text-sm uppercase tracking-[0.3em] text-[#FF6600]">Recherche</p>
           <h1 className="text-3xl font-bold sm:text-4xl">{headerTitle}</h1>
-          <p className="text-sm text-slate-600">{headerSubtitle}</p>
+          <p className="text-sm text-[color:var(--muted)]">{headerSubtitle}</p>
         </header>
 
         {isLoading ? (
@@ -458,19 +463,21 @@ export default function SearchPage() {
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={`skeleton-${index}`}
-                className="h-[420px] animate-pulse rounded-3xl border border-[#F3C8A5]/60 bg-white/70"
+                className="h-[420px] animate-pulse rounded-3xl border border-[color:var(--border-soft)]/80 bg-[color:var(--surface)]/70"
                 aria-hidden
               />
             ))}
           </div>
         ) : error ? (
-          <p className="rounded-3xl border border-red-200/60 bg-red-100/60 p-6 text-center text-red-700">{error}</p>
+          <p className="rounded-3xl border border-red-200/60 bg-red-100/70 p-6 text-center text-red-700 dark:border-red-500/40 dark:bg-red-500/20 dark:text-red-200">
+            {error}
+          </p>
         ) : !query ? (
-          <p className="rounded-3xl border border-[#F3C8A5]/60 bg-white/70 p-6 text-center text-slate-700">
+          <p className="rounded-3xl border border-[color:var(--border-soft)]/80 bg-[color:var(--surface)]/70 p-6 text-center text-[color:var(--muted)]">
             Entrez une recherche pour commencer.
           </p>
         ) : !hasResults ? (
-          <p className="rounded-3xl border border-[#F3C8A5]/60 bg-white/70 p-6 text-center text-slate-700">
+          <p className="rounded-3xl border border-[color:var(--border-soft)]/80 bg-[color:var(--surface)]/70 p-6 text-center text-[color:var(--muted)]">
             Aucun résultat pour «\u00a0{query}\u00a0».
           </p>
         ) : (
@@ -483,7 +490,7 @@ export default function SearchPage() {
             return (
               <section key={key} className="space-y-6">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-semibold text-slate-900">{label}</h2>
+                  <h2 className="text-2xl font-semibold text-[color:var(--text)]">{label}</h2>
                   <div className="h-1 w-16 rounded-full bg-[#FF6600]" aria-hidden />
                 </div>
                 <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
