@@ -27,6 +27,11 @@ interface CompareOffer {
   source?: string | null;
 }
 
+type PriceHistoryEntry = {
+  date: string;
+  price: number | null;
+};
+
 interface CompareProductResponse {
   id: string;
   name: string;
@@ -36,8 +41,14 @@ interface CompareProductResponse {
   rating: number | null;
   base_price: number | null;
   offers: CompareOffer[];
-  price_history: Array<{ date: string; price: number | null }>;
+  price_history: PriceHistoryEntry[];
 }
+
+type PriceStats = {
+  min: number | null;
+  max: number | null;
+  average: number | null;
+};
 
 const VENDOR_LOGOS: Record<string, string> = {
   amazon: "https://logo.clearbit.com/amazon.fr",
@@ -98,7 +109,7 @@ function formatCurrency(value: number | null): string {
   return "—";
 }
 
-function computePriceStats(offers: CompareOffer[], basePrice: number | null) {
+function computePriceStats(offers: CompareOffer[], basePrice: number | null): PriceStats {
   const candidatePrices = offers
     .map((offer) => offer.price)
     .filter((price): price is number => typeof price === "number" && Number.isFinite(price));
@@ -121,7 +132,7 @@ function computePriceStats(offers: CompareOffer[], basePrice: number | null) {
   return { min, max, average };
 }
 
-function normalizeHistory(history: CompareProductResponse["price_history"]): Array<{ date: string; price: number | null }> {
+function normalizeHistory(history: PriceHistoryEntry[] | null | undefined): PriceHistoryEntry[] {
   if (!Array.isArray(history)) {
     return [];
   }
@@ -141,7 +152,7 @@ function normalizeHistory(history: CompareProductResponse["price_history"]): Arr
 
       return { date, price };
     })
-    .filter((entry): entry is { date: string; price: number | null } => Boolean(entry))
+    .filter((entry): entry is PriceHistoryEntry => Boolean(entry))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
@@ -178,7 +189,7 @@ function resolvePrimarySource(offers: CompareOffer[], brand: string | null) {
   return null;
 }
 
-function buildChartDataset(history: Array<{ date: string; price: number | null }>) {
+function buildChartDataset(history: PriceHistoryEntry[]) {
   return history.map((entry) => ({
     date: entry.date,
     price: entry.price ?? null,
