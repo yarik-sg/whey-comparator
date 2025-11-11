@@ -30,6 +30,12 @@ type PriceHistoryEntry = {
   price: number | null;
 };
 
+type PriceStats = {
+  min: number | null;
+  max: number | null;
+  average: number | null;
+};
+
 interface CompareProductResponse {
   id: string;
   name: string;
@@ -37,16 +43,14 @@ interface CompareProductResponse {
   brand: string | null;
   description: string | null;
   rating: number | null;
-  base_price: number | null;
+  price: {
+    min: number | null;
+    max: number | null;
+    avg: number | null;
+  } | null;
   offers: CompareOffer[];
-  price_history: PriceHistoryEntry[];
+  history: PriceHistoryEntry[];
 }
-
-type PriceStats = {
-  min: number | null;
-  max: number | null;
-  average: number | null;
-};
 
 const VENDOR_LOGOS: Record<string, string> = {
   amazon: "https://logo.clearbit.com/amazon.fr",
@@ -79,8 +83,7 @@ function resolveBaseUrl() {
 
 async function fetchComparisonProduct(productId: string): Promise<CompareProductResponse | null> {
   const baseUrl = resolveBaseUrl();
-  const url = new URL("/api/proxy", baseUrl);
-  url.searchParams.set("target", "compare");
+  const url = new URL("/api/compare", baseUrl);
   url.searchParams.set("id", productId);
 
   try {
@@ -128,6 +131,27 @@ function computePriceStats(offers: CompareOffer[], basePrice: number | null): Pr
   const average = candidatePrices.reduce((sum, value) => sum + value, 0) / candidatePrices.length;
 
   return { min, max, average };
+}
+
+function normalizePriceSummary(
+  price: CompareProductResponse["price"],
+  offers: CompareOffer[],
+): PriceStats {
+  const fallback = computePriceStats(offers, price?.min ?? null);
+
+  if (!price) {
+    return fallback;
+  }
+
+  const toNumber = (value: number | null | undefined): number | null => (
+    typeof value === "number" && Number.isFinite(value) ? value : null
+  );
+
+  return {
+    min: toNumber(price.min) ?? fallback.min,
+    max: toNumber(price.max) ?? fallback.max,
+    average: toNumber(price.avg) ?? fallback.average,
+  };
 }
 
 function normalizeHistory(history: PriceHistoryEntry[] | null | undefined): PriceHistoryEntry[] {
@@ -238,11 +262,11 @@ export default async function ComparePage({
   }
 
   const offers = Array.isArray(productData.offers) ? productData.offers : [];
-  const priceStats = computePriceStats(offers, productData.base_price ?? null);
-  const priceHistory = normalizeHistory(productData.price_history);
+  const priceStats = normalizePriceSummary(productData.price, offers);
+  const priceHistory = normalizeHistory(productData.history);
   const chartData = buildChartDataset(priceHistory);
   const primarySource = resolvePrimarySource(offers, productData.brand);
-  const basePriceText = formatCurrency(productData.base_price ?? null);
+  const basePriceText = formatCurrency(priceStats.min);
   const averagePriceText = formatCurrency(priceStats.average);
   const minPriceText = formatCurrency(priceStats.min);
   const maxPriceText = formatCurrency(priceStats.max);
