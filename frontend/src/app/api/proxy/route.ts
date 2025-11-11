@@ -24,7 +24,7 @@ type AggregatedProduct = {
   description?: string | null;
 };
 
-type NormalizedOffer = {
+export type NormalizedOffer = {
   seller: string;
   price: number | null;
   old_price: number | null;
@@ -36,7 +36,7 @@ type NormalizedOffer = {
   source: string | null;
 };
 
-type CompareResponse = {
+export type CompareResponse = {
   id: string;
   name: string;
   image: string | null;
@@ -381,7 +381,7 @@ function buildComparePayload(
   };
 }
 
-async function handleCompareDetailRequest(
+export async function handleCompareDetailRequest(
   url: URL,
 ): Promise<NextResponse> {
   const rawId = url.searchParams.get("id")?.trim();
