@@ -1,13 +1,11 @@
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
+import PriceHistoryChart from "./PriceHistoryChart";
 
 const CTA_BUTTON_CLASSES =
   "inline-flex items-center justify-center gap-2 rounded-full bg-[#FF6600] px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#e65a00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6600]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]";
 const CARD_BASE_CLASSES =
   "rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] shadow-sm";
-
-const PriceHistoryChart = dynamic(() => import("./PriceHistoryChart"), { ssr: false });
 
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
