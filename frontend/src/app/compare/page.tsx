@@ -234,9 +234,10 @@ function renderRating(rating: number | null, source: string | null) {
 export default async function ComparePage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[]>;
+  searchParams?: Record<string, string | string[]> | Promise<Record<string, string | string[]>>;
 }) {
-  const rawId = searchParams?.id;
+  const resolvedSearchParams = await Promise.resolve(searchParams);
+  const rawId = resolvedSearchParams?.id;
   const id = Array.isArray(rawId) ? rawId[0] : rawId;
 
   if (!id || !id.trim()) {
@@ -297,8 +298,8 @@ export default async function ComparePage({
                 />
               ) : (
                 <Image
-                  src="/placeholder.png"
-                  alt="Image produit"
+                  src="/FitIdion_Icon.png"
+                  alt="Image produit indisponible"
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 340px"
