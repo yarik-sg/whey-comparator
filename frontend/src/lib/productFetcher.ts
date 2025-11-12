@@ -69,7 +69,8 @@ type MerchantProfile = {
   aliases?: string[];
 };
 
-const FALLBACK_IMAGE = "/no-image.png";
+const FALLBACK_IMAGE =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
 const MINIMUM_OFFER_COUNT = 5;
 
 const MERCHANT_PROFILES: MerchantProfile[] = [

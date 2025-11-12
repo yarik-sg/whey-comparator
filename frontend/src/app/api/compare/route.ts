@@ -7,8 +7,10 @@ import type {
   ProductPriceSummary,
 } from "@/lib/productFetcher";
 import { getProductData } from "@/lib/productFetcher";
+import { fetchScrapedOffers } from "@/lib/fetchers";
 
-const FALLBACK_IMAGE = "/no-image.png";
+const FALLBACK_IMAGE =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
 
 function buildFallbackOffers(query: string): ProductOffer[] {
   const encodedQuery = encodeURIComponent(query || "produit");
@@ -215,37 +217,51 @@ export async function GET(request: NextRequest) {
   }
 
   const query = url.searchParams.get("q")?.trim();
+  const searchTerm = query && query.length > 0 ? query : rawId;
 
   try {
-    const product = await getProductData(rawId, { query: query ?? undefined });
+    const [product, scrapedOffers] = await Promise.all([
+      getProductData(rawId, { query: searchTerm }),
+      fetchScrapedOffers(searchTerm),
+    ]);
 
-    const realOffers = sortOffersByPrice(
-      (product.offers ?? []).filter((offer) => offer && !isSimulatedOffer(offer)),
-    );
+    const serpOffers = (product.offers ?? []).filter((offer) => offer && !isSimulatedOffer(offer));
+    const mergedOffers = [...serpOffers, ...(Array.isArray(scrapedOffers) ? scrapedOffers : [])];
 
-    if (realOffers.length === 0) {
-      const fallback = buildFallbackProduct(rawId, query ?? rawId);
+    const uniqueOffers = mergedOffers.filter((offer, index, array) => {
+      if (!offer?.url) {
+        return index === array.findIndex((candidate) => candidate.url === offer.url && candidate.seller === offer.seller);
+      }
+      return index === array.findIndex((candidate) => candidate.url === offer.url);
+    });
+
+    if (uniqueOffers.length === 0) {
+      const fallback = buildFallbackProduct(rawId, searchTerm);
       return NextResponse.json(fallback, { status: 200 });
     }
 
-    const priceSummary = toPriceSummary(realOffers, product.price);
+    const sortedOffers = sortOffersByPrice(uniqueOffers);
+    const priceSummary = toPriceSummary(sortedOffers, product.price);
     const rating = typeof product.rating === "number" && Number.isFinite(product.rating)
       ? product.rating
-      : realOffers.find((offer) => typeof offer.rating === "number" && Number.isFinite(offer.rating))?.rating
+      : sortedOffers.find((offer) => typeof offer.rating === "number" && Number.isFinite(offer.rating))?.rating
         ?? null;
 
     const enrichedProduct: ProductData = {
       ...product,
-      image: resolveProductImage(product, realOffers),
+      id: product.id ?? rawId,
+      name: product.name || searchTerm,
+      image: resolveProductImage(product, sortedOffers),
       rating,
       price: priceSummary,
-      offers: realOffers,
+      offers: sortedOffers,
+      history: Array.isArray(product.history) ? product.history : [],
     };
 
     return NextResponse.json(enrichedProduct);
   } catch (error) {
     console.error("compareRoute.get", error);
-    const fallback = buildFallbackProduct(rawId, query ?? rawId);
+    const fallback = buildFallbackProduct(rawId, searchTerm);
     return NextResponse.json(fallback, { status: 200 });
   }
 }

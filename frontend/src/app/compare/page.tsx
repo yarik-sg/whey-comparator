@@ -72,6 +72,9 @@ const VENDOR_LOGOS: Record<string, string> = {
   "google shopping": "https://logo.clearbit.com/google.com",
 };
 
+const FALLBACK_IMAGE =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
+
 async function fetchComparisonProduct(productId: string): Promise<CompareProductResponse | null> {
   try {
     const response = await fetch(`/api/compare?id=${encodeURIComponent(productId)}`, {
@@ -411,7 +414,7 @@ export default function ComparePage() {
         return candidate.trim();
       }
     }
-    return "/no-image.png";
+    return FALLBACK_IMAGE;
   }, [productData, productPreview]);
 
   const displayTitle = productData?.name ?? productPreview?.title ?? "Comparaison FitIdion";
@@ -519,7 +522,7 @@ export default function ComparePage() {
               alt={heroInfo.title}
               className="h-24 w-24 rounded-2xl object-cover"
               onError={(event) => {
-                (event.currentTarget as HTMLImageElement).src = "/no-image.png";
+                (event.currentTarget as HTMLImageElement).src = FALLBACK_IMAGE;
               }}
             />
             <div className="space-y-1">
