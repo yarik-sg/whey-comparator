@@ -197,8 +197,24 @@ async function fetchJson(endpoint, options = {}) {
       return null;
     }
 
+    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+    if (!contentType.includes("application/json")) {
+      console.warn("productAggregator.nonJson", {
+        endpoint,
+        contentType: response.headers.get("content-type") ?? null,
+        preview: text.slice(0, 120),
+      });
+      return null;
+    }
+
+    const trimmed = text.trim();
+    if (!trimmed || trimmed.startsWith("<")) {
+      console.warn("productAggregator.invalidPayload", { endpoint, preview: trimmed.slice(0, 120) });
+      return null;
+    }
+
     try {
-      return JSON.parse(text);
+      return JSON.parse(trimmed);
     } catch (error) {
       console.error("productAggregator.parse", { endpoint, error });
       return null;
