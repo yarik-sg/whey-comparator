@@ -1,6 +1,16 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useLocation } from "react-router-dom";
+
 import PriceHistoryChart from "./PriceHistoryChart";
+import {
+  cacheCompareProduct,
+  loadCachedCompareProduct,
+  type CompareProductPreview,
+} from "@/lib/compareNavigation";
 
 const CTA_BUTTON_CLASSES =
   "inline-flex items-center justify-center gap-2 rounded-full bg-[#FF6600] px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#e65a00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6600]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]";
@@ -62,33 +72,9 @@ const VENDOR_LOGOS: Record<string, string> = {
   "google shopping": "https://logo.clearbit.com/google.com",
 };
 
-function resolveBaseUrl() {
-  const envBase =
-    process.env.INTERNAL_PROXY_BASE_URL
-    || process.env.NEXT_PUBLIC_APP_URL
-    || process.env.APP_URL
-    || process.env.VERCEL_URL
-    || null;
-
-  if (envBase) {
-    const normalized = envBase.replace(/\/$/, "");
-    if (/^https?:\/\//i.test(normalized)) {
-      return normalized;
-    }
-    return `https://${normalized}`;
-  }
-
-  const port = process.env.PORT ?? "3000";
-  return `http://localhost:${port}`;
-}
-
 async function fetchComparisonProduct(productId: string): Promise<CompareProductResponse | null> {
-  const baseUrl = resolveBaseUrl();
-  const url = new URL("/api/compare", baseUrl);
-  url.searchParams.set("id", productId);
-
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(`/api/compare?id=${encodeURIComponent(productId)}`, {
       headers: { Accept: "application/json" },
       cache: "no-store",
     });
@@ -240,263 +226,456 @@ function renderRating(rating: number | null, source: string | null) {
   );
 }
 
-export default async function ComparePage({
-  searchParams,
-}: {
-  searchParams?: Record<string, string | string[]> | Promise<Record<string, string | string[]>>;
-}) {
-  const resolvedSearchParams = await Promise.resolve(searchParams);
-  const rawId = resolvedSearchParams?.id;
-  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+function buildPreviewFromResponse(
+  id: string,
+  data: CompareProductResponse,
+): CompareProductPreview {
+  const offers = Array.isArray(data.offers) ? data.offers : [];
+  const priceStats = computePriceStats(offers, data.price?.min ?? null);
+  const primarySource = resolvePrimarySource(offers, data.brand);
+  const hasPrice = typeof priceStats.min === "number" && Number.isFinite(priceStats.min);
+  const image = typeof data.image === "string" && data.image.trim().length > 0 ? data.image : null;
 
-  if (!id || !id.trim()) {
+  return {
+    id,
+    title: data.name ?? `Produit ${id}`,
+    brand: data.brand ?? null,
+    image,
+    source: primarySource,
+    priceText: hasPrice ? formatCurrency(priceStats.min) : null,
+    priceValue: hasPrice ? priceStats.min : null,
+    rating:
+      typeof data.rating === "number" && Number.isFinite(data.rating) ? data.rating : null,
+    reviewsCount: null,
+  };
+}
+
+function mergePreview(
+  base: CompareProductPreview | null,
+  next: CompareProductPreview,
+): CompareProductPreview {
+  if (!base || base.id !== next.id) {
+    return next;
+  }
+
+  return {
+    ...base,
+    ...next,
+    id: next.id,
+    title: next.title || base.title,
+    brand: next.brand ?? base.brand ?? null,
+    image: next.image ?? base.image ?? null,
+    source: next.source ?? base.source ?? null,
+    priceText: next.priceText ?? base.priceText ?? null,
+    priceValue:
+      typeof next.priceValue === "number"
+        ? next.priceValue
+        : typeof base.priceValue === "number"
+          ? base.priceValue
+          : null,
+    rating:
+      typeof next.rating === "number"
+        ? next.rating
+        : typeof base.rating === "number"
+          ? base.rating
+          : null,
+    reviewsCount:
+      typeof next.reviewsCount === "number"
+        ? next.reviewsCount
+        : typeof base.reviewsCount === "number"
+          ? base.reviewsCount
+          : null,
+  };
+}
+
+export default function ComparePage() {
+  const searchParams = useSearchParams();
+  const location = useLocation();
+  const id = useMemo(() => {
+    const raw = searchParams.get("id");
+    return typeof raw === "string" ? raw.trim() : "";
+  }, [searchParams]);
+
+  const navigationPreview =
+    location && typeof location.state === "object" && location.state !== null
+      ? (location.state as { product?: CompareProductPreview }).product ?? null
+      : null;
+
+  const [productPreview, setProductPreview] = useState<CompareProductPreview | null>(() => {
+    if (navigationPreview && navigationPreview.id) {
+      return navigationPreview;
+    }
+    if (id) {
+      return loadCachedCompareProduct(id) ?? null;
+    }
+    return null;
+  });
+  const [productData, setProductData] = useState<CompareProductResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(Boolean(id));
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (navigationPreview && navigationPreview.id) {
+      setProductPreview(navigationPreview);
+      cacheCompareProduct(navigationPreview);
+    }
+  }, [navigationPreview]);
+
+  useEffect(() => {
+    if (!id) {
+      setProductPreview(null);
+      setProductData(null);
+      setIsLoading(false);
+      setErrorMessage(null);
+      return;
+    }
+
+    setProductPreview((current) => {
+      if (current && current.id === id) {
+        return current;
+      }
+      return loadCachedCompareProduct(id) ?? null;
+    });
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    let cancelled = false;
+
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    fetchComparisonProduct(id).then((data) => {
+      if (cancelled) {
+        return;
+      }
+
+      if (!data) {
+        setProductData(null);
+        setIsLoading(false);
+        setErrorMessage("Impossible de récupérer les données du produit.");
+        return;
+      }
+
+      setProductData(data);
+      setIsLoading(false);
+      setErrorMessage(null);
+
+      const previewFromApi = buildPreviewFromResponse(id, data);
+      cacheCompareProduct(previewFromApi);
+      setProductPreview((current) => mergePreview(current, previewFromApi));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const offers = useMemo<CompareOffer[]>(() => {
+    if (!productData || !Array.isArray(productData.offers)) {
+      return [];
+    }
+    return productData.offers;
+  }, [productData]);
+
+  const priceStats = useMemo<PriceStats>(() => {
+    if (!productData) {
+      return { min: null, max: null, average: null };
+    }
+    return normalizePriceSummary(productData.price, offers);
+  }, [productData, offers]);
+
+  const priceHistory = useMemo(() => {
+    if (!productData) {
+      return [] as PriceHistoryEntry[];
+    }
+    return normalizeHistory(productData.history);
+  }, [productData]);
+
+  const chartData = useMemo(() => buildChartDataset(priceHistory), [priceHistory]);
+
+  const primarySource = useMemo(() => {
+    if (productData) {
+      return resolvePrimarySource(offers, productData.brand);
+    }
+    return productPreview?.source ?? null;
+  }, [offers, productData, productPreview]);
+
+  const productImage = useMemo(() => {
+    const candidates = [productData?.image, productPreview?.image];
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim().length > 0) {
+        return candidate.trim();
+      }
+    }
+    return "/no-image.png";
+  }, [productData, productPreview]);
+
+  const displayTitle = productData?.name ?? productPreview?.title ?? "Comparaison FitIdion";
+  const displayBrand = productData?.brand ?? productPreview?.brand ?? null;
+  const displayDescription = productData?.description ?? null;
+
+  const basePriceText = productData
+    ? formatCurrency(priceStats.min)
+    : productPreview?.priceText ?? "—";
+  const averagePriceText = productData ? formatCurrency(priceStats.average) : "—";
+  const minPriceText = productData ? formatCurrency(priceStats.min) : productPreview?.priceText ?? "—";
+  const maxPriceText = productData ? formatCurrency(priceStats.max) : "—";
+
+  const ratingNode = productData
+    ? renderRating(productData.rating ?? null, primarySource)
+    : typeof productPreview?.rating === "number"
+      ? renderRating(productPreview.rating, primarySource)
+      : null;
+
+  const shouldShowLoader = isLoading && !productData && !errorMessage;
+
+  if (!id) {
     return (
       <main className="min-h-screen bg-[#FFF5EB] pb-20 pt-16 text-[color:var(--text)] dark:bg-[color:var(--accent)]">
         <div className="mx-auto max-w-4xl px-4">
-          <div className={`${CARD_BASE_CLASSES} p-8 text-center`}>Identifiant produit manquant.</div>
+          <div className={`${CARD_BASE_CLASSES} p-8 text-center`}>
+            Identifiant produit manquant.
+          </div>
         </div>
       </main>
     );
   }
-
-  const productData = await fetchComparisonProduct(id.trim());
-
-  if (!productData) {
-    return (
-      <main className="min-h-screen bg-[#FFF5EB] pb-20 pt-16 text-[color:var(--text)] dark:bg-[color:var(--accent)]">
-        <div className="mx-auto max-w-4xl px-4">
-          <div className={`${CARD_BASE_CLASSES} p-8 text-center`}>Impossible de récupérer les données du produit.</div>
-        </div>
-      </main>
-    );
-  }
-
-  const offers = Array.isArray(productData.offers) ? productData.offers : [];
-  const priceStats = normalizePriceSummary(productData.price, offers);
-  const priceHistory = normalizeHistory(productData.history);
-  const chartData = buildChartDataset(priceHistory);
-  const primarySource = resolvePrimarySource(offers, productData.brand);
-  const basePriceText = formatCurrency(priceStats.min);
-  const averagePriceText = formatCurrency(priceStats.average);
-  const minPriceText = formatCurrency(priceStats.min);
-  const maxPriceText = formatCurrency(priceStats.max);
-  const productImage =
-    typeof productData.image === "string" && productData.image.trim().length > 0
-      ? productData.image
-      : "/no-image.png";
 
   return (
     <main className="min-h-screen bg-[#FFF5EB] pb-24 pt-16 text-[color:var(--text)] dark:bg-[color:var(--accent)]">
       <div className="mx-auto max-w-6xl space-y-10 px-4 sm:px-6">
         <header className="space-y-4 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#FF6600]">Comparateur</p>
-          <h1 className="text-3xl font-bold sm:text-4xl">{productData.name ?? "Comparaison FitIdion"}</h1>
+          <h1 className="text-3xl font-bold sm:text-4xl">{displayTitle}</h1>
           <p className="mx-auto max-w-2xl text-sm text-[color:var(--muted)]">
             Comparez instantanément les meilleures offres partenaires pour optimiser vos achats nutrition et accessoires.
             Visualisez l&apos;historique des prix et accédez aux boutiques officielles en un clic.
           </p>
         </header>
 
-        <section className="grid gap-8 lg:grid-cols-[340px,1fr]">
-          <div className={`${CARD_BASE_CLASSES} overflow-hidden`}>
-            <div className="relative h-80 w-full bg-[color:var(--secondary)]">
-              <Image
-                src={productImage}
-                alt={productData.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 340px"
-                loading="lazy"
-              />
-            </div>
-            <div className="space-y-4 p-6">
-              <div className="space-y-1">
-                {productData.brand ? (
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#FF6600]">{productData.brand}</p>
-                ) : null}
-                <h2 className="text-xl font-semibold text-[color:var(--text)]">{productData.name}</h2>
-              </div>
-              {productData.description ? (
-                <p className="text-sm text-[color:var(--muted)]">{productData.description}</p>
+        {productPreview ? (
+          <section className="product-header flex items-center gap-6 rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-6 shadow-sm">
+            <img
+              src={productImage}
+              alt={productPreview.title}
+              className="h-24 w-24 rounded-2xl object-cover"
+              onError={(event) => {
+                (event.currentTarget as HTMLImageElement).src = "/no-image.png";
+              }}
+            />
+            <div className="space-y-1">
+              {productPreview.brand ? (
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#FF6600]">{productPreview.brand}</p>
               ) : null}
-              {renderRating(productData.rating ?? null, primarySource)}
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className={`${CARD_BASE_CLASSES} grid gap-6 p-6 sm:grid-cols-2`}>
-              <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-[color:var(--muted)]">Prix de référence</p>
-                <p className="mt-2 text-3xl font-bold text-[#FF6600]">{basePriceText}</p>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-center text-sm">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted)]">Moyen</p>
-                  <p className="mt-2 text-base font-semibold text-[color:var(--text)]">{averagePriceText}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted)]">Min</p>
-                  <p className="mt-2 text-base font-semibold text-emerald-600 dark:text-emerald-400">{minPriceText}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted)]">Max</p>
-                  <p className="mt-2 text-base font-semibold text-rose-600 dark:text-rose-400">{maxPriceText}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className={`${CARD_BASE_CLASSES} p-6`}>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-[color:var(--text)]">Offres disponibles</h2>
-                  <p className="text-sm text-[color:var(--muted)]">
-                    Classement automatique des marchands par prix TTC. Les frais de livraison sont affichés lorsqu&apos;ils sont
-                    connus.
-                  </p>
-                </div>
-                <span className="inline-flex items-center rounded-full bg-[color:var(--secondary)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-                  {offers.length} offre{offers.length > 1 ? "s" : ""}
-                </span>
-              </div>
-
-              {offers.length === 0 ? (
-                <p className="mt-6 rounded-2xl border border-dashed border-[color:var(--border-soft)] bg-[color:var(--surface-strong)]/60 p-6 text-center text-sm text-[color:var(--muted)]">
-                  Aucune offre trouvée pour ce produit pour le moment.
+              <h2 className="text-xl font-semibold text-[color:var(--text)]">{productPreview.title}</h2>
+              {productPreview.source ? (
+                <p className="text-sm text-[color:var(--muted)]">{productPreview.source}</p>
+              ) : null}
+              {productPreview.priceText ? (
+                <p className="text-base font-semibold text-[color:var(--text)]">{productPreview.priceText}</p>
+              ) : null}
+              {typeof productPreview.rating === "number" ? (
+                <p className="text-xs text-[color:var(--muted)]">
+                  Note {productPreview.rating.toFixed(1)} / 5
                 </p>
-              ) : (
-                <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {offers.map((offer, index) => {
-                    const logoUrl = resolveVendorLogo(offer.seller, offer.logo ?? null, offer.image ?? null);
-                    const isBestPrice = index === 0;
-                    const hasDiscount =
-                      typeof offer.old_price === "number"
-                      && typeof offer.price === "number"
-                      && offer.old_price > offer.price;
-                    const oldPriceText = formatCurrency(
-                      typeof offer.old_price === "number" ? offer.old_price : null,
-                    );
-                    const shippingText = offer.shipping ?? "À vérifier";
-                    const deliveryText = offer.delivery_time ?? null;
-                    const ratingText =
-                      typeof offer.rating === "number" && Number.isFinite(offer.rating)
-                        ? `${offer.rating.toFixed(1)} / 5`
-                        : null;
-                    const sourceText = offer.source && offer.source !== offer.seller ? offer.source : null;
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
-                    return (
-                      <article
-                        key={`${offer.seller}-${offer.url ?? index}`}
-                        className={`relative flex h-full flex-col justify-between gap-4 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md ${
-                          isBestPrice ? "ring-2 ring-[#FF6600]/40" : ""
-                        }`}
-                      >
-                        {isBestPrice ? (
-                          <span className="absolute right-5 top-5 inline-flex items-center rounded-full bg-[#FF6600]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#FF6600]">
-                            Meilleur prix
-                          </span>
-                        ) : null}
+        {errorMessage ? (
+          <div className={`${CARD_BASE_CLASSES} p-8 text-center text-sm text-[color:var(--muted)]`}>
+            {errorMessage}
+          </div>
+        ) : null}
 
-                        <div className="flex items-start gap-4">
-                          <div className="relative h-12 w-12 overflow-hidden rounded-full bg-white ring-1 ring-[color:var(--border-soft)]">
-                            {logoUrl ? (
-                              <Image
-                                src={logoUrl}
-                                alt={offer.seller}
-                                fill
-                                className="object-contain p-1.5"
-                                sizes="48px"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-[#FF6600]">
-                                {offer.seller.slice(0, 2).toUpperCase()}
-                              </div>
-                            )}
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-[color:var(--text)]">{offer.seller}</p>
-                            {sourceText ? (
-                              <p className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted)]">{sourceText}</p>
-                            ) : null}
-                            {ratingText ? (
-                              <p className="text-xs text-[color:var(--muted)]">{ratingText}</p>
-                            ) : null}
-                          </div>
-                        </div>
+        {shouldShowLoader ? (
+          <div className={`${CARD_BASE_CLASSES} p-8 text-center text-sm text-[color:var(--muted)]`}>
+            Chargement des offres en cours…
+          </div>
+        ) : null}
 
-                        <div className="space-y-3">
-                          <div>
-                            <p className="text-2xl font-bold text-[#FF6600]">{formatCurrency(offer.price)}</p>
-                            {hasDiscount ? (
-                              <p className="text-xs text-[color:var(--muted)] line-through">{oldPriceText}</p>
-                            ) : null}
-                          </div>
-
-                          <div className="rounded-2xl bg-[color:var(--secondary)]/40 px-3 py-2 text-xs text-[color:var(--muted)]">
-                            <p>
-                              Livraison :
-                              <span className="font-medium text-[color:var(--text)]"> {shippingText}</span>
-                            </p>
-                            {deliveryText ? (
-                              <p className="mt-1">
-                                Délai :
-                                <span className="font-medium text-[color:var(--text)]"> {deliveryText}</span>
-                              </p>
-                            ) : null}
-                          </div>
-
-                          <div className="flex items-center justify-between gap-2">
-                            {offer.url ? (
-                              <Link
-                                href={offer.url}
-                                className={CTA_BUTTON_CLASSES}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                Voir l&apos;offre
-                              </Link>
-                            ) : (
-                              <span className="text-xs text-[color:var(--muted)]">Lien indisponible</span>
-                            )}
-                            {isBestPrice ? (
-                              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                Offre la plus avantageuse
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      </article>
-                    );
-                  })}
+        {productData ? (
+          <section className="grid gap-8 lg:grid-cols-[340px,1fr]">
+            <div className={`${CARD_BASE_CLASSES} overflow-hidden`}>
+              <div className="relative h-80 w-full bg-[color:var(--secondary)]">
+                <Image
+                  src={productImage}
+                  alt={displayTitle}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 340px"
+                  loading="lazy"
+                />
+              </div>
+              <div className="space-y-4 p-6">
+                <div className="space-y-1">
+                  {displayBrand ? (
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#FF6600]">{displayBrand}</p>
+                  ) : null}
+                  <h2 className="text-xl font-semibold text-[color:var(--text)]">{displayTitle}</h2>
                 </div>
-              )}
+                {displayDescription ? (
+                  <p className="text-sm text-[color:var(--muted)]">{displayDescription}</p>
+                ) : null}
+                {ratingNode}
+              </div>
             </div>
-          </div>
-        </section>
 
-        <section className={`${CARD_BASE_CLASSES} p-6`}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-[color:var(--text)]">Historique des prix</h2>
-              <p className="text-sm text-[color:var(--muted)]">
-                Analysez l&apos;évolution du tarif moyen sur plusieurs semaines pour anticiper les meilleures périodes d&apos;achat.
-              </p>
-            </div>
-            <span className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted)]">
-              {chartData.length} point{chartData.length > 1 ? "s" : ""} de données
-            </span>
-          </div>
+            <div className="space-y-6">
+              <div className={`${CARD_BASE_CLASSES} grid gap-6 p-6 sm:grid-cols-2`}>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-[color:var(--muted)]">Prix de référence</p>
+                  <p className="mt-2 text-3xl font-bold text-[#FF6600]">{basePriceText}</p>
+                </div>
+                <div className="grid grid-cols-3 gap-4 text-center text-sm">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted)]">Moyen</p>
+                    <p className="mt-2 text-base font-semibold text-[color:var(--text)]">{averagePriceText}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted)]">Min</p>
+                    <p className="mt-2 text-base font-semibold text-emerald-600 dark:text-emerald-400">{minPriceText}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--muted)]">Max</p>
+                    <p className="mt-2 text-base font-semibold text-rose-600 dark:text-rose-400">{maxPriceText}</p>
+                  </div>
+                </div>
+              </div>
 
-          {chartData.length === 0 ? (
-            <p className="mt-6 rounded-2xl border border-dashed border-[color:var(--border-soft)] bg-[color:var(--surface-strong)]/60 p-6 text-center text-sm text-[color:var(--muted)]">
-              Historique indisponible pour ce produit pour le moment.
-            </p>
-          ) : (
-            <div className="mt-6 h-72 w-full">
-              <PriceHistoryChart data={chartData} />
+              <div className={`${CARD_BASE_CLASSES} p-6`}>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[color:var(--text)]">Offres disponibles</h2>
+                    <p className="text-sm text-[color:var(--muted)]">
+                      Classement automatique des marchands par prix TTC. Les frais de livraison sont affichés lorsqu&apos;ils sont
+                      connus.
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center rounded-full bg-[color:var(--secondary)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+                    {offers.length} offre{offers.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+
+                {offers.length === 0 ? (
+                  <p className="mt-6 rounded-2xl border border-dashed border-[color:var(--border-soft)] bg-[color:var(--surface-strong)]/60 p-6 text-center text-sm text-[color:var(--muted)]">
+                    Aucune offre trouvée pour ce produit pour le moment.
+                  </p>
+                ) : (
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {offers.map((offer, index) => {
+                      const logoUrl = resolveVendorLogo(offer.seller, offer.logo ?? null, offer.image ?? null);
+                      const isBestPrice = index === 0;
+                      const hasDiscount =
+                        typeof offer.old_price === "number"
+                        && typeof offer.price === "number"
+                        && offer.old_price > offer.price;
+                      const oldPriceText = formatCurrency(
+                        typeof offer.old_price === "number" ? offer.old_price : null,
+                      );
+                      const shippingText = offer.shipping ?? "À vérifier";
+                      const deliveryText = offer.delivery_time ?? null;
+                      const ratingText =
+                        typeof offer.rating === "number" && Number.isFinite(offer.rating)
+                          ? `${offer.rating.toFixed(1)} / 5`
+                          : null;
+                      const sourceText = offer.source && offer.source !== offer.seller ? offer.source : null;
+
+                      return (
+                        <article
+                          key={`${offer.seller}-${offer.url ?? index}`}
+                          className={`relative flex h-full flex-col justify-between gap-4 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md ${
+                            isBestPrice ? "ring-2 ring-[#FF6600]/40" : ""
+                          }`}
+                        >
+                          {isBestPrice ? (
+                            <span className="absolute right-5 top-5 inline-flex items-center rounded-full bg-[#FF6600]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#FF6600]">
+                              Meilleur prix
+                            </span>
+                          ) : null}
+
+                          <div className="flex items-start gap-4">
+                            <div className="relative h-12 w-12 overflow-hidden rounded-full bg-white ring-1 ring-[color:var(--border-soft)]">
+                              {logoUrl ? (
+                                <img src={logoUrl} alt={offer.seller} className="h-full w-full object-contain" />
+                              ) : (
+                                <span className="flex h-full w-full items-center justify-center text-lg" aria-hidden>
+                                  🏷️
+                                </span>
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-[color:var(--text)]">{offer.seller}</p>
+                                {sourceText ? (
+                                  <p className="text-xs text-[color:var(--muted)]">{sourceText}</p>
+                                ) : null}
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-lg font-semibold text-[color:var(--text)]">
+                                  {formatCurrency(offer.price)}
+                                </p>
+                                {hasDiscount ? (
+                                  <p className="text-xs text-[color:var(--muted)] line-through">{oldPriceText}</p>
+                                ) : null}
+                              </div>
+                              <div className="space-y-1 text-xs text-[color:var(--muted)]">
+                                <p>Livraison : {shippingText}</p>
+                                {deliveryText ? <p>Expédition : {deliveryText}</p> : null}
+                                {ratingText ? <p>Note vendeur : {ratingText}</p> : null}
+                              </div>
+                            </div>
+                          </div>
+
+                          {offer.url ? (
+                            <a
+                              href={offer.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={CTA_BUTTON_CLASSES}
+                            >
+                              Voir l&apos;offre
+                            </a>
+                          ) : null}
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className={`${CARD_BASE_CLASSES} space-y-6 p-6`}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[color:var(--text)]">Historique des prix</h2>
+                    <p className="text-sm text-[color:var(--muted)]">
+                      Visualisez l&apos;évolution du prix du produit pour anticiper les meilleures périodes d&apos;achat.
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-2 rounded-full bg-[color:var(--secondary)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
+                    <span aria-hidden>📈</span>
+                    Tendances
+                  </span>
+                </div>
+
+                {chartData.length > 0 ? (
+                  <div className="h-64">
+                    <PriceHistoryChart data={chartData} />
+                  </div>
+                ) : (
+                  <p className="rounded-2xl border border-dashed border-[color:var(--border-soft)] bg-[color:var(--surface-strong)]/60 p-6 text-center text-sm text-[color:var(--muted)]">
+                    Historique insuffisant pour ce produit.
+                  </p>
+                )}
+              </div>
             </div>
-          )}
-        </section>
+          </section>
+        ) : null}
       </div>
     </main>
   );

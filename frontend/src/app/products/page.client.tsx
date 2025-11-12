@@ -18,6 +18,7 @@ import {
   normalizeProductIdentifier,
   type ProductIdentifierCandidate,
 } from "@/lib/productIdentifiers";
+import { buildComparePreviewFromProductSummary } from "@/lib/compareNavigation";
 import type { ProductSummary } from "@/types/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -311,6 +312,10 @@ export default function ProductsPage() {
                   const canonicalId =
                     getCanonicalProductId(product) ?? String(product.id ?? index);
                   const productHref = `/products/${encodeURIComponent(canonicalId)}`;
+                  const comparePreview = buildComparePreviewFromProductSummary(
+                    product,
+                    canonicalId,
+                  );
 
                   return (
                     <ProductCard
@@ -325,6 +330,7 @@ export default function ProductsPage() {
                             className="inline-flex items-center gap-1 font-semibold text-primary transition hover:text-primary/80"
                             aria-label={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
                             title={`Comparer ${product.brand ? `${product.brand} ` : ""}${product.name}`}
+                            product={comparePreview}
                           >
                             Comparer →
                           </CompareLinkButton>

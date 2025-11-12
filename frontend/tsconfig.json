@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "sonner": ["./src/lib/sonner"]
+      "sonner": ["./src/lib/sonner"],
+      "react-router-dom": ["./src/lib/react-router-dom"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
