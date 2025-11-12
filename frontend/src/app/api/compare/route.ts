@@ -9,7 +9,8 @@ import type {
 import { getProductData } from "@/lib/productFetcher";
 import { fetchScrapedOffers } from "@/lib/fetchers";
 
-const FALLBACK_IMAGE = "/no-image.png";
+const FALLBACK_IMAGE =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
 
 function buildFallbackOffers(query: string): ProductOffer[] {
   const encodedQuery = encodeURIComponent(query || "produit");
