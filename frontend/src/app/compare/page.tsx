@@ -23,6 +23,7 @@ interface CompareOffer {
   rating: number | null;
   logo?: string | null;
   source?: string | null;
+  image?: string | null;
 }
 
 type PriceHistoryEntry = {
@@ -39,7 +40,7 @@ type PriceStats = {
 interface CompareProductResponse {
   id: string;
   name: string;
-  image: string | null;
+  image: string;
   brand: string | null;
   description: string | null;
   rating: number | null;
@@ -178,14 +179,18 @@ function normalizeHistory(history: PriceHistoryEntry[] | null | undefined): Pric
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
-function resolveVendorLogo(seller: string, provided?: string | null): string | null {
+function resolveVendorLogo(
+  seller: string,
+  provided?: string | null,
+  fallbackImage?: string | null,
+): string | null {
   if (provided && provided.trim().length > 0) {
     return provided;
   }
 
   const trimmed = seller.trim();
   if (!trimmed) {
-    return null;
+    return fallbackImage ?? null;
   }
 
   const normalized = trimmed.toLowerCase();
@@ -195,7 +200,11 @@ function resolveVendorLogo(seller: string, provided?: string | null): string | n
   }
 
   const fuzzy = Object.entries(VENDOR_LOGOS).find(([key]) => normalized.includes(key));
-  return fuzzy ? fuzzy[1] : null;
+  if (fuzzy) {
+    return fuzzy[1];
+  }
+
+  return fallbackImage ?? null;
 }
 
 function resolvePrimarySource(offers: CompareOffer[], brand: string | null) {
@@ -271,6 +280,10 @@ export default async function ComparePage({
   const averagePriceText = formatCurrency(priceStats.average);
   const minPriceText = formatCurrency(priceStats.min);
   const maxPriceText = formatCurrency(priceStats.max);
+  const productImage =
+    typeof productData.image === "string" && productData.image.trim().length > 0
+      ? productData.image
+      : "/no-image.png";
 
   return (
     <main className="min-h-screen bg-[#FFF5EB] pb-24 pt-16 text-[color:var(--text)] dark:bg-[color:var(--accent)]">
@@ -287,25 +300,14 @@ export default async function ComparePage({
         <section className="grid gap-8 lg:grid-cols-[340px,1fr]">
           <div className={`${CARD_BASE_CLASSES} overflow-hidden`}>
             <div className="relative h-80 w-full bg-[color:var(--secondary)]">
-              {productData.image ? (
-                <Image
-                  src={productData.image}
-                  alt={productData.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 340px"
-                  loading="lazy"
-                />
-              ) : (
-                <Image
-                  src="/FitIdion_Icon.png"
-                  alt="Image produit indisponible"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 340px"
-                  loading="lazy"
-                />
-              )}
+              <Image
+                src={productImage}
+                alt={productData.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 340px"
+                loading="lazy"
+              />
             </div>
             <div className="space-y-4 p-6">
               <div className="space-y-1">
@@ -362,89 +364,110 @@ export default async function ComparePage({
                   Aucune offre trouvée pour ce produit pour le moment.
                 </p>
               ) : (
-                <div className="mt-6 overflow-hidden rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)]">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-[color:var(--secondary)]/60 text-xs uppercase tracking-wide text-[color:var(--muted)]">
-                      <tr>
-                        <th className="px-4 py-3 text-left">Marchand</th>
-                        <th className="px-4 py-3 text-left">Prix</th>
-                        <th className="px-4 py-3 text-left">Livraison</th>
-                        <th className="px-4 py-3 text-right">Lien</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {offers.map((offer, index) => {
-                        const logoUrl = resolveVendorLogo(offer.seller, offer.logo);
-                        const isBestPrice = index === 0;
-                        const hasDiscount =
-                          typeof offer.old_price === "number"
-                          && typeof offer.price === "number"
-                          && offer.old_price > offer.price;
-                        const oldPriceText = formatCurrency(
-                          typeof offer.old_price === "number" ? offer.old_price : null,
-                        );
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {offers.map((offer, index) => {
+                    const logoUrl = resolveVendorLogo(offer.seller, offer.logo ?? null, offer.image ?? null);
+                    const isBestPrice = index === 0;
+                    const hasDiscount =
+                      typeof offer.old_price === "number"
+                      && typeof offer.price === "number"
+                      && offer.old_price > offer.price;
+                    const oldPriceText = formatCurrency(
+                      typeof offer.old_price === "number" ? offer.old_price : null,
+                    );
+                    const shippingText = offer.shipping ?? "À vérifier";
+                    const deliveryText = offer.delivery_time ?? null;
+                    const ratingText =
+                      typeof offer.rating === "number" && Number.isFinite(offer.rating)
+                        ? `${offer.rating.toFixed(1)} / 5`
+                        : null;
+                    const sourceText = offer.source && offer.source !== offer.seller ? offer.source : null;
 
-                        return (
-                          <tr
-                            key={`${offer.seller}-${offer.url ?? index}`}
-                            className={`border-t border-[color:var(--border-soft)]/80 transition-colors hover:bg-[#FFF5EB]/80 dark:hover:bg-[color:var(--secondary)]/50 ${
-                              isBestPrice ? "bg-[#FFF5EB]/60 dark:bg-[color:var(--secondary)]/40" : "bg-[color:var(--surface)]"
-                            }`}
-                          >
-                            <td className="px-4 py-4">
-                              <div className="flex items-center gap-3">
-                                {logoUrl ? (
-                                  <div className="relative h-8 w-8 overflow-hidden rounded-full bg-white">
-                                    <Image
-                                      src={logoUrl}
-                                      alt={offer.seller}
-                                      fill
-                                      className="object-contain p-1"
-                                      sizes="32px"
-                                      loading="lazy"
-                                    />
-                                  </div>
-                                ) : (
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FF6600]/10 text-xs font-semibold text-[#FF6600]">
-                                    {offer.seller.slice(0, 2).toUpperCase()}
-                                  </div>
-                                )}
-                                <div>
-                                  <p className="font-semibold text-[color:var(--text)]">{offer.seller}</p>
-                                  {typeof offer.rating === "number" && Number.isFinite(offer.rating) ? (
-                                    <p className="text-xs text-[color:var(--muted)]">{offer.rating.toFixed(1)} / 5</p>
-                                  ) : null}
-                                </div>
+                    return (
+                      <article
+                        key={`${offer.seller}-${offer.url ?? index}`}
+                        className={`relative flex h-full flex-col justify-between gap-4 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md ${
+                          isBestPrice ? "ring-2 ring-[#FF6600]/40" : ""
+                        }`}
+                      >
+                        {isBestPrice ? (
+                          <span className="absolute right-5 top-5 inline-flex items-center rounded-full bg-[#FF6600]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#FF6600]">
+                            Meilleur prix
+                          </span>
+                        ) : null}
+
+                        <div className="flex items-start gap-4">
+                          <div className="relative h-12 w-12 overflow-hidden rounded-full bg-white ring-1 ring-[color:var(--border-soft)]">
+                            {logoUrl ? (
+                              <Image
+                                src={logoUrl}
+                                alt={offer.seller}
+                                fill
+                                className="object-contain p-1.5"
+                                sizes="48px"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-[#FF6600]">
+                                {offer.seller.slice(0, 2).toUpperCase()}
                               </div>
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="flex flex-col text-[color:var(--text)]">
-                                <span className="text-base font-semibold">{formatCurrency(offer.price)}</span>
-                                {hasDiscount ? (
-                                  <span className="text-xs text-[color:var(--muted)] line-through">{oldPriceText}</span>
-                                ) : null}
-                              </div>
-                            </td>
-                            <td className="px-4 py-4 text-sm text-[color:var(--muted)]">
-                              {offer.shipping ?? "À vérifier"}
-                              {offer.delivery_time ? (
-                                <span className="block text-xs text-[color:var(--muted)]/80">{offer.delivery_time}</span>
-                              ) : null}
-                            </td>
-                            <td className="px-4 py-4 text-right">
-                              {offer.url ? (
-                                <Link href={offer.url} className={CTA_BUTTON_CLASSES} target="_blank" rel="noopener noreferrer">
-                                  Voir l&apos;offre
-                                </Link>
-                              ) : (
-                                <span className="text-xs text-[color:var(--muted)]">Lien indisponible</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-[color:var(--text)]">{offer.seller}</p>
+                            {sourceText ? (
+                              <p className="text-[11px] uppercase tracking-[0.2em] text-[color:var(--muted)]">{sourceText}</p>
+                            ) : null}
+                            {ratingText ? (
+                              <p className="text-xs text-[color:var(--muted)]">{ratingText}</p>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-2xl font-bold text-[#FF6600]">{formatCurrency(offer.price)}</p>
+                            {hasDiscount ? (
+                              <p className="text-xs text-[color:var(--muted)] line-through">{oldPriceText}</p>
+                            ) : null}
+                          </div>
+
+                          <div className="rounded-2xl bg-[color:var(--secondary)]/40 px-3 py-2 text-xs text-[color:var(--muted)]">
+                            <p>
+                              Livraison :
+                              <span className="font-medium text-[color:var(--text)]"> {shippingText}</span>
+                            </p>
+                            {deliveryText ? (
+                              <p className="mt-1">
+                                Délai :
+                                <span className="font-medium text-[color:var(--text)]"> {deliveryText}</span>
+                              </p>
+                            ) : null}
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2">
+                            {offer.url ? (
+                              <Link
+                                href={offer.url}
+                                className={CTA_BUTTON_CLASSES}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Voir l&apos;offre
+                              </Link>
+                            ) : (
+                              <span className="text-xs text-[color:var(--muted)]">Lien indisponible</span>
+                            )}
+                            {isBestPrice ? (
+                              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                Offre la plus avantageuse
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
               )}
             </div>

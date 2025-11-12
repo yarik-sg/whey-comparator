@@ -1,4 +1,9 @@
-import { fetchSerpApi } from "@/lib/productAggregator.js";
+import {
+  fetchAmazon,
+  fetchDecathlon,
+  fetchSerpApi,
+  scrapeMyProtein,
+} from "@/lib/productAggregator.js";
 
 export type ProductPriceSummary = {
   min: number | null;
@@ -21,12 +26,13 @@ export type ProductOffer = {
   rating: number | null;
   logo: string | null;
   source: string | null;
+  image: string | null;
 };
 
 export type ProductData = {
   id: string;
   name: string;
-  image: string | null;
+  image: string;
   brand: string | null;
   description: string | null;
   rating: number | null;
@@ -35,9 +41,9 @@ export type ProductData = {
   history: ProductHistoryEntry[];
 };
 
-type RawSerpProduct = Record<string, unknown>;
+type RawProduct = Record<string, unknown>;
 
-type NormalizedSerpProduct = {
+type NormalizedProduct = {
   id: string | null;
   name: string | null;
   price: number | null;
@@ -48,7 +54,187 @@ type NormalizedSerpProduct = {
   url: string | null;
   rating: number | null;
   description: string | null;
+  shipping?: string | null;
+  delivery_time?: string | null;
 };
+
+type MerchantProfile = {
+  key: string;
+  label: string;
+  logo: string;
+  buildUrl: (query: string) => string;
+  shipping?: string;
+  delivery?: string;
+  rating?: number;
+  aliases?: string[];
+};
+
+const FALLBACK_IMAGE = "/no-image.png";
+const MINIMUM_OFFER_COUNT = 5;
+
+const MERCHANT_PROFILES: MerchantProfile[] = [
+  {
+    key: "amazon",
+    label: "Amazon",
+    logo: "https://logo.clearbit.com/amazon.fr",
+    buildUrl: (query) => `https://www.amazon.fr/s?k=${encodeURIComponent(query)}`,
+    shipping: "Livraison Prime éligible",
+    delivery: "24-48h",
+    rating: 4.7,
+    aliases: ["amazon fr", "amazon marketplace"],
+  },
+  {
+    key: "decathlon",
+    label: "Decathlon",
+    logo: "https://logo.clearbit.com/decathlon.fr",
+    buildUrl: (query) => `https://www.decathlon.fr/search?Ntt=${encodeURIComponent(query)}`,
+    shipping: "Retrait 1h en magasin",
+    delivery: "2-3 jours",
+    rating: 4.6,
+  },
+  {
+    key: "cdiscount",
+    label: "Cdiscount",
+    logo: "https://logo.clearbit.com/cdiscount.com",
+    buildUrl: (query) => `https://www.cdiscount.com/search/10/${encodeURIComponent(query)}.html`,
+    shipping: "Dès 3,99€",
+    delivery: "3-5 jours",
+    rating: 4.3,
+  },
+  {
+    key: "alltricks",
+    label: "Alltricks",
+    logo: "https://logo.clearbit.com/alltricks.fr",
+    buildUrl: (query) => `https://www.alltricks.fr/F-${encodeURIComponent(query)}`,
+    shipping: "Livraison offerte dès 69€",
+    delivery: "2-3 jours",
+    rating: 4.5,
+  },
+  {
+    key: "go-sport",
+    label: "GO Sport",
+    logo: "https://logo.clearbit.com/go-sport.com",
+    buildUrl: (query) => `https://www.go-sport.com/search?q=${encodeURIComponent(query)}`,
+    shipping: "Offert dès 60€",
+    delivery: "3-4 jours",
+    rating: 4.2,
+    aliases: ["gosport"],
+  },
+  {
+    key: "intersport",
+    label: "Intersport",
+    logo: "https://logo.clearbit.com/intersport.fr",
+    buildUrl: (query) => `https://www.intersport.fr/search/${encodeURIComponent(query)}/`,
+    shipping: "Livraison en 48h",
+    delivery: "2-3 jours",
+    rating: 4.1,
+  },
+  {
+    key: "fnac",
+    label: "Fnac",
+    logo: "https://logo.clearbit.com/fnac.com",
+    buildUrl: (query) => `https://www.fnac.com/SearchResult/ResultList.aspx?SCat=0%211&Search=${encodeURIComponent(query)}`,
+    shipping: "Retrait 1h magasin",
+    delivery: "2-4 jours",
+    rating: 4.4,
+  },
+  {
+    key: "darty",
+    label: "Darty",
+    logo: "https://logo.clearbit.com/darty.com",
+    buildUrl: (query) => `https://www.darty.com/nav/recherche/${encodeURIComponent(query)}.html`,
+    shipping: "Retrait 1h magasin",
+    delivery: "2-3 jours",
+    rating: 4.5,
+  },
+  {
+    key: "rakuten",
+    label: "Rakuten",
+    logo: "https://logo.clearbit.com/rakuten.fr",
+    buildUrl: (query) => `https://fr.shopping.rakuten.com/search/${encodeURIComponent(query)}`,
+    shipping: "Selon vendeur",
+    delivery: "3-7 jours",
+    rating: 4.2,
+  },
+  {
+    key: "leclerc",
+    label: "E.Leclerc",
+    logo: "https://logo.clearbit.com/e-leclerc.com",
+    buildUrl: (query) => `https://www.e-leclerc.com/catalogue/search/${encodeURIComponent(query)}`,
+    shipping: "Drive disponible",
+    delivery: "2-4 jours",
+    rating: 4.0,
+    aliases: ["leclerc"],
+  },
+  {
+    key: "auchan",
+    label: "Auchan",
+    logo: "https://logo.clearbit.com/auchan.fr",
+    buildUrl: (query) => `https://www.auchan.fr/recherche/${encodeURIComponent(query)}`,
+    shipping: "Livraison à domicile",
+    delivery: "3-5 jours",
+    rating: 4.0,
+  },
+  {
+    key: "carrefour",
+    label: "Carrefour",
+    logo: "https://logo.clearbit.com/carrefour.fr",
+    buildUrl: (query) => `https://www.carrefour.fr/s?q=${encodeURIComponent(query)}`,
+    shipping: "Retrait 2h",
+    delivery: "3-4 jours",
+    rating: 4.1,
+  },
+];
+
+const MERCHANT_INDEX = new Map<string, MerchantProfile>();
+for (const profile of MERCHANT_PROFILES) {
+  const normalizedKey = normalizeMerchantKey(profile.key || profile.label);
+  if (normalizedKey) {
+    MERCHANT_INDEX.set(normalizedKey, profile);
+  }
+  if (profile.aliases) {
+    for (const alias of profile.aliases) {
+      const aliasKey = normalizeMerchantKey(alias);
+      if (aliasKey) {
+        MERCHANT_INDEX.set(aliasKey, profile);
+      }
+    }
+  }
+  const labelKey = normalizeMerchantKey(profile.label);
+  if (labelKey && !MERCHANT_INDEX.has(labelKey)) {
+    MERCHANT_INDEX.set(labelKey, profile);
+  }
+}
+
+function normalizeMerchantKey(value: string | null | undefined): string {
+  if (!value) {
+    return "";
+  }
+  return value.replace(/[^a-z0-9]+/gi, "").toLowerCase();
+}
+
+function lookupMerchantProfile(value: string | null | undefined): MerchantProfile | null {
+  if (!value) {
+    return null;
+  }
+  const normalized = normalizeMerchantKey(value);
+  if (!normalized) {
+    return null;
+  }
+
+  const direct = MERCHANT_INDEX.get(normalized);
+  if (direct) {
+    return direct;
+  }
+
+  for (const [key, profile] of MERCHANT_INDEX.entries()) {
+    if (normalized.includes(key)) {
+      return profile;
+    }
+  }
+
+  return null;
+}
 
 function toNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -81,12 +267,12 @@ function toString(value: unknown): string | null {
   return null;
 }
 
-function normalizeSerpProduct(entry: unknown): NormalizedSerpProduct | null {
+function normalizeSerpProduct(entry: unknown): NormalizedProduct | null {
   if (!entry || typeof entry !== "object") {
     return null;
   }
 
-  const raw = entry as RawSerpProduct;
+  const raw = entry as RawProduct;
 
   const id = toString(raw.id)
     || toString(raw.product_id)
@@ -131,15 +317,78 @@ function normalizeSerpProduct(entry: unknown): NormalizedSerpProduct | null {
   };
 }
 
+function normalizeExternalProduct(entry: unknown, fallbackVendor?: string): NormalizedProduct | null {
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+
+  const raw = entry as RawProduct;
+  const id = toString(raw.id)
+    || toString(raw.product_id)
+    || toString(raw.productId)
+    || null;
+  const name = toString(raw.name) || toString(raw.title) || null;
+  const vendor = toString(raw.vendor)
+    || toString(raw.brand)
+    || fallbackVendor
+    || null;
+  const brand = toString(raw.brand) || null;
+  const image = toString(raw.image)
+    || toString(raw.image_url)
+    || toString(raw.imageUrl)
+    || toString(raw.thumbnail)
+    || (Array.isArray(raw.images)
+      ? raw.images.find((item) => typeof item === "string" && item.trim().length > 0) ?? null
+      : null);
+  const description = toString(raw.description)
+    || toString(raw.subtitle)
+    || toString(raw.resume)
+    || null;
+  const url = toString(raw.url)
+    || toString(raw.link)
+    || toString(raw.permalink)
+    || toString(raw.productUrl)
+    || null;
+  const price = toNumber(raw.price)
+    ?? toNumber(raw.current_price)
+    ?? toNumber(raw.currentPrice)
+    ?? toNumber(raw.prix)
+    ?? toNumber(raw.bestPrice)
+    ?? toNumber(raw.amount)
+    ?? null;
+  const oldPrice = toNumber(raw.old_price)
+    ?? toNumber(raw.previous_price)
+    ?? toNumber(raw.referencePrice)
+    ?? toNumber(raw.originalPrice)
+    ?? null;
+  const rating = toNumber(raw.rating)
+    ?? toNumber(raw.note)
+    ?? toNumber(raw.averageRating)
+    ?? toNumber(raw.avis)
+    ?? null;
+
+  return {
+    id,
+    name,
+    price,
+    old_price: oldPrice,
+    image,
+    brand,
+    vendor,
+    url,
+    rating,
+    description,
+    shipping: toString(raw.shipping) || null,
+    delivery_time: toString(raw.delivery_time) || toString(raw.deliveryTime) || null,
+  };
+}
+
 function dedupeOffers(offers: ProductOffer[]): ProductOffer[] {
   const seen = new Map<string, ProductOffer>();
 
   for (const offer of offers) {
-    const keyParts = [offer.seller.trim().toLowerCase()];
-    if (offer.url) {
-      keyParts.push(offer.url);
-    }
-    const key = keyParts.join("::");
+    const sellerKey = offer.seller.trim().toLowerCase();
+    const key = offer.url ? `${sellerKey}::${offer.url}` : sellerKey;
 
     const existing = seen.get(key);
     if (!existing) {
@@ -179,6 +428,10 @@ function roundCurrency(value: number): number {
   return Number.parseFloat(value.toFixed(2));
 }
 
+function roundRating(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
 function computePriceStats(offers: ProductOffer[], fallbackPrice: number | null): ProductPriceSummary {
   const values: number[] = [];
 
@@ -212,8 +465,16 @@ function deriveSeed(input: string): number {
   return hash || 1;
 }
 
+function createPseudoRandom(seed: number): () => number {
+  let state = seed || 1;
+  return () => {
+    state = (state * 1664525 + 1013904223) % 0xffffffff;
+    return state / 0xffffffff;
+  };
+}
+
 function simulateBasePrice(seed: number): number {
-  const normalized = (seed % 2500) / 100; // 0 -> 24.99
+  const normalized = (seed % 3500) / 100; // 0 -> 34.99
   const price = 24.5 + normalized;
   return roundCurrency(price);
 }
@@ -237,7 +498,7 @@ function buildSyntheticHistory(basePrice: number, seed: number): ProductHistoryE
   return entries;
 }
 
-function pickBestProduct(products: NormalizedSerpProduct[], query: string): NormalizedSerpProduct | null {
+function pickBestProduct(products: NormalizedProduct[], query: string): NormalizedProduct | null {
   if (products.length === 0) {
     return null;
   }
@@ -263,52 +524,136 @@ function pickBestProduct(products: NormalizedSerpProduct[], query: string): Norm
   return products[0];
 }
 
-function toOffer(product: NormalizedSerpProduct): ProductOffer {
+function toOffer(product: NormalizedProduct, query: string): ProductOffer | null {
   const seller = product.vendor
     || product.brand
     || product.name
-    || "Marchand";
+    || "Marchand partenaire";
+
+  if (!seller) {
+    return null;
+  }
+
+  const merchantProfile = lookupMerchantProfile(seller);
+  const url = product.url ?? merchantProfile?.buildUrl(query) ?? null;
+
+  const price = typeof product.price === "number" && Number.isFinite(product.price)
+    ? roundCurrency(product.price)
+    : null;
+  const oldPrice = typeof product.old_price === "number" && Number.isFinite(product.old_price)
+    ? roundCurrency(product.old_price)
+    : null;
+  const rating = typeof product.rating === "number" && Number.isFinite(product.rating)
+    ? roundRating(product.rating)
+    : merchantProfile?.rating ?? null;
 
   return {
     seller,
-    price: typeof product.price === "number" && Number.isFinite(product.price)
-      ? roundCurrency(product.price)
-      : null,
-    old_price: typeof product.old_price === "number" && Number.isFinite(product.old_price)
-      ? roundCurrency(product.old_price)
-      : null,
-    url: product.url ?? null,
-    shipping: null,
-    delivery_time: null,
-    rating: typeof product.rating === "number" && Number.isFinite(product.rating)
-      ? roundCurrency(product.rating)
-      : null,
-    logo: null,
-    source: product.vendor ?? "Google Shopping",
+    price,
+    old_price: oldPrice,
+    url,
+    shipping: product.shipping ?? merchantProfile?.shipping ?? null,
+    delivery_time: product.delivery_time ?? merchantProfile?.delivery ?? null,
+    rating,
+    logo: merchantProfile?.logo ?? null,
+    source: merchantProfile?.label ?? product.vendor ?? null,
+    image: product.image ?? merchantProfile?.logo ?? null,
   };
 }
 
-function ensureOffers(offers: ProductOffer[], query: string, seed: number): ProductOffer[] {
-  if (offers.length > 0) {
-    return offers;
+function buildSimulatedOffers(
+  count: number,
+  query: string,
+  seed: number,
+  basePrice: number,
+  existingSellers: Set<string>,
+): ProductOffer[] {
+  const offers: ProductOffer[] = [];
+  const random = createPseudoRandom(seed);
+  const base = basePrice > 0 ? basePrice : simulateBasePrice(seed);
+
+  for (const profile of MERCHANT_PROFILES) {
+    if (offers.length >= count) {
+      break;
+    }
+    const key = normalizeMerchantKey(profile.label);
+    if (existingSellers.has(key)) {
+      continue;
+    }
+
+    const variation = (random() - 0.45) * 0.22; // [-0.099, +0.187)
+    const price = roundCurrency(Math.max(base * (1 + variation), base * 0.85));
+    const oldPrice = roundCurrency(price * (1 + Math.abs(variation) + 0.06));
+
+    offers.push({
+      seller: profile.label,
+      price,
+      old_price: oldPrice,
+      url: profile.buildUrl(query),
+      shipping: profile.shipping ?? "Livraison selon marchand",
+      delivery_time: profile.delivery ?? null,
+      rating: profile.rating ? roundRating(profile.rating) : null,
+      logo: profile.logo,
+      source: "Simulation",
+      image: profile.logo,
+    });
+
+    existingSellers.add(key);
   }
 
-  const simulatedPrice = simulateBasePrice(seed);
-  const url = `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(query)}`;
+  // Enrichir avec des partenaires génériques si nécessaire.
+  let partnerIndex = 1;
+  while (offers.length < count) {
+    const partnerName = `Boutique partenaire ${partnerIndex}`;
+    const variation = (random() - 0.5) * 0.14;
+    const price = roundCurrency(Math.max(base * (1 + variation), base * 0.88));
+    const oldPrice = roundCurrency(price * 1.08);
 
-  return [
-    {
-      seller: "Boutique partenaire",
-      price: simulatedPrice,
-      old_price: roundCurrency(simulatedPrice * 1.08),
-      url,
-      shipping: null,
-      delivery_time: null,
+    offers.push({
+      seller: partnerName,
+      price,
+      old_price: oldPrice,
+      url: `https://www.idealo.fr/prix/${encodeURIComponent(query)}`,
+      shipping: "Livraison variable",
+      delivery_time: "3-6 jours",
       rating: null,
       logo: null,
       source: "Simulation",
-    },
-  ];
+      image: null,
+    });
+
+    existingSellers.add(normalizeMerchantKey(partnerName));
+    partnerIndex += 1;
+  }
+
+  return offers;
+}
+
+function ensureOffers(offers: ProductOffer[], query: string, seed: number): ProductOffer[] {
+  const deduped = dedupeOffers(offers.filter((offer) => Boolean(offer?.seller)));
+  const existingSellers = new Set(
+    deduped.map((offer) => normalizeMerchantKey(offer.seller)),
+  );
+
+  const needed = Math.max(
+    MINIMUM_OFFER_COUNT - deduped.length,
+    deduped.length === 0 ? MINIMUM_OFFER_COUNT : 0,
+  );
+
+  if (needed <= 0) {
+    return deduped;
+  }
+
+  const basePrice = deduped[0]?.price ?? null;
+  const simulated = buildSimulatedOffers(
+    needed,
+    query,
+    seed,
+    typeof basePrice === "number" ? basePrice : simulateBasePrice(seed),
+    existingSellers,
+  );
+
+  return dedupeOffers([...deduped, ...simulated]);
 }
 
 function normalizeDescription(description: string | null, query: string): string | null {
@@ -321,7 +666,7 @@ function normalizeDescription(description: string | null, query: string): string
     return "Comparaison générée automatiquement.";
   }
 
-  return `Analyse des offres en ligne pour \"${trimmed}\".`;
+  return `Analyse des offres en ligne pour "${trimmed}".`;
 }
 
 function normalizeId(id: string | null, fallback: string): string {
@@ -357,7 +702,7 @@ export async function getProductData(
     return {
       id: "produit",
       name: "Produit",
-      image: null,
+      image: FALLBACK_IMAGE,
       brand: null,
       description: "Comparaison générée automatiquement.",
       rating: null,
@@ -371,27 +716,85 @@ export async function getProductData(
     ? options.query.trim()
     : identifier;
 
-  let serpResults: NormalizedSerpProduct[] = [];
-  try {
-    const rawResults = await fetchSerpApi(query, { limit: 16 });
-    serpResults = rawResults
-      .map(normalizeSerpProduct)
-      .filter((product): product is NormalizedSerpProduct => Boolean(product));
-  } catch (error) {
-    console.error("productFetcher.serp", error);
-  }
+  let serpResults: NormalizedProduct[] = [];
+  let decathlonResults: NormalizedProduct[] = [];
+  let amazonResults: NormalizedProduct[] = [];
+  let myProteinResults: NormalizedProduct[] = [];
 
-  const seed = deriveSeed(identifier + query);
-  const bestProduct = pickBestProduct(serpResults, query);
+  const tasks: Promise<void>[] = [];
 
-  const offers = ensureOffers(
-    dedupeOffers(serpResults.map(toOffer).filter((offer) => Boolean(offer.seller))),
-    query,
-    seed,
+  tasks.push(
+    fetchSerpApi(query, { limit: 24 })
+      .then((raw) => {
+        serpResults = raw
+          .map(normalizeSerpProduct)
+          .filter((product): product is NormalizedProduct => Boolean(product));
+      })
+      .catch((error) => {
+        console.error("productFetcher.serp", error);
+        serpResults = [];
+      }),
   );
 
-  const referencePrice = bestProduct?.price ?? offers[0]?.price ?? null;
-  let priceStats = computePriceStats(offers, referencePrice);
+  tasks.push(
+    fetchDecathlon(query)
+      .then((raw) => {
+        decathlonResults = raw
+          .map((item: unknown) => normalizeExternalProduct(item, "Decathlon"))
+          .filter((product): product is NormalizedProduct => Boolean(product));
+      })
+      .catch((error) => {
+        console.error("productFetcher.decathlon", error);
+        decathlonResults = [];
+      }),
+  );
+
+  tasks.push(
+    fetchAmazon(query)
+      .then((raw) => {
+        amazonResults = raw
+          .map((item: unknown) => normalizeExternalProduct(item, "Amazon"))
+          .filter((product): product is NormalizedProduct => Boolean(product));
+      })
+      .catch((error) => {
+        console.error("productFetcher.amazon", error);
+        amazonResults = [];
+      }),
+  );
+
+  tasks.push(
+    scrapeMyProtein(query)
+      .then((raw) => {
+        myProteinResults = raw
+          .map((item: unknown) => normalizeExternalProduct(item, "MyProtein"))
+          .filter((product): product is NormalizedProduct => Boolean(product));
+      })
+      .catch((error) => {
+        console.error("productFetcher.myprotein", error);
+        myProteinResults = [];
+      }),
+  );
+
+  await Promise.all(tasks);
+
+  const combinedProducts = [
+    ...decathlonResults,
+    ...amazonResults,
+    ...myProteinResults,
+    ...serpResults,
+  ];
+
+  const seed = deriveSeed(identifier + query);
+  const bestProduct = pickBestProduct(combinedProducts, query);
+
+  let offers = combinedProducts
+    .map((product) => toOffer(product, query))
+    .filter((offer): offer is ProductOffer => Boolean(offer?.seller));
+
+  offers = ensureOffers(offers, query, seed).slice(0, 18);
+
+  const referencePrice = bestProduct?.price ?? offers[0]?.price ?? simulateBasePrice(seed);
+  let priceStats = computePriceStats(offers, typeof referencePrice === "number" ? referencePrice : null);
 
   if (priceStats.min === null && priceStats.max === null && priceStats.avg === null) {
     const simulated = simulateBasePrice(seed);
@@ -409,15 +812,22 @@ export async function getProductData(
 
   const history = buildSyntheticHistory(baseForHistory, seed);
 
+  const productImage = bestProduct?.image
+    || offers.find((offer) => offer.image)?.image
+    || FALLBACK_IMAGE;
+
+  const productRating = typeof bestProduct?.rating === "number" && Number.isFinite(bestProduct.rating)
+    ? roundRating(bestProduct.rating)
+    : offers.find((offer) => typeof offer.rating === "number" && Number.isFinite(offer.rating))?.rating
+    ?? null;
+
   return {
     id: normalizeId(bestProduct?.id ?? null, identifier),
     name: normalizeName(bestProduct?.name ?? null, query),
-    image: bestProduct?.image ?? null,
+    image: productImage,
     brand: bestProduct?.brand ?? bestProduct?.vendor ?? null,
     description: normalizeDescription(bestProduct?.description ?? null, query),
-    rating: typeof bestProduct?.rating === "number" && Number.isFinite(bestProduct.rating)
-      ? roundCurrency(bestProduct.rating)
-      : null,
+    rating: productRating,
     price: priceStats,
     offers,
     history,
