@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import type { ProductData, ProductOffer, ProductHistoryEntry } from "@/lib/productFetcher";
+import type {
+  ProductData,
+  ProductOffer,
+  ProductHistoryEntry,
+  ProductPriceSummary,
+} from "@/lib/productFetcher";
 import { getProductData } from "@/lib/productFetcher";
 
 const FALLBACK_IMAGE = "/no-image.png";
@@ -114,6 +119,93 @@ function buildFallbackProduct(id: string, query: string): ProductData {
   };
 }
 
+function isSimulatedOffer(offer: ProductOffer): boolean {
+  const source = offer.source?.toLowerCase() ?? "";
+  if (source.includes("simulation")) {
+    return true;
+  }
+
+  const seller = offer.seller.trim().toLowerCase();
+  return seller.startsWith("boutique partenaire") || seller.includes("simulation");
+}
+
+function sortOffersByPrice(offers: ProductOffer[]): ProductOffer[] {
+  return [...offers].sort((a, b) => {
+    const priceA = typeof a.price === "number" && Number.isFinite(a.price)
+      ? a.price
+      : Number.POSITIVE_INFINITY;
+    const priceB = typeof b.price === "number" && Number.isFinite(b.price)
+      ? b.price
+      : Number.POSITIVE_INFINITY;
+
+    if (priceA !== priceB) {
+      return priceA - priceB;
+    }
+
+    const ratingA = typeof a.rating === "number" && Number.isFinite(a.rating) ? a.rating : -1;
+    const ratingB = typeof b.rating === "number" && Number.isFinite(b.rating) ? b.rating : -1;
+    if (ratingA !== ratingB) {
+      return ratingB - ratingA;
+    }
+
+    return a.seller.localeCompare(b.seller, "fr", { sensitivity: "base" });
+  });
+}
+
+function toPriceSummary(
+  offers: ProductOffer[],
+  fallback: ProductPriceSummary | null | undefined,
+): ProductPriceSummary {
+  const values: number[] = offers
+    .map((offer) => (typeof offer.price === "number" && Number.isFinite(offer.price) ? offer.price : null))
+    .filter((price): price is number => price !== null);
+
+  if (values.length > 0) {
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const total = values.reduce((sum, value) => sum + value, 0);
+    const avg = total / values.length;
+
+    return {
+      min: Number.parseFloat(min.toFixed(2)),
+      max: Number.parseFloat(max.toFixed(2)),
+      avg: Number.parseFloat(avg.toFixed(2)),
+    };
+  }
+
+  const fallbackValues = [fallback?.min, fallback?.max, fallback?.avg]
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+
+  if (fallbackValues.length > 0 && fallback) {
+    return {
+      min: typeof fallback.min === "number" && Number.isFinite(fallback.min)
+        ? Number.parseFloat(fallback.min.toFixed(2))
+        : null,
+      max: typeof fallback.max === "number" && Number.isFinite(fallback.max)
+        ? Number.parseFloat(fallback.max.toFixed(2))
+        : null,
+      avg: typeof fallback.avg === "number" && Number.isFinite(fallback.avg)
+        ? Number.parseFloat(fallback.avg.toFixed(2))
+        : null,
+    };
+  }
+
+  return { min: null, max: null, avg: null };
+}
+
+function resolveProductImage(product: ProductData, offers: ProductOffer[]): string {
+  if (product.image && product.image.trim() && product.image !== FALLBACK_IMAGE) {
+    return product.image;
+  }
+
+  const candidate = offers.find((offer) => typeof offer.image === "string" && offer.image.trim().length > 0);
+  if (candidate?.image) {
+    return candidate.image;
+  }
+
+  return FALLBACK_IMAGE;
+}
+
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const rawId = url.searchParams.get("id")?.trim();
@@ -126,7 +218,31 @@ export async function GET(request: NextRequest) {
 
   try {
     const product = await getProductData(rawId, { query: query ?? undefined });
-    return NextResponse.json(product);
+
+    const realOffers = sortOffersByPrice(
+      (product.offers ?? []).filter((offer) => offer && !isSimulatedOffer(offer)),
+    );
+
+    if (realOffers.length === 0) {
+      const fallback = buildFallbackProduct(rawId, query ?? rawId);
+      return NextResponse.json(fallback, { status: 200 });
+    }
+
+    const priceSummary = toPriceSummary(realOffers, product.price);
+    const rating = typeof product.rating === "number" && Number.isFinite(product.rating)
+      ? product.rating
+      : realOffers.find((offer) => typeof offer.rating === "number" && Number.isFinite(offer.rating))?.rating
+        ?? null;
+
+    const enrichedProduct: ProductData = {
+      ...product,
+      image: resolveProductImage(product, realOffers),
+      rating,
+      price: priceSummary,
+      offers: realOffers,
+    };
+
+    return NextResponse.json(enrichedProduct);
   } catch (error) {
     console.error("compareRoute.get", error);
     const fallback = buildFallbackProduct(rawId, query ?? rawId);

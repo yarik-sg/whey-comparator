@@ -425,11 +425,66 @@ export default function ComparePage() {
   const minPriceText = productData ? formatCurrency(priceStats.min) : productPreview?.priceText ?? "—";
   const maxPriceText = productData ? formatCurrency(priceStats.max) : "—";
 
-  const ratingNode = productData
+  const mainOffer = offers.length > 0 ? offers[0] : null;
+
+  const heroInfo = useMemo(() => {
+    if (productData) {
+      const heroPrice = mainOffer ? formatCurrency(mainOffer.price ?? null) : basePriceText;
+      const heroRating = typeof productData.rating === "number" && Number.isFinite(productData.rating)
+        ? productData.rating
+        : typeof mainOffer?.rating === "number" && Number.isFinite(mainOffer.rating)
+          ? mainOffer.rating
+          : null;
+
+      return {
+        title: displayTitle,
+        brand: displayBrand,
+        source: mainOffer?.seller ?? primarySource,
+        priceText: heroPrice,
+        rating: heroRating,
+        url: mainOffer?.url ?? null,
+      };
+    }
+
+    if (productPreview) {
+      return {
+        title: productPreview.title,
+        brand: productPreview.brand ?? null,
+        source: productPreview.source ?? null,
+        priceText: productPreview.priceText ?? "—",
+        rating:
+          typeof productPreview.rating === "number" && Number.isFinite(productPreview.rating)
+            ? productPreview.rating
+            : null,
+        url: null,
+      };
+    }
+
+    return {
+      title: displayTitle,
+      brand: displayBrand,
+      source: primarySource,
+      priceText: basePriceText,
+      rating: null,
+      url: null,
+    };
+  }, [
+    basePriceText,
+    displayBrand,
+    displayTitle,
+    mainOffer,
+    primarySource,
+    productData,
+    productPreview,
+  ]);
+
+  const heroRatingNode = heroInfo.rating !== null
+    ? renderRating(heroInfo.rating, heroInfo.source ?? primarySource)
+    : null;
+
+  const detailRatingNode = productData
     ? renderRating(productData.rating ?? null, primarySource)
-    : typeof productPreview?.rating === "number"
-      ? renderRating(productPreview.rating, primarySource)
-      : null;
+    : null;
 
   const shouldShowLoader = isLoading && !productData && !errorMessage;
 
@@ -457,31 +512,37 @@ export default function ComparePage() {
           </p>
         </header>
 
-        {productPreview ? (
+        {productPreview || productData ? (
           <section className="product-header flex items-center gap-6 rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-6 shadow-sm">
             <img
               src={productImage}
-              alt={productPreview.title}
+              alt={heroInfo.title}
               className="h-24 w-24 rounded-2xl object-cover"
               onError={(event) => {
                 (event.currentTarget as HTMLImageElement).src = "/no-image.png";
               }}
             />
             <div className="space-y-1">
-              {productPreview.brand ? (
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#FF6600]">{productPreview.brand}</p>
+              {heroInfo.brand ? (
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#FF6600]">{heroInfo.brand}</p>
               ) : null}
-              <h2 className="text-xl font-semibold text-[color:var(--text)]">{productPreview.title}</h2>
-              {productPreview.source ? (
-                <p className="text-sm text-[color:var(--muted)]">{productPreview.source}</p>
+              <h2 className="text-xl font-semibold text-[color:var(--text)]">{heroInfo.title}</h2>
+              {heroInfo.source ? (
+                <p className="text-sm text-[color:var(--muted)]">Vendu par {heroInfo.source}</p>
               ) : null}
-              {productPreview.priceText ? (
-                <p className="text-base font-semibold text-[color:var(--text)]">{productPreview.priceText}</p>
+              {heroInfo.priceText ? (
+                <p className="text-base font-semibold text-[color:var(--text)]">{heroInfo.priceText}</p>
               ) : null}
-              {typeof productPreview.rating === "number" ? (
-                <p className="text-xs text-[color:var(--muted)]">
-                  Note {productPreview.rating.toFixed(1)} / 5
-                </p>
+              {heroRatingNode}
+              {heroInfo.url ? (
+                <a
+                  href={heroInfo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${CTA_BUTTON_CLASSES} mt-2 inline-flex`}
+                >
+                  Voir l&apos;offre principale
+                </a>
               ) : null}
             </div>
           </section>
@@ -522,7 +583,7 @@ export default function ComparePage() {
                 {displayDescription ? (
                   <p className="text-sm text-[color:var(--muted)]">{displayDescription}</p>
                 ) : null}
-                {ratingNode}
+                {detailRatingNode}
               </div>
             </div>
 
