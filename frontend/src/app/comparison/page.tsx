@@ -14,6 +14,7 @@ import {
   normalizeProductIdentifier,
   type ProductIdentifierCandidate,
 } from "@/lib/productIdentifiers";
+import { buildComparePreviewFromProductSummary } from "@/lib/compareNavigation";
 import type { ComparisonEntry, ComparisonResponse, DealItem, ProductListResponse, ProductSummary } from "@/types/api";
 
 
@@ -354,6 +355,10 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
                   const canonicalId =
                     getCanonicalProductId(product, { offers }) ?? String(product.id ?? index);
                   const productHref = `/products/${encodeURIComponent(canonicalId)}`;
+                  const comparePreview = buildComparePreviewFromProductSummary(
+                    product,
+                    canonicalId,
+                  );
 
                   return (
                     <div key={canonicalId} className="space-y-4">
@@ -366,6 +371,7 @@ export default async function ComparisonPage({ searchParams }: ComparisonPagePro
                             <CompareLinkButton
                               href={buildComparisonHref(canonicalId)}
                               className="inline-flex items-center gap-1 font-semibold text-primary transition hover:text-primary/80"
+                              product={comparePreview}
                             >
                               Comparer individuellement →
                             </CompareLinkButton>

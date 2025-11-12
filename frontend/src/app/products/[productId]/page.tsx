@@ -25,6 +25,7 @@ import {
   parseNumericIdentifier,
   type ProductIdentifierCandidate,
 } from "@/lib/productIdentifiers";
+import { buildComparePreviewFromProductSummary } from "@/lib/compareNavigation";
 import type {
   DealItem,
   PriceHistoryResponse,
@@ -222,6 +223,10 @@ export default async function ProductDetailPage({
   const similarResponse = await fetchSimilarProducts(similarProductId, similarFallbackId, 4);
   const similarProducts = similarResponse?.similar ?? [];
   const galleryImages = buildGalleryImages(product, offers);
+  const comparePreview = buildComparePreviewFromProductSummary(
+    product,
+    canonicalProductId,
+  );
   const averageRating = product.rating ?? bestOffer?.rating ?? null;
   const reviewsCount = product.reviewsCount ?? bestOffer?.reviewsCount ?? null;
   const hasAverageRating = typeof averageRating === "number" && !Number.isNaN(averageRating);
@@ -285,6 +290,7 @@ export default async function ProductDetailPage({
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                   aria-label={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
                   title={`Ajouter ${product.brand ? `${product.brand} ` : ""}${product.name} à la comparaison`}
+                  product={comparePreview}
                 >
                   Ajouter à la comparaison
                 </CompareLinkButton>

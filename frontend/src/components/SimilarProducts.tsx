@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { getCanonicalProductId } from "@/lib/productIdentifiers";
 import type { ProductIdentifierCandidate } from "@/lib/productIdentifiers";
 import type { ProductSummary } from "@/types/api";
+import { buildComparePreviewFromProductSummary } from "@/lib/compareNavigation";
 
 interface SimilarProductsProps {
   products: ProductSummary[];
@@ -61,6 +62,10 @@ export function SimilarProducts({
             currentProductId,
             canonicalId,
           );
+          const comparePreview = buildComparePreviewFromProductSummary(
+            product,
+            canonicalId,
+          );
 
           return (
             <ProductCard
@@ -75,6 +80,7 @@ export function SimilarProducts({
                     className="inline-flex items-center gap-1 font-semibold text-primary transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                     aria-label={`Comparer avec ${product.name}`}
                     title={`Comparer avec ${product.name}`}
+                    product={comparePreview}
                   >
                     Comparer →
                   </CompareLinkButton>

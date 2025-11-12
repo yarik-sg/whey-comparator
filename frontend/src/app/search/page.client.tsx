@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+import { CompareLinkButton } from "@/components/CompareLinkButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import {
   isSearchResultsEmpty,
   summarizeSearchItem,
 } from "@/lib/searchService";
+import type { CompareProductPreview } from "@/lib/compareNavigation";
 
 const DEFAULT_IMAGE = "/placeholder.png";
 const ORANGE_BUTTON_CLASSES =
@@ -177,6 +179,24 @@ function resolveProductId(item: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
+function buildComparePreviewFromSearchResult(
+  info: ProductResultInfo,
+  productId: string,
+): CompareProductPreview {
+  return {
+    id: productId,
+    title: info.title,
+    brand: info.brand ?? null,
+    image: info.image ?? null,
+    source: info.source ?? info.origin ?? null,
+    priceText: info.price?.text ?? null,
+    priceValue: typeof info.price?.amount === "number" ? info.price.amount : null,
+    rating: typeof info.rating === "number" ? info.rating : null,
+    reviewsCount:
+      typeof info.reviewsCount === "number" ? info.reviewsCount : null,
+  };
+}
+
 function extractProductInfo(item: Record<string, unknown>): ProductResultInfo {
   const product =
     typeof item.product === "object" && item.product !== null
@@ -272,6 +292,9 @@ function ProductResultCard({ item }: { item: Record<string, unknown> }) {
       : null;
   const productId = info.id;
   const compareHref = productId ? `/compare?id=${encodeURIComponent(productId)}` : undefined;
+  const comparePreview = productId
+    ? buildComparePreviewFromSearchResult(info, productId)
+    : null;
   const rating = info.rating;
   const reviewsCount = info.reviewsCount;
   const showRating = typeof rating === "number";
@@ -342,9 +365,12 @@ function ProductResultCard({ item }: { item: Record<string, unknown> }) {
         <div className="pt-2">
           {compareHref ? (
             <Button asChild className={`w-full ${ORANGE_BUTTON_CLASSES}`}>
-              <Link href={compareHref}>
+              <CompareLinkButton
+                href={compareHref}
+                product={comparePreview ?? undefined}
+              >
                 Comparer les prix
-              </Link>
+              </CompareLinkButton>
             </Button>
           ) : (
             <Button className={`w-full ${ORANGE_BUTTON_CLASSES}`} disabled>
