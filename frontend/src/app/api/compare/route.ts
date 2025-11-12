@@ -7,7 +7,7 @@ const FALLBACK_IMAGE = "/no-image.png";
 
 function buildFallbackOffers(query: string): ProductOffer[] {
   const encodedQuery = encodeURIComponent(query || "produit");
-  const offerTemplates: Array<Omit<ProductOffer, "price" | "old_price"> & { price: number; old_price: number }>> = [
+  const offerTemplates: Array<Omit<ProductOffer, "price" | "old_price"> & { price: number; old_price: number }> = [
     {
       seller: "Amazon",
       price: 31.99,
