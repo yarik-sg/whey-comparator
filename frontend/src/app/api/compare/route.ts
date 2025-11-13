@@ -1,137 +1,121 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import type {
-  ProductData,
-  ProductOffer,
-  ProductHistoryEntry,
-  ProductPriceSummary,
-} from "@/lib/productFetcher";
-import { getProductData } from "@/lib/productFetcher";
-import { fetchScrapedOffers } from "@/lib/fetchers";
-
 const FALLBACK_IMAGE =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
+const PRICE_REGEX = /(\d+[.,]\d{2})\s?€/;
 
-function buildFallbackOffers(query: string): ProductOffer[] {
-  const encodedQuery = encodeURIComponent(query || "produit");
-  const offerTemplates: Array<Omit<ProductOffer, "price" | "old_price"> & { price: number; old_price: number }> = [
-    {
-      seller: "Amazon",
-      price: 31.99,
-      old_price: 36.99,
-      url: `https://www.amazon.fr/s?k=${encodedQuery}`,
-      shipping: "Livraison Prime éligible",
-      delivery_time: "24-48h",
-      rating: 4.7,
-      logo: "https://logo.clearbit.com/amazon.fr",
-      source: "Simulation",
-      image: "https://logo.clearbit.com/amazon.fr",
-    },
-    {
-      seller: "Decathlon",
-      price: 33.49,
-      old_price: 38.99,
-      url: `https://www.decathlon.fr/search?Ntt=${encodedQuery}`,
-      shipping: "Retrait 1h magasin",
-      delivery_time: "2-3 jours",
-      rating: 4.6,
-      logo: "https://logo.clearbit.com/decathlon.fr",
-      source: "Simulation",
-      image: "https://logo.clearbit.com/decathlon.fr",
-    },
-    {
-      seller: "Cdiscount",
-      price: 30.99,
-      old_price: 35.99,
-      url: `https://www.cdiscount.com/search/10/${encodedQuery}.html`,
-      shipping: "Dès 3,99€",
-      delivery_time: "3-5 jours",
-      rating: 4.3,
-      logo: "https://logo.clearbit.com/cdiscount.com",
-      source: "Simulation",
-      image: "https://logo.clearbit.com/cdiscount.com",
-    },
-    {
-      seller: "GO Sport",
-      price: 34.49,
-      old_price: 39.99,
-      url: `https://www.go-sport.com/search?q=${encodedQuery}`,
-      shipping: "Offert dès 60€",
-      delivery_time: "3-4 jours",
-      rating: 4.2,
-      logo: "https://logo.clearbit.com/go-sport.com",
-      source: "Simulation",
-      image: "https://logo.clearbit.com/go-sport.com",
-    },
-    {
-      seller: "Fnac",
-      price: 35.99,
-      old_price: 41.99,
-      url: `https://www.fnac.com/SearchResult/ResultList.aspx?SCat=0%211&Search=${encodedQuery}`,
-      shipping: "Retrait 1h magasin",
-      delivery_time: "2-4 jours",
-      rating: 4.4,
-      logo: "https://logo.clearbit.com/fnac.com",
-      source: "Simulation",
-      image: "https://logo.clearbit.com/fnac.com",
-    },
-  ];
-
-  return offerTemplates.map((offer) => ({
-    ...offer,
-    price: Number.parseFloat(offer.price.toFixed(2)),
-    old_price: Number.parseFloat(offer.old_price.toFixed(2)),
-  }));
+interface CompareOffer {
+  seller: string;
+  price: number | null;
+  old_price: number | null;
+  url: string | null;
+  shipping: string | null;
+  delivery_time: string | null;
+  rating: number | null;
+  logo?: string | null;
+  source?: string | null;
+  image?: string | null;
 }
 
-function buildFallbackHistory(basePrice: number): ProductHistoryEntry[] {
-  const entries: ProductHistoryEntry[] = [];
-  const now = new Date();
+interface CompareProductPayload {
+  id: string;
+  name: string;
+  image: string;
+  brand: string | null;
+  description: string | null;
+  rating: number | null;
+  price: {
+    min: number | null;
+    max: number | null;
+    avg: number | null;
+  } | null;
+  offers: CompareOffer[];
+  history: Array<{ date: string; price: number | null }>;
+}
 
-  for (let index = 6; index >= 0; index -= 1) {
-    const snapshot = new Date(now);
-    snapshot.setDate(now.getDate() - index * 7);
-    const variation = (index - 3) * 0.6;
-    const price = Number.parseFloat((basePrice + variation).toFixed(2));
-    entries.push({ date: snapshot.toISOString(), price });
+interface NormalizedSerpOffer {
+  offer: CompareOffer | null;
+  image: string | null;
+}
+
+interface ScraperSnapshot {
+  offer: CompareOffer | null;
+  title: string | null;
+  image: string | null;
+}
+
+function toCleanString(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  return null;
+}
+
+function toNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const cleaned = value.replace(/[^0-9,.-]/g, "").replace(/,/g, ".");
+    if (!cleaned) {
+      return null;
+    }
+    const parsed = Number.parseFloat(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function parsePrice(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === "string") {
+    return toNumber(value);
+  }
+  return null;
+}
+
+function dedupeOffers(offers: CompareOffer[]): CompareOffer[] {
+  const seen = new Map<string, CompareOffer>();
+
+  for (const offer of offers) {
+    const sellerKey = offer.seller.trim().toLowerCase();
+    const uniqueKey = offer.url ? `${sellerKey}::${offer.url}` : sellerKey;
+
+    if (!seen.has(uniqueKey)) {
+      seen.set(uniqueKey, offer);
+      continue;
+    }
+
+    const current = seen.get(uniqueKey);
+    if (!current) {
+      continue;
+    }
+
+    const currentPrice = typeof current.price === "number" && Number.isFinite(current.price)
+      ? current.price
+      : Number.POSITIVE_INFINITY;
+    const nextPrice = typeof offer.price === "number" && Number.isFinite(offer.price)
+      ? offer.price
+      : Number.POSITIVE_INFINITY;
+
+    if (nextPrice < currentPrice) {
+      seen.set(uniqueKey, offer);
+    }
   }
 
-  return entries;
+  return Array.from(seen.values());
 }
 
-function buildFallbackProduct(id: string, query: string): ProductData {
-  const normalizedId = id.trim() || "produit";
-  const basePrice = 32.99;
-  const offers = buildFallbackOffers(query || normalizedId);
-
-  return {
-    id: normalizedId,
-    name: "Produit indisponible",
-    image: FALLBACK_IMAGE,
-    brand: null,
-    description: "Comparaison générée automatiquement (mode secours).",
-    rating: null,
-    price: {
-      min: 30.99,
-      max: 35.99,
-      avg: Number.parseFloat(basePrice.toFixed(2)),
-    },
-    offers,
-    history: buildFallbackHistory(basePrice),
-  };
-}
-
-function isSimulatedOffer(offer: ProductOffer): boolean {
-  const source = offer.source?.toLowerCase() ?? "";
-  if (source.includes("simulation")) {
-    return true;
-  }
-
-  const seller = offer.seller.trim().toLowerCase();
-  return seller.startsWith("boutique partenaire") || seller.includes("simulation");
-}
-
-function sortOffersByPrice(offers: ProductOffer[]): ProductOffer[] {
+function sortOffersByPrice(offers: CompareOffer[]): CompareOffer[] {
   return [...offers].sort((a, b) => {
     const priceA = typeof a.price === "number" && Number.isFinite(a.price)
       ? a.price
@@ -154,114 +138,253 @@ function sortOffersByPrice(offers: ProductOffer[]): ProductOffer[] {
   });
 }
 
-function toPriceSummary(
-  offers: ProductOffer[],
-  fallback: ProductPriceSummary | null | undefined,
-): ProductPriceSummary {
-  const values: number[] = offers
+function summarizePrices(offers: CompareOffer[]): CompareProductPayload["price"] {
+  const values = offers
     .map((offer) => (typeof offer.price === "number" && Number.isFinite(offer.price) ? offer.price : null))
     .filter((price): price is number => price !== null);
 
-  if (values.length > 0) {
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const total = values.reduce((sum, value) => sum + value, 0);
-    const avg = total / values.length;
-
-    return {
-      min: Number.parseFloat(min.toFixed(2)),
-      max: Number.parseFloat(max.toFixed(2)),
-      avg: Number.parseFloat(avg.toFixed(2)),
-    };
+  if (values.length === 0) {
+    return { min: null, max: null, avg: null };
   }
 
-  const fallbackValues = [fallback?.min, fallback?.max, fallback?.avg]
-    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const avg = values.reduce((sum, value) => sum + value, 0) / values.length;
 
-  if (fallbackValues.length > 0 && fallback) {
-    return {
-      min: typeof fallback.min === "number" && Number.isFinite(fallback.min)
-        ? Number.parseFloat(fallback.min.toFixed(2))
-        : null,
-      max: typeof fallback.max === "number" && Number.isFinite(fallback.max)
-        ? Number.parseFloat(fallback.max.toFixed(2))
-        : null,
-      avg: typeof fallback.avg === "number" && Number.isFinite(fallback.avg)
-        ? Number.parseFloat(fallback.avg.toFixed(2))
-        : null,
-    };
-  }
-
-  return { min: null, max: null, avg: null };
+  return {
+    min: Number.parseFloat(min.toFixed(2)),
+    max: Number.parseFloat(max.toFixed(2)),
+    avg: Number.parseFloat(avg.toFixed(2)),
+  };
 }
 
-function resolveProductImage(product: ProductData, offers: ProductOffer[]): string {
-  if (product.image && product.image.trim() && product.image !== FALLBACK_IMAGE) {
-    return product.image;
+function resolveImageSource(...candidates: Array<string | null | undefined>): string {
+  for (const candidate of candidates) {
+    if (typeof candidate === "string") {
+      const trimmed = candidate.trim();
+      if (trimmed.length > 0) {
+        return trimmed;
+      }
+    }
   }
-
-  const candidate = offers.find((offer) => typeof offer.image === "string" && offer.image.trim().length > 0);
-  if (candidate?.image) {
-    return candidate.image;
-  }
-
   return FALLBACK_IMAGE;
+}
+
+function normalizeSerpOffer(entry: Record<string, unknown>): NormalizedSerpOffer {
+  const record = entry as Record<string, unknown>;
+  const seller = toCleanString(record["source"])
+    ?? toCleanString(record["store"])
+    ?? toCleanString(record["merchant"])
+    ?? toCleanString(record["vendor"]);
+  const url = toCleanString(record["product_link"]) ?? toCleanString(record["link"]) ?? toCleanString(record["serpapi_product_link"]);
+  const image = toCleanString(record["thumbnail"]) ?? toCleanString(record["image"]);
+
+  if (!seller || !url) {
+    return { offer: null, image };
+  }
+
+  const price = parsePrice(record["extracted_price"] ?? record["price"]);
+  const oldPrice = parsePrice(record["extracted_previous_price"] ?? record["previous_price"]);
+  const shipping = toCleanString(record["shipping"]) ?? toCleanString(record["shipping_cost"]);
+  const delivery = toCleanString(record["delivery"]) ?? toCleanString(record["delivery_time"]);
+  const rating = toNumber(record["rating"]);
+
+  return {
+    offer: {
+      seller,
+      price,
+      old_price: oldPrice,
+      url,
+      shipping: shipping ?? null,
+      delivery_time: delivery ?? null,
+      rating,
+      logo: null,
+      source: "SerpAPI",
+      image,
+    },
+    image,
+  };
+}
+
+function escapeMetaKey(key: string): string {
+  return key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractMetaContent(html: string, attribute: "name" | "property", key: string): string | null {
+  const pattern = new RegExp(
+    `<meta[^>]+${attribute}=["']${escapeMetaKey(key)}["'][^>]*content=["']([^"']+)["']`,
+    "i",
+  );
+  const match = html.match(pattern);
+  return match ? match[1].trim() : null;
+}
+
+function extractTitleFromHtml(html: string): string | null {
+  const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  return match ? match[1].trim() : null;
+}
+
+function extractPriceFromHtml(html: string): number | null {
+  const match = html.match(PRICE_REGEX);
+  if (!match) {
+    return null;
+  }
+  return Number.parseFloat(match[1].replace(/,/g, "."));
+}
+
+function resolveSellerLabel(url: string | null, fallbackBrand: string | null): string | null {
+  if (fallbackBrand) {
+    return fallbackBrand;
+  }
+  if (!url) {
+    return null;
+  }
+  try {
+    const host = new URL(url).hostname.replace(/^www\./i, "");
+    return host || null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchSerpOffers(query: string): Promise<{ offers: CompareOffer[]; image: string | null }> {
+  const apiKey = process.env.SERPAPI_KEY;
+  if (!apiKey) {
+    console.warn("compareRoute.serp", "Missing SERPAPI_KEY environment variable");
+    return { offers: [], image: null };
+  }
+
+  const url = `https://serpapi.com/search.json?engine=google_shopping&gl=fr&hl=fr&num=20&q=${encodeURIComponent(query)}&api_key=${apiKey}`;
+
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) {
+      console.warn("compareRoute.serp", `Request failed with status ${response.status}`);
+      return { offers: [], image: null };
+    }
+
+    const payload = (await response.json()) as { shopping_results?: Array<Record<string, unknown>> };
+    const results = Array.isArray(payload.shopping_results) ? payload.shopping_results : [];
+
+    const offers: CompareOffer[] = [];
+    let fallbackImage: string | null = null;
+
+    for (const entry of results) {
+      const normalized = normalizeSerpOffer(entry);
+      if (normalized.offer) {
+        offers.push(normalized.offer);
+      }
+      if (!fallbackImage && normalized.image) {
+        fallbackImage = normalized.image;
+      }
+    }
+
+    return { offers, image: fallbackImage };
+  } catch (error) {
+    console.warn("compareRoute.serp", error);
+    return { offers: [], image: null };
+  }
+}
+
+async function fetchScraperSnapshot(productUrl: string | null, brand: string | null): Promise<ScraperSnapshot> {
+  const apiKey = process.env.SCRAPERAPI_KEY;
+  if (!productUrl || !apiKey) {
+    if (!apiKey) {
+      console.warn("compareRoute.scraper", "Missing SCRAPERAPI_KEY environment variable");
+    }
+    return { offer: null, title: null, image: null };
+  }
+
+  const url = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(productUrl)}`;
+
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+    if (!response.ok) {
+      console.warn("compareRoute.scraper", `Request failed with status ${response.status}`);
+      return { offer: null, title: null, image: null };
+    }
+
+    const html = await response.text();
+    const price = extractPriceFromHtml(html);
+    const title = extractMetaContent(html, "property", "og:title")
+      ?? extractMetaContent(html, "name", "title")
+      ?? extractTitleFromHtml(html);
+    const image = extractMetaContent(html, "property", "og:image")
+      ?? extractMetaContent(html, "name", "twitter:image");
+    const seller = resolveSellerLabel(productUrl, brand);
+
+    const offer = price !== null && seller
+      ? {
+          seller,
+          price,
+          old_price: null,
+          url: productUrl,
+          shipping: null,
+          delivery_time: null,
+          rating: null,
+          logo: null,
+          source: "ScraperAPI",
+          image,
+        }
+      : null;
+
+    return { offer, title: title ?? null, image: image ?? null };
+  } catch (error) {
+    console.warn("compareRoute.scraper", error);
+    return { offer: null, title: null, image: null };
+  }
 }
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
-  const rawId = url.searchParams.get("id")?.trim();
+  const query = toCleanString(url.searchParams.get("q"));
+  const imageParam = toCleanString(url.searchParams.get("img"));
+  const brandParam = toCleanString(url.searchParams.get("brand"));
+  const productUrl = toCleanString(url.searchParams.get("url"));
 
-  if (!rawId) {
-    return NextResponse.json({ error: "Missing id parameter" }, { status: 400 });
+  if (!query) {
+    return NextResponse.json({ error: "Missing q parameter" }, { status: 400 });
   }
 
-  const query = url.searchParams.get("q")?.trim();
-  const searchTerm = query && query.length > 0 ? query : rawId;
-
   try {
-    const [product, scrapedOffers] = await Promise.all([
-      getProductData(rawId, { query: searchTerm }),
-      fetchScrapedOffers(searchTerm),
+    const [serpResult, scraperResult] = await Promise.all([
+      fetchSerpOffers(query),
+      fetchScraperSnapshot(productUrl, brandParam),
     ]);
 
-    const serpOffers = (product.offers ?? []).filter((offer) => offer && !isSimulatedOffer(offer));
-    const mergedOffers = [...serpOffers, ...(Array.isArray(scrapedOffers) ? scrapedOffers : [])];
+    const mergedOffers = dedupeOffers([
+      ...serpResult.offers,
+      ...(scraperResult.offer ? [scraperResult.offer] : []),
+    ]);
+    const sortedOffers = sortOffersByPrice(mergedOffers);
 
-    const uniqueOffers = mergedOffers.filter((offer, index, array) => {
-      if (!offer?.url) {
-        return index === array.findIndex((candidate) => candidate.url === offer.url && candidate.seller === offer.seller);
-      }
-      return index === array.findIndex((candidate) => candidate.url === offer.url);
-    });
-
-    if (uniqueOffers.length === 0) {
-      const fallback = buildFallbackProduct(rawId, searchTerm);
-      return NextResponse.json(fallback, { status: 200 });
-    }
-
-    const sortedOffers = sortOffersByPrice(uniqueOffers);
-    const priceSummary = toPriceSummary(sortedOffers, product.price);
-    const rating = typeof product.rating === "number" && Number.isFinite(product.rating)
-      ? product.rating
-      : sortedOffers.find((offer) => typeof offer.rating === "number" && Number.isFinite(offer.rating))?.rating
-        ?? null;
-
-    const enrichedProduct: ProductData = {
-      ...product,
-      id: product.id ?? rawId,
-      name: product.name || searchTerm,
-      image: resolveProductImage(product, sortedOffers),
-      rating,
-      price: priceSummary,
+    const payload: CompareProductPayload = {
+      id: query,
+      name: scraperResult.title ?? query,
+      image: resolveImageSource(imageParam, scraperResult.image, serpResult.image),
+      brand: brandParam ?? null,
+      description: null,
+      rating: sortedOffers.find((offer) => typeof offer.rating === "number" && Number.isFinite(offer.rating))?.rating ?? null,
+      price: sortedOffers.length > 0 ? summarizePrices(sortedOffers) : { min: null, max: null, avg: null },
       offers: sortedOffers,
-      history: Array.isArray(product.history) ? product.history : [],
+      history: [],
     };
 
-    return NextResponse.json(enrichedProduct);
+    return NextResponse.json(payload);
   } catch (error) {
     console.error("compareRoute.get", error);
-    const fallback = buildFallbackProduct(rawId, searchTerm);
+    const fallback: CompareProductPayload = {
+      id: query,
+      name: query,
+      image: resolveImageSource(imageParam),
+      brand: brandParam ?? null,
+      description: null,
+      rating: null,
+      price: { min: null, max: null, avg: null },
+      offers: [],
+      history: [],
+    };
+
     return NextResponse.json(fallback, { status: 200 });
   }
 }

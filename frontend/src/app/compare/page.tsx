@@ -3,14 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useLocation } from "react-router-dom";
 
 import PriceHistoryChart from "./PriceHistoryChart";
-import {
-  cacheCompareProduct,
-  loadCachedCompareProduct,
-  type CompareProductPreview,
-} from "@/lib/compareNavigation";
 
 const CTA_BUTTON_CLASSES =
   "inline-flex items-center justify-center gap-2 rounded-full bg-[#FF6600] px-5 py-2 text-sm font-semibold text-white shadow transition hover:bg-[#e65a00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6600]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--surface)]";
@@ -63,6 +57,30 @@ interface CompareProductResponse {
   history: PriceHistoryEntry[];
 }
 
+interface CompareRequestPayload {
+  query: string;
+  brand?: string | null;
+  image?: string | null;
+  productUrl?: string | null;
+}
+
+type StoredComparePayload = {
+  q?: string;
+  title?: string;
+  img?: string;
+  image?: string;
+  brand?: string;
+  url?: string;
+  productUrl?: string;
+};
+
+type CompareInput = {
+  title: string;
+  brand: string | null;
+  image: string | null;
+  productUrl: string | null;
+};
+
 const VENDOR_LOGOS: Record<string, string> = {
   amazon: "https://logo.clearbit.com/amazon.fr",
   decathlon: "https://logo.clearbit.com/decathlon.fr",
@@ -75,9 +93,56 @@ const VENDOR_LOGOS: Record<string, string> = {
 const FALLBACK_IMAGE =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
 
-async function fetchComparisonProduct(productId: string): Promise<CompareProductResponse | null> {
+function pickFirstStringValue(...values: Array<string | null | undefined>): string | null {
+  for (const value of values) {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        return trimmed;
+      }
+    }
+  }
+  return null;
+}
+
+function readLastComparePayload(): StoredComparePayload | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
   try {
-    const response = await fetch(`/api/compare?id=${encodeURIComponent(productId)}`, {
+    const raw = window.localStorage.getItem("fitidion:lastCompare");
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as StoredComparePayload;
+    if (parsed && typeof parsed === "object") {
+      return parsed;
+    }
+  } catch (error) {
+    console.warn("compare:lastCompare:read", error);
+  }
+  return null;
+}
+
+async function fetchComparisonProduct(payload: CompareRequestPayload): Promise<CompareProductResponse | null> {
+  if (!payload.query) {
+    return null;
+  }
+
+  try {
+    const params = new URLSearchParams();
+    params.set("q", payload.query);
+    if (payload.brand) {
+      params.set("brand", payload.brand);
+    }
+    if (payload.image) {
+      params.set("img", payload.image);
+    }
+    if (payload.productUrl) {
+      params.set("url", payload.productUrl);
+    }
+
+    const response = await fetch(`/api/compare?${params.toString()}`, {
       headers: { Accept: "application/json" },
       cache: "no-store",
     });
@@ -229,120 +294,66 @@ function renderRating(rating: number | null, source: string | null) {
   );
 }
 
-function buildPreviewFromResponse(
-  id: string,
-  data: CompareProductResponse,
-): CompareProductPreview {
-  const offers = Array.isArray(data.offers) ? data.offers : [];
-  const priceStats = computePriceStats(offers, data.price?.min ?? null);
-  const primarySource = resolvePrimarySource(offers, data.brand);
-  const hasPrice = typeof priceStats.min === "number" && Number.isFinite(priceStats.min);
-  const image = typeof data.image === "string" && data.image.trim().length > 0 ? data.image : null;
-
-  return {
-    id,
-    title: data.name ?? `Produit ${id}`,
-    brand: data.brand ?? null,
-    image,
-    source: primarySource,
-    priceText: hasPrice ? formatCurrency(priceStats.min) : null,
-    priceValue: hasPrice ? priceStats.min : null,
-    rating:
-      typeof data.rating === "number" && Number.isFinite(data.rating) ? data.rating : null,
-    reviewsCount: null,
-  };
-}
-
-function mergePreview(
-  base: CompareProductPreview | null,
-  next: CompareProductPreview,
-): CompareProductPreview {
-  if (!base || base.id !== next.id) {
-    return next;
-  }
-
-  return {
-    ...base,
-    ...next,
-    id: next.id,
-    title: next.title || base.title,
-    brand: next.brand ?? base.brand ?? null,
-    image: next.image ?? base.image ?? null,
-    source: next.source ?? base.source ?? null,
-    priceText: next.priceText ?? base.priceText ?? null,
-    priceValue:
-      typeof next.priceValue === "number"
-        ? next.priceValue
-        : typeof base.priceValue === "number"
-          ? base.priceValue
-          : null,
-    rating:
-      typeof next.rating === "number"
-        ? next.rating
-        : typeof base.rating === "number"
-          ? base.rating
-          : null,
-    reviewsCount:
-      typeof next.reviewsCount === "number"
-        ? next.reviewsCount
-        : typeof base.reviewsCount === "number"
-          ? base.reviewsCount
-          : null,
-  };
-}
-
 export default function ComparePage() {
   const searchParams = useSearchParams();
-  const location = useLocation();
-  const id = useMemo(() => {
-    const raw = searchParams.get("id");
-    return typeof raw === "string" ? raw.trim() : "";
-  }, [searchParams]);
+  const rawQuery = searchParams.get("q");
+  const rawImage = searchParams.get("img");
+  const rawBrand = searchParams.get("brand");
+  const rawUrl = searchParams.get("url");
 
-  const navigationPreview =
-    location && typeof location.state === "object" && location.state !== null
-      ? (location.state as { product?: CompareProductPreview }).product ?? null
-      : null;
-
-  const [productPreview, setProductPreview] = useState<CompareProductPreview | null>(() => {
-    if (navigationPreview && navigationPreview.id) {
-      return navigationPreview;
+  const [compareInput, setCompareInput] = useState<CompareInput | null>(() => {
+    const title = pickFirstStringValue(rawQuery);
+    if (!title) {
+      return null;
     }
-    if (id) {
-      return loadCachedCompareProduct(id) ?? null;
-    }
-    return null;
+    return {
+      title,
+      brand: pickFirstStringValue(rawBrand),
+      image: pickFirstStringValue(rawImage),
+      productUrl: pickFirstStringValue(rawUrl),
+    };
   });
   const [productData, setProductData] = useState<CompareProductResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(Boolean(id));
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (navigationPreview && navigationPreview.id) {
-      setProductPreview(navigationPreview);
-      cacheCompareProduct(navigationPreview);
-    }
-  }, [navigationPreview]);
-
-  useEffect(() => {
-    if (!id) {
-      setProductPreview(null);
-      setProductData(null);
-      setIsLoading(false);
-      setErrorMessage(null);
+    if (typeof window === "undefined") {
       return;
     }
 
-    setProductPreview((current) => {
-      if (current && current.id === id) {
-        return current;
-      }
-      return loadCachedCompareProduct(id) ?? null;
+    const stored = readLastComparePayload();
+    const title = pickFirstStringValue(rawQuery, stored?.q, stored?.title);
+
+    if (!title) {
+      setCompareInput(null);
+      return;
+    }
+
+    const brand = pickFirstStringValue(rawBrand, stored?.brand);
+    const image = pickFirstStringValue(rawImage, stored?.img, stored?.image);
+    const productUrl = pickFirstStringValue(rawUrl, stored?.url, stored?.productUrl);
+
+    setCompareInput({
+      title,
+      brand: brand ?? null,
+      image: image ?? null,
+      productUrl: productUrl ?? null,
     });
-  }, [id]);
+  }, [rawBrand, rawImage, rawQuery, rawUrl]);
+
+  const compareQuery = compareInput?.title ?? "";
+  const compareBrand = compareInput?.brand ?? null;
+  const compareImage = compareInput?.image ?? null;
+  const compareUrl = compareInput?.productUrl ?? null;
 
   useEffect(() => {
-    if (!id) {
+    if (!compareQuery) {
+      setProductData(null);
+      setIsLoading(false);
+      if (!compareInput) {
+        setErrorMessage(null);
+      }
       return;
     }
 
@@ -351,7 +362,12 @@ export default function ComparePage() {
     setIsLoading(true);
     setErrorMessage(null);
 
-    fetchComparisonProduct(id).then((data) => {
+    fetchComparisonProduct({
+      query: compareQuery,
+      brand: compareBrand,
+      image: compareImage,
+      productUrl: compareUrl,
+    }).then((data) => {
       if (cancelled) {
         return;
       }
@@ -359,37 +375,46 @@ export default function ComparePage() {
       if (!data) {
         setProductData(null);
         setIsLoading(false);
-        setErrorMessage("Impossible de récupérer les données du produit.");
+        setErrorMessage("Impossible de récupérer les offres pour le moment.");
         return;
       }
 
       setProductData(data);
       setIsLoading(false);
       setErrorMessage(null);
-
-      const previewFromApi = buildPreviewFromResponse(id, data);
-      cacheCompareProduct(previewFromApi);
-      setProductPreview((current) => mergePreview(current, previewFromApi));
     });
 
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [compareBrand, compareImage, compareQuery, compareUrl]);
 
   const offers = useMemo<CompareOffer[]>(() => {
-    if (!productData || !Array.isArray(productData.offers)) {
+    if (!productData?.offers) {
       return [];
     }
-    return productData.offers;
+    return [...productData.offers].sort((a, b) => {
+      const priceA = typeof a.price === "number" && Number.isFinite(a.price)
+        ? a.price
+        : Number.POSITIVE_INFINITY;
+      const priceB = typeof b.price === "number" && Number.isFinite(b.price)
+        ? b.price
+        : Number.POSITIVE_INFINITY;
+
+      if (priceA !== priceB) {
+        return priceA - priceB;
+      }
+
+      return a.seller.localeCompare(b.seller, "fr", { sensitivity: "base" });
+    });
   }, [productData]);
 
   const priceStats = useMemo<PriceStats>(() => {
-    if (!productData) {
-      return { min: null, max: null, average: null };
+    if (productData) {
+      return normalizePriceSummary(productData.price, offers);
     }
-    return normalizePriceSummary(productData.price, offers);
-  }, [productData, offers]);
+    return computePriceStats(offers, null);
+  }, [offers, productData]);
 
   const priceHistory = useMemo(() => {
     if (!productData) {
@@ -401,102 +426,72 @@ export default function ComparePage() {
   const chartData = useMemo(() => buildChartDataset(priceHistory), [priceHistory]);
 
   const primarySource = useMemo(() => {
-    if (productData) {
-      return resolvePrimarySource(offers, productData.brand);
-    }
-    return productPreview?.source ?? null;
-  }, [offers, productData, productPreview]);
+    return resolvePrimarySource(offers, productData?.brand ?? compareBrand ?? null);
+  }, [compareBrand, offers, productData]);
 
   const productImage = useMemo(() => {
-    const candidates = [productData?.image, productPreview?.image];
+    const candidates = [productData?.image, compareImage];
     for (const candidate of candidates) {
       if (typeof candidate === "string" && candidate.trim().length > 0) {
         return candidate.trim();
       }
     }
     return FALLBACK_IMAGE;
-  }, [productData, productPreview]);
+  }, [compareImage, productData]);
 
-  const displayTitle = productData?.name ?? productPreview?.title ?? "Comparaison FitIdion";
-  const displayBrand = productData?.brand ?? productPreview?.brand ?? null;
+  const displayTitle = productData?.name ?? compareQuery || "Comparaison FitIdion";
+  const displayBrand = productData?.brand ?? compareBrand ?? null;
   const displayDescription = productData?.description ?? null;
 
-  const basePriceText = productData
-    ? formatCurrency(priceStats.min)
-    : productPreview?.priceText ?? "—";
-  const averagePriceText = productData ? formatCurrency(priceStats.average) : "—";
-  const minPriceText = productData ? formatCurrency(priceStats.min) : productPreview?.priceText ?? "—";
-  const maxPriceText = productData ? formatCurrency(priceStats.max) : "—";
+  const basePriceText = formatCurrency(priceStats.min);
+  const averagePriceText = formatCurrency(priceStats.average);
+  const minPriceText = formatCurrency(priceStats.min);
+  const maxPriceText = formatCurrency(priceStats.max);
 
   const mainOffer = offers.length > 0 ? offers[0] : null;
 
   const heroInfo = useMemo(() => {
-    if (productData) {
-      const heroPrice = mainOffer ? formatCurrency(mainOffer.price ?? null) : basePriceText;
-      const heroRating = typeof productData.rating === "number" && Number.isFinite(productData.rating)
-        ? productData.rating
-        : typeof mainOffer?.rating === "number" && Number.isFinite(mainOffer.rating)
-          ? mainOffer.rating
-          : null;
-
-      return {
-        title: displayTitle,
-        brand: displayBrand,
-        source: mainOffer?.seller ?? primarySource,
-        priceText: heroPrice,
-        rating: heroRating,
-        url: mainOffer?.url ?? null,
-      };
-    }
-
-    if (productPreview) {
-      return {
-        title: productPreview.title,
-        brand: productPreview.brand ?? null,
-        source: productPreview.source ?? null,
-        priceText: productPreview.priceText ?? "—",
-        rating:
-          typeof productPreview.rating === "number" && Number.isFinite(productPreview.rating)
-            ? productPreview.rating
-            : null,
-        url: null,
-      };
-    }
+    const heroPrice = mainOffer ? formatCurrency(mainOffer.price ?? null) : basePriceText;
+    const heroRating = typeof productData?.rating === "number" && Number.isFinite(productData.rating)
+      ? productData.rating
+      : typeof mainOffer?.rating === "number" && Number.isFinite(mainOffer.rating)
+        ? mainOffer.rating
+        : null;
 
     return {
       title: displayTitle,
       brand: displayBrand,
-      source: primarySource,
-      priceText: basePriceText,
-      rating: null,
-      url: null,
+      source: mainOffer?.seller ?? primarySource ?? compareBrand ?? null,
+      priceText: offers.length > 0 ? heroPrice : "—",
+      rating: heroRating,
+      url: mainOffer?.url ?? compareUrl ?? null,
     };
   }, [
     basePriceText,
+    compareBrand,
+    compareUrl,
     displayBrand,
     displayTitle,
     mainOffer,
+    offers.length,
     primarySource,
     productData,
-    productPreview,
   ]);
 
   const heroRatingNode = heroInfo.rating !== null
     ? renderRating(heroInfo.rating, heroInfo.source ?? primarySource)
     : null;
 
-  const detailRatingNode = productData
-    ? renderRating(productData.rating ?? null, primarySource)
-    : null;
+  const detailRatingNode = productData ? renderRating(productData.rating ?? null, primarySource) : null;
 
-  const shouldShowLoader = isLoading && !productData && !errorMessage;
+  const shouldShowLoader = Boolean(compareQuery) && isLoading && !productData && !errorMessage;
 
-  if (!id) {
+  if (!compareQuery) {
     return (
       <main className="min-h-screen bg-[#FFF5EB] pb-20 pt-16 text-[color:var(--text)] dark:bg-[color:var(--accent)]">
         <div className="mx-auto max-w-4xl px-4">
           <div className={`${CARD_BASE_CLASSES} p-8 text-center`}>
-            Identifiant produit manquant.
+            Aucun produit à comparer. Lancez une recherche puis cliquez sur «&nbsp;Comparer les prix&nbsp;».
           </div>
         </div>
       </main>
@@ -515,7 +510,7 @@ export default function ComparePage() {
           </p>
         </header>
 
-        {productPreview || productData ? (
+        {compareInput || productData ? (
           <section className="product-header flex items-center gap-6 rounded-3xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-6 shadow-sm">
             <img
               src={productImage}
@@ -628,7 +623,7 @@ export default function ComparePage() {
 
                 {offers.length === 0 ? (
                   <p className="mt-6 rounded-2xl border border-dashed border-[color:var(--border-soft)] bg-[color:var(--surface-strong)]/60 p-6 text-center text-sm text-[color:var(--muted)]">
-                    Aucune offre trouvée pour ce produit pour le moment.
+                    Aucune offre disponible pour ce produit pour le moment.
                   </p>
                 ) : (
                   <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
