@@ -1,17 +1,26 @@
+import apiClient from "./apiClient";
+
 const DEFAULT_LIMIT = 24;
 const DECATHLON_ENDPOINT =
   process.env.DECATHLON_SEARCH_URL
   || process.env.NEXT_PUBLIC_DECATHLON_SEARCH_URL
-  || "https://musical-cod-4jp747x6w77vf7gxw-8000.app.github.dev/produits/decathlon";
+  || null;
 const AMAZON_ENDPOINT =
   process.env.AMAZON_SEARCH_URL
   || process.env.NEXT_PUBLIC_AMAZON_SEARCH_URL
-  || "https://musical-cod-4jp747x6w77vf7gxw-8000.app.github.dev/produits/amazon";
+  || null;
 const MYPROTEIN_ENDPOINT =
   process.env.MYPROTEIN_SEARCH_URL
   || process.env.NEXT_PUBLIC_MYPROTEIN_SEARCH_URL
-  || "https://musical-cod-4jp747x6w77vf7gxw-8000.app.github.dev/produits/myprotein";
+  || null;
 const SERP_ENDPOINT = "https://serpapi.com/search.json";
+const BACKEND_VENDOR_KEYWORDS = {
+  decathlon: ["decathlon"],
+  amazon: ["amazon"],
+  myprotein: ["myprotein"],
+};
+const backendProductsCache = new Map();
+const backendFetchPromises = new Map();
 
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
   style: "currency",
@@ -260,43 +269,239 @@ function ensureArray(payload) {
   return [];
 }
 
-export async function fetchDecathlon(query) {
-  const url = resolveEndpoint(DECATHLON_ENDPOINT, query);
+function extractPriceFromObject(entry) {
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+
+  if ("amount" in entry) {
+    const amount = toNumber(entry.amount);
+    if (amount !== null) {
+      return amount;
+    }
+  }
+
+  if ("price" in entry) {
+    const amount = toNumber(entry.price);
+    if (amount !== null) {
+      return amount;
+    }
+  }
+
+  if ("value" in entry) {
+    const amount = toNumber(entry.value);
+    if (amount !== null) {
+      return amount;
+    }
+  }
+
+  return null;
+}
+
+function normaliseDeal(entry) {
+  if (!entry || typeof entry !== "object") {
+    return null;
+  }
+
+  const idCandidate = pickString(entry.productId)
+    || pickString(entry.id)
+    || null;
+  const vendorCandidate = pickString(entry.vendor)
+    || pickString(entry.source)
+    || null;
+  const nameCandidate = pickString(entry.title)
+    || pickString(entry.name)
+    || vendorCandidate
+    || "Produit";
+  const descriptionCandidate = pickString(entry.stockStatus)
+    || pickString(entry.description)
+    || pickString(entry.shippingText);
+
+  const priceCandidate = extractPriceFromObject(entry.price)
+    || extractPriceFromObject(entry.totalPrice)
+    || toNumber(entry.amount)
+    || toNumber(entry.price);
+  const previousCandidate = pickFromRecord(entry, [
+    "previousPrice",
+    "oldPrice",
+    "priceBeforeDiscount",
+    "strikePrice",
+  ]);
+
+  const ratingCandidate = pickFromRecord(entry, ["rating", "reviewsCount"]);
+
+  return {
+    id: idCandidate,
+    name: nameCandidate,
+    price: normalisePrice(priceCandidate),
+    old_price: normalisePrice(previousCandidate),
+    image: pickString(entry.image) ?? null,
+    brand: pickString(entry.brand) ?? vendorCandidate ?? null,
+    vendor: vendorCandidate,
+    url: pickString(entry.link) ?? pickString(entry.url) ?? null,
+    rating: typeof ratingCandidate === "number"
+      ? ratingCandidate
+      : toNumber(ratingCandidate),
+    description: descriptionCandidate ?? null,
+  };
+}
+
+function normalizeBackendProducts(query) {
+  if (typeof query !== "string") {
+    return null;
+  }
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  const cached = backendProductsCache.get(normalized);
+  if (cached) {
+    return cached;
+  }
+  return null;
+}
+
+async function fetchBackendProducts(query) {
+  if (typeof query !== "string") {
+    return [];
+  }
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) {
+    return [];
+  }
+  const cached = backendProductsCache.get(normalized);
+  if (cached) {
+    return cached;
+  }
+
+  const ongoing = backendFetchPromises.get(normalized);
+  if (ongoing) {
+    return ongoing;
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const data = await apiClient.get(`/compare`, {
+        query: { q: query, limit: 48 },
+        cache: "no-store",
+        allowProxyFallback: true,
+      });
+      const records = ensureArray(data);
+      const normalizedProducts = records
+        .map((record) => normaliseDeal(record))
+        .filter(Boolean);
+      backendProductsCache.set(normalized, normalizedProducts);
+      return normalizedProducts;
+    } catch (error) {
+      console.error("productAggregator.backend", { error });
+      return [];
+    } finally {
+      backendFetchPromises.delete(normalized);
+    }
+  })();
+
+  backendFetchPromises.set(normalized, fetchPromise);
+  return fetchPromise;
+}
+
+async function fetchBackendVendorProducts(query, vendorKey) {
+  const cachedProducts = normalizeBackendProducts(query);
+  if (cachedProducts && cachedProducts.length > 0) {
+    return filterBackendVendor(cachedProducts, vendorKey);
+  }
+
+  const products = await fetchBackendProducts(query);
+  if (!products || products.length === 0) {
+    return [];
+  }
+  return filterBackendVendor(products, vendorKey);
+}
+
+function filterBackendVendor(products, vendorKey) {
+  if (!vendorKey) {
+    return products;
+  }
+  const keywords = BACKEND_VENDOR_KEYWORDS[vendorKey];
+  if (!keywords || keywords.length === 0) {
+    return products;
+  }
+
+  return products.filter((product) => {
+    const vendor = product.vendor || product.brand || "";
+    const normalizedVendor = typeof vendor === "string" ? vendor.toLowerCase() : "";
+    if (!normalizedVendor) {
+      return false;
+    }
+    return keywords.some((keyword) => normalizedVendor.includes(keyword));
+  });
+}
+
+async function fetchLegacyVendorProducts(query, endpoint, vendor) {
+  const url = resolveEndpoint(endpoint, query);
   if (!url) {
     return [];
   }
+
   const payload = await fetchJson(url);
   const records = ensureArray(payload);
   const normalized = records
-    .map((record) => normaliseProduct(record, "Decathlon"))
+    .map((record) => normaliseProduct(record, vendor))
     .filter(Boolean);
   return filterByQuery(normalized, query).slice(0, DEFAULT_LIMIT);
+}
+
+export async function fetchDecathlon(query) {
+  const trimmed = query?.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  const backendProducts = await fetchBackendVendorProducts(trimmed, "decathlon");
+  if (backendProducts.length > 0) {
+    return backendProducts.slice(0, DEFAULT_LIMIT);
+  }
+
+  if (DECATHLON_ENDPOINT) {
+    return fetchLegacyVendorProducts(trimmed, DECATHLON_ENDPOINT, "Decathlon");
+  }
+
+  return [];
 }
 
 export async function fetchAmazon(query) {
-  const url = resolveEndpoint(AMAZON_ENDPOINT, query);
-  if (!url) {
+  const trimmed = query?.trim();
+  if (!trimmed) {
     return [];
   }
-  const payload = await fetchJson(url);
-  const records = ensureArray(payload);
-  const normalized = records
-    .map((record) => normaliseProduct(record, "Amazon"))
-    .filter(Boolean);
-  return filterByQuery(normalized, query).slice(0, DEFAULT_LIMIT);
+
+  const backendProducts = await fetchBackendVendorProducts(trimmed, "amazon");
+  if (backendProducts.length > 0) {
+    return backendProducts.slice(0, DEFAULT_LIMIT);
+  }
+
+  if (AMAZON_ENDPOINT) {
+    return fetchLegacyVendorProducts(trimmed, AMAZON_ENDPOINT, "Amazon");
+  }
+
+  return [];
 }
 
 export async function scrapeMyProtein(query) {
-  const url = resolveEndpoint(MYPROTEIN_ENDPOINT, query);
-  if (!url) {
+  const trimmed = query?.trim();
+  if (!trimmed) {
     return [];
   }
-  const payload = await fetchJson(url);
-  const records = ensureArray(payload);
-  const normalized = records
-    .map((record) => normaliseProduct(record, "MyProtein"))
-    .filter(Boolean);
-  return filterByQuery(normalized, query).slice(0, DEFAULT_LIMIT);
+
+  const backendProducts = await fetchBackendVendorProducts(trimmed, "myprotein");
+  if (backendProducts.length > 0) {
+    return backendProducts.slice(0, DEFAULT_LIMIT);
+  }
+
+  if (MYPROTEIN_ENDPOINT) {
+    return fetchLegacyVendorProducts(trimmed, MYPROTEIN_ENDPOINT, "MyProtein");
+  }
+
+  return [];
 }
 
 function buildSerpUrl(query, limit, apiKey) {
