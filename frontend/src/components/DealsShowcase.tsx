@@ -257,7 +257,7 @@ export function DealsShowcase() {
       try {
         const data = await apiClient.get<DealItem[]>("/compare", {
           cache: "no-store",
-          query: { limit: 9 },
+          query: { limit: 9, legacy: true },
         });
 
         if (!mounted) {

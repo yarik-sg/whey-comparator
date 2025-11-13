@@ -21,6 +21,7 @@ from starlette.responses import Response
 
 from fallback_catalogue import get_fallback_product, get_fallback_products
 from services.gyms_scraper import get_partner_gyms
+from services.product_compare import compare_product
 from services.local_cache import local_cache
 
 app = FastAPI()
@@ -2856,34 +2857,62 @@ def compare(
     marque: Optional[str] = Query(None),
     categorie: Optional[str] = Query(None),
     nom: Optional[str] = Query(None),
-    limit: int = Query(12, ge=1, le=24)
+    limit: int = Query(12, ge=1, le=24),
+    brand: Optional[str] = Query(None),
+    image: Optional[str] = Query(None),
+    image_alias: Optional[str] = Query(None, alias="img"),
+    product_url: Optional[str] = Query(None, alias="url"),
+    legacy: bool = Query(False),
 ):
-    search_term = (nom or q).strip() or "whey protein"
-    serp_deals = collect_serp_deals(
-        search_term,
-        marque=marque,
-        categorie=categorie,
-        limit=limit,
-    )
-    scraper_deals = collect_scraper_deals(
-        search_term,
-        limit=limit,
-        marque=marque,
-        categorie=categorie,
-        name=nom,
-    )
+    search_term = (nom or q or "").strip()
+    brand_filter = marque or brand
 
-    combined = serp_deals + scraper_deals
-    combined.sort(
-        key=lambda deal: (
-            deal.get("price", {}).get("amount")
-            if deal.get("price", {}).get("amount") is not None
-            else float("inf")
+    if legacy:
+        legacy_term = search_term or "whey protein"
+        serp_deals = collect_serp_deals(
+            legacy_term,
+            marque=brand_filter,
+            categorie=categorie,
+            limit=limit,
         )
-    )
+        scraper_deals = collect_scraper_deals(
+            legacy_term,
+            limit=limit,
+            marque=brand_filter,
+            categorie=categorie,
+            name=nom,
+        )
 
-    mark_best_price(combined)
-    return combined[:limit]
+        combined = serp_deals + scraper_deals
+        combined.sort(
+            key=lambda deal: (
+                deal.get("price", {}).get("amount")
+                if deal.get("price", {}).get("amount") is not None
+                else float("inf")
+            )
+        )
+
+        mark_best_price(combined)
+        return combined[:limit]
+
+    normalized_query = search_term
+    if not normalized_query:
+        raise HTTPException(
+            status_code=400,
+            detail="Le paramètre q est requis pour la comparaison détaillée.",
+        )
+
+    try:
+        return asyncio.run(
+            compare_product(
+                normalized_query,
+                product_brand=brand_filter,
+                product_image=image or image_alias,
+                product_url=product_url,
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/products")

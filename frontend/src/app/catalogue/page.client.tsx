@@ -477,7 +477,7 @@ export default function PromosPage() {
         try {
           const deals = await apiClient.get<DealItem[]>("/compare", {
             cache: "no-store",
-            query: { q: category.query, limit: 24 },
+            query: { q: category.query, limit: 24, legacy: true },
           });
 
           const normalizedDeals = selectTopPromotions(Array.isArray(deals) ? deals : [], PROMOS_PER_CATEGORY);

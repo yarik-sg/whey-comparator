@@ -382,7 +382,7 @@ async function fetchBackendProducts(query) {
   const fetchPromise = (async () => {
     try {
       const data = await apiClient.get(`/compare`, {
-        query: { q: query, limit: 48 },
+        query: { q: query, limit: 48, legacy: true },
         cache: "no-store",
         allowProxyFallback: true,
       });
