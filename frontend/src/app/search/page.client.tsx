@@ -39,6 +39,7 @@ interface ProductResultInfo {
   originalPrice?: PriceInfo;
   rating?: number;
   reviewsCount?: number;
+  productUrl?: string;
 }
 
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
@@ -233,6 +234,17 @@ function extractProductInfo(item: Record<string, unknown>): ProductResultInfo {
     firstImageFromProduct,
   );
 
+  const productUrl = pickFirstString(
+    (item as Record<string, unknown>).productUrl,
+    (item as Record<string, unknown>).product_url,
+    (item as Record<string, unknown>).url,
+    (item as Record<string, unknown>).link,
+    product?.productUrl,
+    product?.product_url,
+    product?.url,
+    product?.link,
+  );
+
   const price =
     resolvePrice((item as Record<string, unknown>).price)
     ?? resolvePrice((item as Record<string, unknown>).bestPrice)
@@ -274,6 +286,7 @@ function extractProductInfo(item: Record<string, unknown>): ProductResultInfo {
     originalPrice: originalPrice ?? undefined,
     rating: typeof rating === "number" ? Math.min(Math.max(rating, 0), 5) : undefined,
     reviewsCount,
+    productUrl: productUrl ?? undefined,
   };
 }
 
@@ -291,7 +304,29 @@ function ProductResultCard({ item }: { item: Record<string, unknown> }) {
       ? Math.round(((info.originalPrice.amount - info.price.amount) / info.originalPrice.amount) * 100)
       : null;
   const productId = info.id;
-  const compareHref = productId ? `/compare?id=${encodeURIComponent(productId)}` : undefined;
+  const comparePayload = {
+    q: info.title,
+    img: info.image ?? "",
+    brand: info.brand ?? "",
+    url: info.productUrl ?? "",
+  };
+
+  const compareQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("q", comparePayload.q);
+    if (comparePayload.img) {
+      params.set("img", comparePayload.img);
+    }
+    if (comparePayload.brand) {
+      params.set("brand", comparePayload.brand);
+    }
+    if (comparePayload.url) {
+      params.set("url", comparePayload.url);
+    }
+    return params.toString();
+  }, [comparePayload.brand, comparePayload.img, comparePayload.q, comparePayload.url]);
+
+  const compareHref = `/compare?${compareQuery}`;
   const comparePreview = productId
     ? buildComparePreviewFromSearchResult(info, productId)
     : null;
@@ -368,6 +403,19 @@ function ProductResultCard({ item }: { item: Record<string, unknown> }) {
               <CompareLinkButton
                 href={compareHref}
                 product={comparePreview ?? undefined}
+                onClick={() => {
+                  if (typeof window === "undefined") {
+                    return;
+                  }
+                  try {
+                    window.localStorage.setItem(
+                      "fitidion:lastCompare",
+                      JSON.stringify(comparePayload),
+                    );
+                  } catch (error) {
+                    console.warn("compare:store", error);
+                  }
+                }}
               >
                 Comparer les prix
               </CompareLinkButton>
