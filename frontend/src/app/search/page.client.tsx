@@ -290,6 +290,20 @@ function extractProductInfo(item: Record<string, unknown>): ProductResultInfo {
   };
 }
 
+function buildComparePreviewId(info: ProductResultInfo): string {
+  if (info.id) {
+    return info.id;
+  }
+
+  const slug = info.title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    || "produit";
+
+  return slug;
+}
+
 function ProductResultCard({ item }: { item: Record<string, unknown> }) {
   const [imageFailed, setImageFailed] = useState(false);
   const info = useMemo(() => extractProductInfo(item), [item]);
@@ -303,7 +317,7 @@ function ProductResultCard({ item }: { item: Record<string, unknown> }) {
     hasOriginalPrice && info.originalPrice?.amount && info.price?.amount
       ? Math.round(((info.originalPrice.amount - info.price.amount) / info.originalPrice.amount) * 100)
       : null;
-  const productId = info.id;
+  const previewId = buildComparePreviewId(info);
   const comparePayload = {
     q: info.title,
     img: info.image ?? "",
@@ -327,9 +341,7 @@ function ProductResultCard({ item }: { item: Record<string, unknown> }) {
   }, [comparePayload.brand, comparePayload.img, comparePayload.q, comparePayload.url]);
 
   const compareHref = `/compare?${compareQuery}`;
-  const comparePreview = productId
-    ? buildComparePreviewFromSearchResult(info, productId)
-    : null;
+  const comparePreview = buildComparePreviewFromSearchResult(info, previewId);
   const rating = info.rating;
   const reviewsCount = info.reviewsCount;
   const showRating = typeof rating === "number";
