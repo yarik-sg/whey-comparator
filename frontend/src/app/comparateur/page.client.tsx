@@ -86,6 +86,7 @@ export default function Comparateur() {
           marque: marque || undefined,
           categorie: categorie || undefined,
           limit: 24,
+          legacy: true,
         },
         cache: "no-store",
       })
