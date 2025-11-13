@@ -50,16 +50,14 @@ export async function fetchScrapedOffers(query: string): Promise<ProductOffer[]>
         const logo = buildLogoUrl(hostname);
 
         results.push({
+          title: `${hostname} · ${query}`,
           seller: hostname,
           price,
-          old_price: null,
-          url,
-          shipping: "Voir site marchand",
-          delivery_time: "Variable",
-          rating: null,
-          logo,
+          priceText: price.toFixed(2),
+          link: url,
           source: "ScraperAPI",
-          image: logo,
+          thumbnail: logo,
+          rating: null,
         });
       } catch (error) {
         console.error("fetchScrapedOffers iteration error:", error);

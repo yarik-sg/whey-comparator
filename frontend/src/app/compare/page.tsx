@@ -18,16 +18,14 @@ const priceFormatter = new Intl.NumberFormat("fr-FR", {
 });
 
 interface CompareOffer {
+  title: string;
   seller: string;
   price: number | null;
-  old_price: number | null;
-  url: string | null;
-  shipping: string | null;
-  delivery_time: string | null;
+  priceText: string | null;
+  link: string | null;
+  source: string | null;
+  thumbnail: string | null;
   rating: number | null;
-  logo?: string | null;
-  source?: string | null;
-  image?: string | null;
 }
 
 type PriceHistoryEntry = {
@@ -42,7 +40,6 @@ type PriceStats = {
 };
 
 interface CompareProductResponse {
-  id: string;
   name: string;
   image: string;
   brand: string | null;
@@ -52,7 +49,7 @@ interface CompareProductResponse {
     min: number | null;
     max: number | null;
     avg: number | null;
-  } | null;
+  };
   offers: CompareOffer[];
   history: PriceHistoryEntry[];
 }
@@ -439,7 +436,7 @@ export default function ComparePage() {
     return FALLBACK_IMAGE;
   }, [compareImage, productData]);
 
-  const displayTitle = productData?.name ?? compareQuery || "Comparaison FitIdion";
+  const displayTitle = productData?.name ?? compareInput?.title ?? compareQuery ?? "Comparaison FitIdion";
   const displayBrand = productData?.brand ?? compareBrand ?? null;
   const displayDescription = productData?.description ?? null;
 
@@ -451,7 +448,9 @@ export default function ComparePage() {
   const mainOffer = offers.length > 0 ? offers[0] : null;
 
   const heroInfo = useMemo(() => {
-    const heroPrice = mainOffer ? formatCurrency(mainOffer.price ?? null) : basePriceText;
+    const heroPrice = mainOffer
+      ? mainOffer.priceText ?? formatCurrency(mainOffer.price ?? null)
+      : basePriceText;
     const heroRating = typeof productData?.rating === "number" && Number.isFinite(productData.rating)
       ? productData.rating
       : typeof mainOffer?.rating === "number" && Number.isFinite(mainOffer.rating)
@@ -461,10 +460,10 @@ export default function ComparePage() {
     return {
       title: displayTitle,
       brand: displayBrand,
-      source: mainOffer?.seller ?? primarySource ?? compareBrand ?? null,
+      source: mainOffer?.source ?? mainOffer?.seller ?? primarySource ?? compareBrand ?? null,
       priceText: offers.length > 0 ? heroPrice : "—",
       rating: heroRating,
-      url: mainOffer?.url ?? compareUrl ?? null,
+      url: mainOffer?.link ?? compareUrl ?? null,
     };
   }, [
     basePriceText,
@@ -612,8 +611,8 @@ export default function ComparePage() {
                   <div>
                     <h2 className="text-lg font-semibold text-[color:var(--text)]">Offres disponibles</h2>
                     <p className="text-sm text-[color:var(--muted)]">
-                      Classement automatique des marchands par prix TTC. Les frais de livraison sont affichés lorsqu&apos;ils sont
-                      connus.
+                      Classement automatique des marchands détectés via Google Shopping (SerpAPI) et ScraperAPI, triés par prix
+                      TTC.
                     </p>
                   </div>
                   <span className="inline-flex items-center rounded-full bg-[color:var(--secondary)] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[color:var(--muted)]">
@@ -628,17 +627,9 @@ export default function ComparePage() {
                 ) : (
                   <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {offers.map((offer, index) => {
-                      const logoUrl = resolveVendorLogo(offer.seller, offer.logo ?? null, offer.image ?? null);
+                      const logoUrl = resolveVendorLogo(offer.seller, offer.thumbnail, offer.thumbnail);
                       const isBestPrice = index === 0;
-                      const hasDiscount =
-                        typeof offer.old_price === "number"
-                        && typeof offer.price === "number"
-                        && offer.old_price > offer.price;
-                      const oldPriceText = formatCurrency(
-                        typeof offer.old_price === "number" ? offer.old_price : null,
-                      );
-                      const shippingText = offer.shipping ?? "À vérifier";
-                      const deliveryText = offer.delivery_time ?? null;
+                      const priceText = offer.priceText ?? formatCurrency(offer.price);
                       const ratingText =
                         typeof offer.rating === "number" && Number.isFinite(offer.rating)
                           ? `${offer.rating.toFixed(1)} / 5`
@@ -647,7 +638,7 @@ export default function ComparePage() {
 
                       return (
                         <article
-                          key={`${offer.seller}-${offer.url ?? index}`}
+                          key={`${offer.seller}-${offer.link ?? index}`}
                           className={`relative flex h-full flex-col justify-between gap-4 rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md ${
                             isBestPrice ? "ring-2 ring-[#FF6600]/40" : ""
                           }`}
@@ -671,29 +662,25 @@ export default function ComparePage() {
                             <div className="space-y-2">
                               <div className="space-y-1">
                                 <p className="text-sm font-semibold text-[color:var(--text)]">{offer.seller}</p>
+                                {offer.title ? (
+                                  <p className="text-xs text-[color:var(--muted)]">{offer.title}</p>
+                                ) : null}
                                 {sourceText ? (
-                                  <p className="text-xs text-[color:var(--muted)]">{sourceText}</p>
+                                  <p className="text-xs text-[color:var(--muted)]/80">{sourceText}</p>
                                 ) : null}
                               </div>
                               <div className="space-y-1">
-                                <p className="text-lg font-semibold text-[color:var(--text)]">
-                                  {formatCurrency(offer.price)}
-                                </p>
-                                {hasDiscount ? (
-                                  <p className="text-xs text-[color:var(--muted)] line-through">{oldPriceText}</p>
+                                <p className="text-lg font-semibold text-[color:var(--text)]">{priceText}</p>
+                                {ratingText ? (
+                                  <p className="text-xs text-[color:var(--muted)]">{ratingText}</p>
                                 ) : null}
-                              </div>
-                              <div className="space-y-1 text-xs text-[color:var(--muted)]">
-                                <p>Livraison : {shippingText}</p>
-                                {deliveryText ? <p>Expédition : {deliveryText}</p> : null}
-                                {ratingText ? <p>Note vendeur : {ratingText}</p> : null}
                               </div>
                             </div>
                           </div>
 
-                          {offer.url ? (
+                          {offer.link ? (
                             <a
-                              href={offer.url}
+                              href={offer.link}
                               target="_blank"
                               rel="noopener noreferrer"
                               className={CTA_BUTTON_CLASSES}
