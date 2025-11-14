@@ -50,16 +50,21 @@ interface CompareProductDetails {
   rating: number | null;
 }
 
+type PriceSummaryPayload = {
+  min: number | null;
+  max: number | null;
+  avg?: number | null;
+  average?: number | null;
+} | null;
+
 interface CompareProductResponse {
-  query: string;
-  product: CompareProductDetails;
-  price: {
-    min: number | null;
-    max: number | null;
-    avg: number | null;
-  } | null;
-  offers: CompareOffer[];
-  history: PriceHistoryEntry[];
+  query?: string;
+  product?: CompareProductDetails | null;
+  price?: PriceSummaryPayload;
+  stats?: PriceSummaryPayload;
+  offers?: CompareOffer[] | null;
+  history?: PriceHistoryEntry[] | null;
+  comparison?: CompareProductResponse | null;
 }
 
 interface CompareRequestPayload {
@@ -158,12 +163,7 @@ async function fetchComparisonProduct(payload: CompareRequestPayload): Promise<C
 
     const payload = await response.json();
     if (payload && typeof payload === "object") {
-      if ("comparison" in payload && payload.comparison) {
-        return payload.comparison as CompareProductResponse;
-      }
-      if ("product" in payload && "offers" in payload) {
-        return payload as CompareProductResponse;
-      }
+      return payload as CompareProductResponse;
     }
     return null;
   } catch {
@@ -217,10 +217,10 @@ function computePriceStats(offers: CompareOffer[], basePrice: number | null): Pr
 }
 
 function normalizePriceSummary(
-  price: CompareProductResponse["price"],
+  price: PriceSummaryPayload,
   offers: CompareOffer[],
 ): PriceStats {
-  const fallback = computePriceStats(offers, price?.min ?? null);
+  const fallback = computePriceStats(offers, price?.min ?? price?.average ?? null);
 
   if (!price) {
     return fallback;
@@ -233,7 +233,7 @@ function normalizePriceSummary(
   return {
     min: toNumber(price.min) ?? fallback.min,
     max: toNumber(price.max) ?? fallback.max,
-    average: toNumber(price.avg) ?? fallback.average,
+    average: toNumber(price.avg ?? price.average) ?? fallback.average,
   };
 }
 
@@ -418,10 +418,11 @@ export default function ComparePage() {
   }, [compareBrand, compareImage, compareQuery, compareUrl]);
 
   const offers = useMemo<CompareOffer[]>(() => {
-    if (!productData?.offers) {
+    const resolvedOffers = productData?.offers ?? productData?.comparison?.offers ?? [];
+    if (!Array.isArray(resolvedOffers)) {
       return [];
     }
-    return [...productData.offers].sort((a, b) => {
+    return [...resolvedOffers].sort((a, b) => {
       const priceA = typeof a.price === "number" && Number.isFinite(a.price)
         ? a.price
         : Number.POSITIVE_INFINITY;
@@ -437,23 +438,24 @@ export default function ComparePage() {
     });
   }, [productData]);
 
+  const statsPayload = productData?.stats ?? productData?.comparison?.stats ?? null;
+  const pricePayload = productData?.price ?? productData?.comparison?.price ?? null;
+
   const priceStats = useMemo<PriceStats>(() => {
-    if (productData) {
-      return normalizePriceSummary(productData.price, offers);
+    if (statsPayload || pricePayload) {
+      return normalizePriceSummary(statsPayload ?? pricePayload ?? null, offers);
     }
     return computePriceStats(offers, null);
-  }, [offers, productData]);
+  }, [offers, pricePayload, statsPayload]);
 
   const priceHistory = useMemo(() => {
-    if (!productData) {
-      return [] as PriceHistoryEntry[];
-    }
-    return normalizeHistory(productData.history);
+    const historyPayload = productData?.history ?? productData?.comparison?.history ?? [];
+    return normalizeHistory(historyPayload);
   }, [productData]);
 
   const chartData = useMemo(() => buildChartDataset(priceHistory), [priceHistory]);
 
-  const comparisonProduct = productData?.product ?? null;
+  const comparisonProduct = productData?.comparison?.product ?? productData?.product ?? null;
 
   const primarySource = useMemo(() => {
     return resolvePrimarySource(offers, comparisonProduct?.brand ?? compareBrand ?? null);
@@ -593,8 +595,7 @@ export default function ComparePage() {
           </div>
         ) : null}
 
-        {productData ? (
-          <section className="grid gap-8 lg:grid-cols-[340px,1fr]">
+        <section className="grid gap-8 lg:grid-cols-[340px,1fr]">
             <div className={`${CARD_BASE_CLASSES} overflow-hidden`}>
               <div className="relative h-80 w-full bg-[color:var(--secondary)]">
                 <Image
@@ -759,7 +760,6 @@ export default function ComparePage() {
               </div>
             </div>
           </section>
-        ) : null}
       </div>
     </main>
   );
