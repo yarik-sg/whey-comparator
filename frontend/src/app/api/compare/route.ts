@@ -18,6 +18,8 @@ interface BackendOffer {
   rating?: number | null;
   reviews?: number | null;
   source?: string | null;
+  shipping_text?: string | null;
+  shipping_cost?: number | null;
 }
 
 interface BackendCompareResponse {
@@ -46,6 +48,8 @@ interface CompareOffer {
   source: string | null;
   thumbnail: string | null;
   rating: number | null;
+  shippingText: string | null;
+  shippingCost: number | null;
 }
 
 interface PriceHistoryEntry {
@@ -53,12 +57,18 @@ interface PriceHistoryEntry {
   price: number | null;
 }
 
-interface CompareProductResponse {
+interface CompareProductDetails {
   name: string;
   image: string | null;
   brand: string | null;
+  url: string | null;
   description: string | null;
   rating: number | null;
+}
+
+interface CompareProductResponse {
+  query: string;
+  product: CompareProductDetails;
   price: {
     min: number | null;
     max: number | null;
@@ -85,6 +95,8 @@ function mapOffers(offers: BackendOffer[], fallbackTitle: string): CompareOffer[
     source: offer.source ?? offer.seller ?? null,
     thumbnail: offer.image ?? null,
     rating: typeof offer.rating === "number" ? offer.rating : null,
+    shippingText: offer.shipping_text ?? null,
+    shippingCost: typeof offer.shipping_cost === "number" ? offer.shipping_cost : null,
   }));
 }
 
@@ -180,13 +192,18 @@ export async function GET(request: NextRequest) {
     const imageSource = backend.product?.image ?? image ?? null;
     const brandSource = backend.product?.brand ?? brand ?? null;
     const description = descriptionParam ?? `Historique des offres pour « ${productName} ».`;
+    const resolvedProductUrl = backend.product?.url ?? productUrl ?? null;
 
     const responsePayload: CompareProductResponse = {
-      name: productName,
-      image: imageSource,
-      brand: brandSource,
-      description,
-      rating,
+      query,
+      product: {
+        name: productName,
+        image: imageSource,
+        brand: brandSource,
+        url: resolvedProductUrl,
+        description,
+        rating,
+      },
       price,
       offers: resolvedOffers,
       history,

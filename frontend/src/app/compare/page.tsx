@@ -26,6 +26,8 @@ interface CompareOffer {
   source: string | null;
   thumbnail: string | null;
   rating: number | null;
+  shippingText: string | null;
+  shippingCost: number | null;
 }
 
 type PriceHistoryEntry = {
@@ -39,17 +41,23 @@ type PriceStats = {
   average: number | null;
 };
 
-interface CompareProductResponse {
+interface CompareProductDetails {
   name: string;
-  image: string;
+  image: string | null;
   brand: string | null;
+  url: string | null;
   description: string | null;
   rating: number | null;
+}
+
+interface CompareProductResponse {
+  query: string;
+  product: CompareProductDetails;
   price: {
     min: number | null;
     max: number | null;
     avg: number | null;
-  };
+  } | null;
   offers: CompareOffer[];
   history: PriceHistoryEntry[];
 }
@@ -148,8 +156,16 @@ async function fetchComparisonProduct(payload: CompareRequestPayload): Promise<C
       return null;
     }
 
-    const data = (await response.json()) as CompareProductResponse;
-    return data;
+    const payload = await response.json();
+    if (payload && typeof payload === "object") {
+      if ("comparison" in payload && payload.comparison) {
+        return payload.comparison as CompareProductResponse;
+      }
+      if ("product" in payload && "offers" in payload) {
+        return payload as CompareProductResponse;
+      }
+    }
+    return null;
   } catch {
     return null;
   }
@@ -160,6 +176,21 @@ function formatCurrency(value: number | null): string {
     return priceFormatter.format(value);
   }
   return "—";
+}
+
+function formatShippingInfo(offer: CompareOffer): string {
+  if (offer.shippingText && offer.shippingText.trim().length > 0) {
+    return offer.shippingText.trim();
+  }
+
+  if (typeof offer.shippingCost === "number") {
+    if (offer.shippingCost === 0) {
+      return "Livraison offerte";
+    }
+    return `Livraison ${formatCurrency(offer.shippingCost)}`;
+  }
+
+  return "Frais de port non communiqués";
 }
 
 function computePriceStats(offers: CompareOffer[], basePrice: number | null): PriceStats {
@@ -422,23 +453,29 @@ export default function ComparePage() {
 
   const chartData = useMemo(() => buildChartDataset(priceHistory), [priceHistory]);
 
+  const comparisonProduct = productData?.product ?? null;
+
   const primarySource = useMemo(() => {
-    return resolvePrimarySource(offers, productData?.brand ?? compareBrand ?? null);
-  }, [compareBrand, offers, productData]);
+    return resolvePrimarySource(offers, comparisonProduct?.brand ?? compareBrand ?? null);
+  }, [compareBrand, comparisonProduct?.brand, offers]);
 
   const productImage = useMemo(() => {
-    const candidates = [productData?.image, compareImage];
+    const candidates = [comparisonProduct?.image, compareImage];
     for (const candidate of candidates) {
       if (typeof candidate === "string" && candidate.trim().length > 0) {
         return candidate.trim();
       }
     }
     return FALLBACK_IMAGE;
-  }, [compareImage, productData]);
+  }, [compareImage, comparisonProduct?.image]);
 
-  const displayTitle = productData?.name ?? compareInput?.title ?? compareQuery ?? "Comparaison FitIdion";
-  const displayBrand = productData?.brand ?? compareBrand ?? null;
-  const displayDescription = productData?.description ?? null;
+  const displayTitle = comparisonProduct?.name ?? compareInput?.title ?? compareQuery ?? "Comparaison FitIdion";
+  const displayBrand = comparisonProduct?.brand ?? compareBrand ?? null;
+  const displayDescription = comparisonProduct?.description ?? null;
+  const displayProductUrl = comparisonProduct?.url ?? compareUrl ?? null;
+  const displayRating = typeof comparisonProduct?.rating === "number" && Number.isFinite(comparisonProduct.rating)
+    ? comparisonProduct.rating
+    : null;
 
   const basePriceText = formatCurrency(priceStats.min);
   const averagePriceText = formatCurrency(priceStats.average);
@@ -451,11 +488,10 @@ export default function ComparePage() {
     const heroPrice = mainOffer
       ? mainOffer.priceText ?? formatCurrency(mainOffer.price ?? null)
       : basePriceText;
-    const heroRating = typeof productData?.rating === "number" && Number.isFinite(productData.rating)
-      ? productData.rating
-      : typeof mainOffer?.rating === "number" && Number.isFinite(mainOffer.rating)
+    const heroRating = displayRating
+      ?? (typeof mainOffer?.rating === "number" && Number.isFinite(mainOffer.rating)
         ? mainOffer.rating
-        : null;
+        : null);
 
     return {
       title: displayTitle,
@@ -463,25 +499,25 @@ export default function ComparePage() {
       source: mainOffer?.source ?? mainOffer?.seller ?? primarySource ?? compareBrand ?? null,
       priceText: offers.length > 0 ? heroPrice : "—",
       rating: heroRating,
-      url: mainOffer?.link ?? compareUrl ?? null,
+      url: mainOffer?.link ?? displayProductUrl,
     };
   }, [
     basePriceText,
     compareBrand,
-    compareUrl,
     displayBrand,
+    displayProductUrl,
+    displayRating,
     displayTitle,
     mainOffer,
     offers.length,
     primarySource,
-    productData,
   ]);
 
   const heroRatingNode = heroInfo.rating !== null
     ? renderRating(heroInfo.rating, heroInfo.source ?? primarySource)
     : null;
 
-  const detailRatingNode = productData ? renderRating(productData.rating ?? null, primarySource) : null;
+  const detailRatingNode = displayRating !== null ? renderRating(displayRating, primarySource) : null;
 
   const shouldShowLoader = Boolean(compareQuery) && isLoading && !productData && !errorMessage;
 
@@ -635,6 +671,7 @@ export default function ComparePage() {
                           ? `${offer.rating.toFixed(1)} / 5`
                           : null;
                       const sourceText = offer.source && offer.source !== offer.seller ? offer.source : null;
+                      const shippingText = formatShippingInfo(offer);
 
                       return (
                         <article
@@ -671,6 +708,7 @@ export default function ComparePage() {
                               </div>
                               <div className="space-y-1">
                                 <p className="text-lg font-semibold text-[color:var(--text)]">{priceText}</p>
+                                <p className="text-xs text-[color:var(--muted)]">{shippingText}</p>
                                 {ratingText ? (
                                   <p className="text-xs text-[color:var(--muted)]">{ratingText}</p>
                                 ) : null}
