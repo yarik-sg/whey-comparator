@@ -1,119 +1,161 @@
 [
   {
-    "id": "force-hypertrophie-8s",
-    "nom": "Blueprint Hypertrophie",
+    "id": "debutant-machines-1w",
+    "nom": "Programme Débutant Machines",
+    "objectif": "Prise en main salle",
+    "niveau": "Débutant",
+    "duree_programme": "1 semaine • 3 séances guidées",
+    "description": "Exercices progressifs sur machines guidées pour apprendre les bons gestes en toute sécurité.",
+    "image": "/images/full-body-debutant.jpg",
+    "exercices": [
+      {
+        "nom": "Presse à cuisses",
+        "machine": "Presse inclinée guidée",
+        "duree": "10 minutes",
+        "series": "3",
+        "repetitions": "12-15",
+        "image": null
+      },
+      {
+        "nom": "Poulie haute",
+        "machine": "Lat pulldown",
+        "duree": "8 minutes",
+        "series": "3",
+        "repetitions": "10-12",
+        "image": null
+      },
+      {
+        "nom": "Développé assis",
+        "machine": "Machine chest press",
+        "duree": "8 minutes",
+        "series": "3",
+        "repetitions": "12",
+        "image": null
+      },
+      {
+        "nom": "Gainage abdos",
+        "machine": "Chaise romaine",
+        "duree": "6 minutes",
+        "series": "3",
+        "repetitions": "30-40 secondes",
+        "image": null
+      }
+    ],
+    "astuces": [
+      "Commencez chaque séance par 5 minutes de mobilisation articulaire sur vélo ou rameur.",
+      "Réglez les machines de sorte que les axes correspondent à vos articulations pour éviter les tensions inutiles.",
+      "Notez vos charges pour visualiser vos progrès dès la deuxième séance."
+    ],
+    "nutrition": [
+      "Priorisez 20 g de protéines dans l'heure suivant l'entraînement (yaourt grec, shaker).",
+      "Hydratez-vous à hauteur de 30 ml/kg par jour pour faciliter la récupération musculaire.",
+      "Ajoutez des glucides complexes (quinoa, riz complet) aux repas précédant les séances."
+    ]
+  },
+  {
+    "id": "prise-masse-ppl-1m",
+    "nom": "Split Push/Pull/Legs - Volume",
     "objectif": "Prise de masse",
     "niveau": "Intermédiaire",
-    "duree_programme": "8 semaines",
-    "description": "Une progression structurée pour développer force et volume musculaire grâce aux mouvements polyarticulaires et au suivi de charges.",
+    "duree_programme": "1 mois • Split PPL",
+    "description": "Cycle de 4 semaines structuré autour des machines pour maximiser la tension mécanique et le volume.",
     "image": "/images/prise-masse.jpg",
     "exercices": [
       {
-        "nom": "Squat barre",
-        "duree": "12 minutes",
+        "nom": "Presse épaules",
+        "machine": "Shoulder press Nautilus",
+        "duree": "10 minutes",
         "series": "4",
         "repetitions": "8-10",
         "image": null
       },
       {
-        "nom": "Développé couché",
+        "nom": "Rowing assis",
+        "machine": "Low row convergent",
         "duree": "10 minutes",
-        "series": "4",
-        "repetitions": "6-8",
-        "image": null
-      },
-      {
-        "nom": "Rowing barre",
-        "duree": "8 minutes",
         "series": "4",
         "repetitions": "10-12",
         "image": null
       },
       {
-        "nom": "Soulevé de terre jambes tendues",
-        "duree": "8 minutes",
-        "series": "3",
+        "nom": "Presse à cuisses lourde",
+        "machine": "Leg press 45°",
+        "duree": "12 minutes",
+        "series": "5",
         "repetitions": "8-10",
         "image": null
+      },
+      {
+        "nom": "Curl ischio allongé",
+        "machine": "Leg curl",
+        "duree": "8 minutes",
+        "series": "4",
+        "repetitions": "12",
+        "image": null
       }
+    ],
+    "astuces": [
+      "Utilisez un tempo contrôlé (2 secondes montée / 3 secondes descente) pour recruter un maximum de fibres.",
+      "Alternez les angles d'assise et les poignées pour réduire les points faibles sur le push/pull.",
+      "Ajoutez une quatrième semaine en deload en réduisant les charges de 20 % mais en conservant le volume."
+    ],
+    "nutrition": [
+      "Visez un surplus calorique modéré (+250 kcal/jour) pour une prise de masse maîtrisée.",
+      "Répartissez 1,8 à 2 g de protéines/kg sur 4 repas minimum.",
+      "Complétez avec des lipides de qualité (huile d'olive, noix) pour soutenir les hormones anabolisantes."
     ]
   },
   {
-    "id": "defi-seche-6s",
-    "nom": "Défi Sèche Fonctionnelle",
+    "id": "seche-circuit-1m",
+    "nom": "Programme Sèche Métabolique",
     "objectif": "Sèche",
     "niveau": "Avancé",
-    "duree_programme": "6 semaines",
-    "description": "Un mélange de HIIT et de circuits métaboliques pour réduire le taux de masse grasse tout en conservant de la tonicité musculaire.",
+    "duree_programme": "1 mois • Circuits + cardio",
+    "description": "Alternance de circuits machines et d'intervalles cardio pour accélérer la dépense énergétique.",
     "image": "/images/seche-musculaire.jpg",
     "exercices": [
       {
-        "nom": "Burpees explosifs",
-        "duree": "6 minutes",
-        "series": "5",
+        "nom": "Circuit rameur + tirage",
+        "machine": "Rameur Concept2 & tirage poulie",
+        "duree": "12 minutes",
+        "series": "4",
+        "repetitions": "45 sec / 15 reps",
+        "image": null
+      },
+      {
+        "nom": "Presse horizontale explosive",
+        "machine": "Chest press hammer",
+        "duree": "8 minutes",
+        "series": "4",
         "repetitions": "12",
         "image": null
       },
       {
-        "nom": "Kettlebell swings",
+        "nom": "Escalier mécanique",
+        "machine": "Stairmaster",
+        "duree": "10 minutes",
+        "series": "4",
+        "repetitions": "1 min rapide / 1 min lente",
+        "image": null
+      },
+      {
+        "nom": "Crunch câble",
+        "machine": "Poulie haute",
         "duree": "6 minutes",
         "series": "4",
         "repetitions": "20",
         "image": null
-      },
-      {
-        "nom": "Mountain climbers",
-        "duree": "5 minutes",
-        "series": "4",
-        "repetitions": "45 secondes",
-        "image": null
-      },
-      {
-        "nom": "Gainage planche",
-        "duree": "4 minutes",
-        "series": "4",
-        "repetitions": "60 secondes",
-        "image": null
       }
-    ]
-  },
-  {
-    "id": "full-body-debutant-4s",
-    "nom": "Full Body Essentiels",
-    "objectif": "Full body",
-    "niveau": "Débutant",
-    "duree_programme": "4 semaines",
-    "description": "Le socle idéal pour démarrer : séances courtes et équilibrées sur l’ensemble du corps pour construire technique et régularité.",
-    "image": "/images/full-body-debutant.jpg",
-    "exercices": [
-      {
-        "nom": "Squat poids du corps",
-        "duree": "6 minutes",
-        "series": "3",
-        "repetitions": "15",
-        "image": null
-      },
-      {
-        "nom": "Pompes inclinées",
-        "duree": "5 minutes",
-        "series": "3",
-        "repetitions": "10-12",
-        "image": null
-      },
-      {
-        "nom": "Tirage élastique",
-        "duree": "5 minutes",
-        "series": "3",
-        "repetitions": "12",
-        "image": null
-      },
-      {
-        "nom": "Planche",
-        "duree": "4 minutes",
-        "series": "3",
-        "repetitions": "30 secondes",
-        "image": null
-      }
+    ],
+    "astuces": [
+      "Associez les circuits à un suivi de fréquence cardiaque pour rester dans la zone 75-85 % de FC max.",
+      "Terminez chaque séance par 5 minutes de respiration diaphragmatique pour faire retomber le cortisol.",
+      "Planifiez une journée active (marche, mobilité) plutôt qu'un repos complet pour maintenir la dépense énergétique."
+    ],
+    "nutrition": [
+      "Déficit calorique léger (−350 kcal/jour) avec 2 g de protéines/kg pour préserver le muscle.",
+      "Intégrez des légumes riches en fibres à chaque repas pour la satiété.",
+      "Fractionnez l'apport glucidique autour des séances (pré/peri/post)."
     ]
   }
 ]
