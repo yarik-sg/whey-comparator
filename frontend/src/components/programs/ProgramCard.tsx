@@ -31,8 +31,11 @@ export type Programme = {
   duree_programme?: string;
   description?: string;
   image?: string | null;
+  astuces?: string[];
+  nutrition?: string[];
   exercices: Array<{
     nom: string;
+    machine?: string;
     duree: string;
     series: string;
     repetitions: string;
@@ -101,6 +104,11 @@ export function ProgramCard({ programme }: ProgramCardProps) {
                 </div>
                 <div className="flex-1 space-y-1 text-sm">
                   <p className="font-semibold text-[color:var(--text)]">{exercice.nom}</p>
+                  {exercice.machine ? (
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-[color:var(--text)]/60">
+                      Machine : {exercice.machine}
+                    </p>
+                  ) : null}
                   <p className="text-[color:var(--text)]/70">
                     Durée : {exercice.duree} • Séries : {exercice.series} • Répétitions : {exercice.repetitions}
                   </p>
@@ -109,6 +117,38 @@ export function ProgramCard({ programme }: ProgramCardProps) {
             );
           })}
         </ul>
+
+        {programme.astuces?.length ? (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--text)]/60">
+              Astuces & conseils
+            </h3>
+            <ul className="space-y-2 text-sm text-[color:var(--text)]/80">
+              {programme.astuces.map((tip) => (
+                <li key={`${programme.id}-${tip}`} className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {programme.nutrition?.length ? (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--text)]/60">
+              Recommandations nutrition
+            </h3>
+            <ul className="space-y-2 text-sm text-[color:var(--text)]/80">
+              {programme.nutrition.map((tip) => (
+                <li key={`${programme.id}-nutrition-${tip}`} className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </CardContent>
 
       <CardFooter className="border-t border-white/10 py-4">
