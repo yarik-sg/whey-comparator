@@ -4,11 +4,13 @@ FROM node:20-alpine AS base
 
 WORKDIR /app
 
-# Install dependencies separately to leverage Docker layer caching.
+# Copy only dependency files first
 COPY package.json package-lock.json ./
-COPY vendor ./vendor
+
+# Install dependencies
 RUN npm ci
 
+# Now copy the rest of the project
 COPY . .
 
 EXPOSE 3000
