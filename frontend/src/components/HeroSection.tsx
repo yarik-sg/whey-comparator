@@ -95,20 +95,12 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
   }, [searchQuery]);
 
   return (
-    <section className="relative isolate overflow-hidden bg-background pb-24 pt-28 text-text transition-colors sm:pt-32">
-      <div className="absolute inset-0 -z-20">
-        <Image
-          src="/window.svg"
-          alt="Athlète réalisant une séance de musculation"
-          fill
-          priority
-          className="object-cover object-center opacity-80 blur-sm"
-          sizes="100vw"
-        />
-      </div>
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-secondary/85 via-background/92 to-background dark:from-[rgba(10,15,31,0.92)] dark:via-[rgba(10,15,31,0.9)] dark:to-[rgba(10,15,31,0.98)]" aria-hidden />
+    <section
+      className="relative isolate overflow-hidden bg-gradient-to-b from-orange-50 via-orange-50/40 to-white pb-16 pt-20 text-text transition-colors dark:from-[#0a0f1f] dark:via-[#0a0f1f] dark:to-[#0a0f1f] sm:pt-24"
+    >
+      {/* Le hero utilise désormais un simple dégradé pour rester léger et fiable sur mobile. */}
 
-      <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-center gap-12 px-6 text-center sm:px-8 md:gap-16">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-center gap-10 px-6 text-center sm:px-8 md:gap-14">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -120,10 +112,10 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           </span>
 
           <div className="space-y-5">
-            <h1 className="font-heading text-4xl font-semibold leading-tight text-[color:var(--text)] sm:text-5xl lg:text-6xl">
+            <h1 className="font-heading text-3xl font-semibold leading-tight text-[color:var(--text)] sm:text-4xl lg:text-5xl">
               Trouvez les meilleurs produits, au meilleur prix.
             </h1>
-            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-[color:var(--text)]/80">
+            <p className="mx-auto max-w-2xl text-base leading-relaxed text-[color:var(--text)]/80 sm:text-lg">
               Comparez des centaines de compléments, suivez les variations de prix et économisez sur chacune de vos commandes fitness.
             </p>
           </div>
