@@ -1,4 +1,5 @@
 import apiClient from "./apiClient";
+import { getFallbackDeals } from "./fallbackCatalogue";
 
 const DEFAULT_LIMIT = 24;
 const DECATHLON_ENDPOINT =
@@ -27,6 +28,65 @@ const priceFormatter = new Intl.NumberFormat("fr-FR", {
   currency: "EUR",
   minimumFractionDigits: 2,
 });
+
+const DEFAULT_CATEGORY_LIMIT = 3;
+const CLOTHING_KEYWORDS = [
+  "short",
+  "shorts",
+  "t-shirt",
+  "tshirt",
+  "tee",
+  "hoodie",
+  "legging",
+  "leggings",
+  "jogging",
+  "jogger",
+  "sweatshirt",
+  "brassière",
+  "brassiere",
+  "tank",
+  "crop",
+];
+
+const GYMSHARK_FALLBACK_CLOTHES = [
+  {
+    id: "gymshark-apex-tee",
+    name: "Gymshark Apex T-Shirt",
+    brand: "Gymshark",
+    vendor: "Gymshark",
+    price: 34,
+    old_price: 39,
+    image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80",
+    url: "https://www.gymshark.com/products/gymshark-apex-t-shirt",
+  },
+  {
+    id: "gymshark-arrival-shorts",
+    name: "Gymshark Arrival Shorts",
+    brand: "Gymshark",
+    vendor: "Gymshark",
+    price: 29,
+    old_price: 35,
+    image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=600&q=80",
+    url: "https://www.gymshark.com/products/gymshark-arrival-shorts",
+  },
+  {
+    id: "gymshark-vital-leggings",
+    name: "Gymshark Vital Seamless Leggings",
+    brand: "Gymshark",
+    vendor: "Gymshark",
+    price: 49,
+    old_price: 55,
+    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
+    url: "https://www.gymshark.com/products/gymshark-vital-seamless-leggings",
+  },
+];
+
+function getGymsharkFallbackDeals(limit = DEFAULT_CATEGORY_LIMIT) {
+  const resolvedLimit = Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_CATEGORY_LIMIT;
+  return GYMSHARK_FALLBACK_CLOTHES.slice(0, resolvedLimit).map((entry) =>
+    toDealItem(entry, { sourceLabel: "Sélection Gymshark", forcedType: "clothes" }),
+  );
+}
 
 function toNumber(value) {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -78,6 +138,64 @@ function normalisePrice(value) {
     return null;
   }
   return amount;
+}
+
+function cleanProductName(value) {
+  if (typeof value !== "string") {
+    return "Produit";
+  }
+
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildApiPriceObject(amount) {
+  if (typeof amount !== "number" || Number.isNaN(amount)) {
+    return { amount: null, currency: "EUR", formatted: null };
+  }
+
+  return {
+    amount,
+    currency: "EUR",
+    formatted: priceFormatter.format(amount),
+  };
+}
+
+function toDealItem(product, { sourceLabel, forcedType } = {}) {
+  const safeName = cleanProductName(product.name || product.title || product.description || "Produit");
+  const vendorName = pickString(product.vendor) || pickString(product.brand) || sourceLabel || "Marketplace";
+  const resolvedId = typeof product.id === "number" || typeof product.id === "string"
+    ? String(product.id)
+    : `${vendorName}:${safeName}`.toLowerCase();
+  const priceAmount = normalisePrice(product.price);
+  const previousAmount = normalisePrice(product.old_price);
+  const ratingValue = typeof product.rating === "number" ? product.rating : toNumber(product.rating);
+
+  return {
+    id: resolvedId,
+    title: safeName,
+    vendor: vendorName,
+    price: buildApiPriceObject(priceAmount),
+    totalPrice: previousAmount ? buildApiPriceObject(previousAmount) : null,
+    shippingCost: null,
+    shippingText: product.description ?? null,
+    inStock: null,
+    stockStatus: forcedType ?? null,
+    link: product.url ?? null,
+    image: product.image ?? null,
+    rating: typeof ratingValue === "number" ? ratingValue : null,
+    reviewsCount: typeof product.reviewsCount === "number" ? product.reviewsCount : null,
+    bestPrice: false,
+    isBestPrice: false,
+    source: sourceLabel || vendorName,
+    productId: resolvedId,
+    expiresAt: null,
+    weightKg: null,
+    pricePerKg: null,
+  };
 }
 
 function normaliseProduct(record, vendor) {
@@ -614,6 +732,138 @@ export function mergeAndCleanResults(results) {
   return deduped;
 }
 
+async function fetchCategoryDeals({
+  query,
+  limit = DEFAULT_CATEGORY_LIMIT,
+  serpQuery,
+  fallbackQuery,
+  predicate,
+  source,
+  forcedType,
+  fallbackFactory,
+}) {
+  const resolvedLimit = Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_CATEGORY_LIMIT;
+  const trimmedQuery = query?.trim();
+  let collected = [];
+
+  if (trimmedQuery) {
+    const baseResults = await searchProducts(trimmedQuery, { limit: resolvedLimit * 4 }).catch(() => []);
+    const normalizedBase = Array.isArray(baseResults) ? baseResults : [];
+    collected = normalizedBase
+      .map((entry) => ({
+        ...entry,
+        name: cleanProductName(entry.name || entry.title || entry.description || "Produit"),
+        price: normalisePrice(entry.price),
+        old_price: normalisePrice(entry.old_price),
+      }))
+      .filter((entry) => typeof entry.price === "number" && Number.isFinite(entry.price));
+
+    if (typeof predicate === "function") {
+      collected = collected.filter((entry) => predicate(entry));
+    }
+  }
+
+  if (collected.length < resolvedLimit) {
+    const serpResults = await fetchSerpApi(serpQuery || trimmedQuery, { limit: resolvedLimit * 4 }).catch(() => []);
+    const normalizedSerp = Array.isArray(serpResults)
+      ? serpResults
+          .map((entry, index) => ({
+            id: entry.id || entry.productId || entry.product_id || entry.position || `serp-${index}`,
+            name: cleanProductName(entry.name || entry.title || entry.description || "Produit"),
+            price: normalisePrice(entry.price ?? entry.amount ?? entry.extracted_price),
+            old_price: normalisePrice(entry.old_price ?? entry.compare_at_price),
+            image: entry.image || entry.thumbnail || null,
+            brand: entry.brand || entry.store || null,
+            vendor: entry.vendor || entry.source || entry.store || entry.brand || "SerpAPI",
+            url: entry.url || entry.link || null,
+            rating: toNumber(entry.rating),
+            description: entry.description || null,
+          }))
+          .filter((entry) => typeof entry.price === "number" && Number.isFinite(entry.price))
+      : [];
+
+    if (normalizedSerp.length > 0) {
+      const merged = mergeAndCleanResults([...collected, ...normalizedSerp]);
+      collected = typeof predicate === "function" ? merged.filter((entry) => predicate(entry)) : merged;
+    }
+  }
+
+  collected.sort((a, b) => {
+    const priceA = typeof a.price === "number" ? a.price : Number.POSITIVE_INFINITY;
+    const priceB = typeof b.price === "number" ? b.price : Number.POSITIVE_INFINITY;
+    if (priceA !== priceB) {
+      return priceA - priceB;
+    }
+    return a.name.localeCompare(b.name, "fr", { sensitivity: "base" });
+  });
+
+  const limited = collected.slice(0, resolvedLimit);
+
+  if (limited.length === 0) {
+    if (typeof fallbackFactory === "function") {
+      const fallbackDeals = fallbackFactory(resolvedLimit);
+      return { deals: fallbackDeals, usedFallback: fallbackDeals.length > 0 };
+    }
+
+    const fallbackDeals = getFallbackDeals({ limit: resolvedLimit, query: fallbackQuery || trimmedQuery || undefined });
+    return { deals: fallbackDeals, usedFallback: fallbackDeals.length > 0 };
+  }
+
+  return {
+    deals: limited.map((entry) => toDealItem(entry, { sourceLabel: source, forcedType })),
+    usedFallback: false,
+  };
+}
+
+export async function fetchWheyAbove20(options = {}) {
+  const { limit = DEFAULT_CATEGORY_LIMIT } = options;
+  const minPrice = 20;
+  return fetchCategoryDeals({
+    query: "whey isolate",
+    serpQuery: "whey isolate 1kg france",
+    fallbackQuery: "whey",
+    limit,
+    source: "Sélection Whey",
+    predicate: (entry) => typeof entry.price === "number" && entry.price >= minPrice,
+  });
+}
+
+export async function fetchCreatine(options = {}) {
+  const { limit = DEFAULT_CATEGORY_LIMIT } = options;
+  return fetchCategoryDeals({
+    query: "creatine monohydrate",
+    serpQuery: "creatine monohydrate 500g",
+    fallbackQuery: "creatine",
+    limit,
+    source: "Sélection Créatine",
+    predicate: (entry) => {
+      const name = `${entry.name ?? ""} ${entry.description ?? ""}`.toLowerCase();
+      return name.includes("créatine") || name.includes("creatine");
+    },
+  });
+}
+
+export async function fetchGymsharkClothes(options = {}) {
+  const { limit = DEFAULT_CATEGORY_LIMIT } = options;
+  return fetchCategoryDeals({
+    query: "gymshark vêtements",
+    serpQuery: "gymshark clothes france",
+    fallbackQuery: "gymshark",
+    limit,
+    source: "Sélection Gymshark",
+    forcedType: "clothes",
+    fallbackFactory: getGymsharkFallbackDeals,
+    predicate: (entry) => {
+      const vendor = `${entry.vendor ?? entry.brand ?? ""}`.toLowerCase();
+      if (!vendor.includes("gymshark")) {
+        return false;
+      }
+      const name = `${entry.name ?? ""} ${entry.description ?? ""}`.toLowerCase();
+      return CLOTHING_KEYWORDS.some((keyword) => name.includes(keyword));
+    },
+  });
+}
+
 export async function searchProducts(query, { limit = DEFAULT_LIMIT } = {}) {
   const trimmed = query?.trim();
   if (!trimmed) {
@@ -653,6 +903,9 @@ export default {
   fetchAmazon,
   scrapeMyProtein,
   fetchSerpApi,
+  fetchWheyAbove20,
+  fetchCreatine,
+  fetchGymsharkClothes,
   mergeAndCleanResults,
   searchProducts,
   formatPrice,

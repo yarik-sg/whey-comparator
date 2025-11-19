@@ -8,8 +8,11 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import apiClient from "@/lib/apiClient";
-import { getFallbackDeals } from "@/lib/fallbackCatalogue";
+import {
+  fetchCreatine,
+  fetchGymsharkClothes,
+  fetchWheyAbove20,
+} from "@/lib/productAggregator";
 import { buildDisplayImageUrl } from "@/lib/images";
 import type { DealItem } from "@/types/api";
 
@@ -20,6 +23,21 @@ const priceFormatter = new Intl.NumberFormat("fr-FR", {
 });
 
 type FetchState = "idle" | "loading" | "success" | "error";
+
+const CATEGORY_LIMIT = 3;
+
+type CategoryKey = "whey" | "creatine" | "gymshark";
+
+type CategoryFetcherResult = { deals: DealItem[]; usedFallback: boolean };
+
+type CategoryFetcher = (options?: { limit?: number }) => Promise<CategoryFetcherResult>;
+
+interface CategoryConfig {
+  key: CategoryKey;
+  title: string;
+  description: string;
+  fetcher: CategoryFetcher;
+}
 
 const formatRemainingTime = (deadline: string) => {
   const diff = new Date(deadline).getTime() - Date.now();
@@ -228,11 +246,18 @@ function DealCard({
 }
 
 export function DealsShowcase() {
-  const [deals, setDeals] = useState<DealItem[]>([]);
-  const [state, setState] = useState<FetchState>("idle");
   const [hydrated, setHydrated] = useState(false);
   const [usingFallback, setUsingFallback] = useState(false);
-  const fallbackDeals = useMemo(() => getFallbackDeals({ limit: 9 }), []);
+  const [categoryDeals, setCategoryDeals] = useState<Record<CategoryKey, DealItem[]>>({
+    whey: [],
+    creatine: [],
+    gymshark: [],
+  });
+  const [categoryStatus, setCategoryStatus] = useState<Record<CategoryKey, FetchState>>({
+    whey: "idle",
+    creatine: "idle",
+    gymshark: "idle",
+  });
   const router = useRouter();
   const quickFilters = useMemo(
     () => [
@@ -245,59 +270,85 @@ export function DealsShowcase() {
     [],
   );
 
+  // Ordre imposé : Whey -> Créatine -> Gymshark afin de conserver la lecture attendue.
+  const categoryConfigs = useMemo<CategoryConfig[]>(
+    () => [
+      {
+        key: "whey",
+        title: "Whey ≥ 20€",
+        description: "Isolats et concentrés triés par prix croissant.",
+        fetcher: fetchWheyAbove20 as CategoryFetcher,
+      },
+      {
+        key: "creatine",
+        title: "Créatine",
+        description: "Nos meilleures options monohydrate du moment.",
+        fetcher: fetchCreatine as CategoryFetcher,
+      },
+      {
+        key: "gymshark",
+        title: "Vêtements Gymshark",
+        description: "Sélection de pièces lifestyle et training.",
+        fetcher: fetchGymsharkClothes as CategoryFetcher,
+      },
+    ],
+    [],
+  );
+
   useEffect(() => {
     setHydrated(true);
   }, []);
 
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
 
-    const fetchDeals = async () => {
-      setState("loading");
-      try {
-        const data = await apiClient.get<DealItem[]>("/compare", {
-          cache: "no-store",
-          query: { limit: 9, legacy: true },
-        });
-
-        if (!mounted) {
-          return;
-        }
-
-        if (Array.isArray(data) && data.length > 0) {
-          setDeals(data);
-          setUsingFallback(false);
-          setState("success");
-        } else if (fallbackDeals.length > 0) {
-          setDeals(fallbackDeals);
-          setUsingFallback(true);
-          setState("success");
-        } else {
-          setDeals([]);
-          setUsingFallback(false);
-          setState("success");
-        }
-      } catch {
-        if (mounted) {
-          if (fallbackDeals.length > 0) {
-            setDeals(fallbackDeals);
-            setUsingFallback(true);
-            setState("success");
-          } else {
-            setState("error");
+    // Chaque catégorie se charge via son fetcher pour rester indépendante.
+    categoryConfigs.forEach((config) => {
+      setCategoryStatus((prev) => ({ ...prev, [config.key]: "loading" }));
+      config
+        .fetcher({ limit: CATEGORY_LIMIT })
+        .then((result) => {
+          if (cancelled) {
+            return;
           }
-        }
-      }
-    };
-
-    fetchDeals();
+          setCategoryDeals((prev) => ({ ...prev, [config.key]: result.deals }));
+          setCategoryStatus((prev) => ({ ...prev, [config.key]: "success" }));
+          if (result.usedFallback) {
+            setUsingFallback(true);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setCategoryStatus((prev) => ({ ...prev, [config.key]: "error" }));
+          }
+        });
+    });
 
     return () => {
-      mounted = false;
+      cancelled = true;
     };
-  }, []);
+  }, [categoryConfigs]);
 
-  const hasDeals = deals.length > 0;
+  const overallState: FetchState = useMemo(() => {
+    const statuses = categoryConfigs.map((config) => categoryStatus[config.key]);
+    if (statuses.every((status) => status === "success")) {
+      return "success";
+    }
+    if (statuses.every((status) => status === "error")) {
+      return "error";
+    }
+    return "loading";
+  }, [categoryConfigs, categoryStatus]);
+
+  const totalDeals = useMemo(
+    () =>
+      categoryConfigs.reduce((acc, config) => {
+        const entries = categoryDeals[config.key] ?? [];
+        return acc + entries.length;
+      }, 0),
+    [categoryConfigs, categoryDeals],
+  );
+  const hasDeals = totalDeals > 0;
 
   return (
     <section id="promotions" className="relative overflow-hidden py-24">
@@ -334,36 +385,59 @@ export function DealsShowcase() {
           </p>
         )}
 
-        {state === "error" && (
+        {overallState === "error" && (
           <p className="mt-8 rounded-3xl border border-red-200/60 bg-red-500/10 p-5 text-sm text-red-200">
             Impossible de charger les promotions. Réessayez plus tard.
           </p>
         )}
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {state !== "success"
-            ? Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={`skeleton-${index}`}
-                  className="h-[420px] animate-pulse rounded-3xl border border-accent/50 bg-accent/60 dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.6)]"
-                  aria-hidden
-                />
-              ))
-            : hasDeals
-            ? deals.map((deal, index) => (
-                <DealCard
-                  key={deal.id ?? `${deal.vendor}-${deal.title}`}
-                  deal={deal}
-                  index={index}
-                  hydrated={hydrated}
-                />
-              ))
-            : (
-                <p className="col-span-full rounded-3xl border border-white/20 bg-white/10 p-8 text-center text-muted dark:text-muted/70">
-                  Aucune promotion disponible pour le moment.
-                </p>
-              )}
-        </div>
+        {overallState !== "success" ? (
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: CATEGORY_LIMIT * categoryConfigs.length }).map((_, index) => (
+              <div
+                key={`skeleton-${index}`}
+                className="h-[420px] animate-pulse rounded-3xl border border-accent/50 bg-accent/60 dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.6)]"
+                aria-hidden
+              />
+            ))}
+          </div>
+        ) : hasDeals ? (
+          <div className="mt-12 space-y-12">
+            {categoryConfigs.map((config, configIndex) => {
+              const entries = categoryDeals[config.key] ?? [];
+              return (
+                <div key={config.key} className="space-y-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="text-2xl font-semibold text-dark dark:text-white">{config.title}</h3>
+                      <p className="text-sm text-muted dark:text-muted/70">{config.description}</p>
+                    </div>
+                  </div>
+                  <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    {entries.length > 0 ? (
+                      entries.map((deal, index) => (
+                        <DealCard
+                          key={deal.id ?? `${config.key}-${deal.vendor}-${deal.title}`}
+                          deal={deal}
+                          index={configIndex * CATEGORY_LIMIT + index}
+                          hydrated={hydrated}
+                        />
+                      ))
+                    ) : (
+                      <p className="col-span-full rounded-3xl border border-white/20 bg-white/10 p-8 text-center text-muted dark:text-muted/70">
+                        Aucune promotion disponible pour le moment.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-12 rounded-3xl border border-white/20 bg-white/10 p-8 text-center text-muted dark:text-muted/70">
+            Aucune promotion disponible pour le moment.
+          </p>
+        )}
 
         <div className="mt-10 flex justify-center">
           <Button
