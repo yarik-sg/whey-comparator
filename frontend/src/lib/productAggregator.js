@@ -1,5 +1,4 @@
 import apiClient from "./apiClient";
-import { getFallbackDeals } from "./fallbackCatalogue";
 
 const DEFAULT_LIMIT = 24;
 const DECATHLON_ENDPOINT =
@@ -47,46 +46,6 @@ const CLOTHING_KEYWORDS = [
   "tank",
   "crop",
 ];
-
-const GYMSHARK_FALLBACK_CLOTHES = [
-  {
-    id: "gymshark-apex-tee",
-    name: "Gymshark Apex T-Shirt",
-    brand: "Gymshark",
-    vendor: "Gymshark",
-    price: 34,
-    old_price: 39,
-    image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80",
-    url: "https://www.gymshark.com/products/gymshark-apex-t-shirt",
-  },
-  {
-    id: "gymshark-arrival-shorts",
-    name: "Gymshark Arrival Shorts",
-    brand: "Gymshark",
-    vendor: "Gymshark",
-    price: 29,
-    old_price: 35,
-    image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=600&q=80",
-    url: "https://www.gymshark.com/products/gymshark-arrival-shorts",
-  },
-  {
-    id: "gymshark-vital-leggings",
-    name: "Gymshark Vital Seamless Leggings",
-    brand: "Gymshark",
-    vendor: "Gymshark",
-    price: 49,
-    old_price: 55,
-    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
-    url: "https://www.gymshark.com/products/gymshark-vital-seamless-leggings",
-  },
-];
-
-function getGymsharkFallbackDeals(limit = DEFAULT_CATEGORY_LIMIT) {
-  const resolvedLimit = Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_CATEGORY_LIMIT;
-  return GYMSHARK_FALLBACK_CLOTHES.slice(0, resolvedLimit).map((entry) =>
-    toDealItem(entry, { sourceLabel: "Sélection Gymshark", forcedType: "clothes" }),
-  );
-}
 
 function toNumber(value) {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -502,7 +461,8 @@ async function fetchBackendProducts(query) {
       const data = await apiClient.get(`/compare`, {
         query: { q: query, limit: 48, legacy: true },
         cache: "no-store",
-        allowProxyFallback: true,
+        allowProxyFallback: false,
+        preferProxy: true,
       });
       const records = ensureArray(data);
       const normalizedProducts = records
@@ -736,11 +696,9 @@ async function fetchCategoryDeals({
   query,
   limit = DEFAULT_CATEGORY_LIMIT,
   serpQuery,
-  fallbackQuery,
   predicate,
   source,
   forcedType,
-  fallbackFactory,
 }) {
   const resolvedLimit = Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_CATEGORY_LIMIT;
   const trimmedQuery = query?.trim();
@@ -764,7 +722,8 @@ async function fetchCategoryDeals({
   }
 
   if (collected.length < resolvedLimit) {
-    const serpResults = await fetchSerpApi(serpQuery || trimmedQuery, { limit: resolvedLimit * 4 }).catch(() => []);
+    const serpQueryValue = serpQuery || trimmedQuery;
+    const serpResults = await fetchSerpApi(serpQueryValue, { limit: resolvedLimit * 4 }).catch(() => []);
     const normalizedSerp = Array.isArray(serpResults)
       ? serpResults
           .map((entry, index) => ({
@@ -800,13 +759,7 @@ async function fetchCategoryDeals({
   const limited = collected.slice(0, resolvedLimit);
 
   if (limited.length === 0) {
-    if (typeof fallbackFactory === "function") {
-      const fallbackDeals = fallbackFactory(resolvedLimit);
-      return { deals: fallbackDeals, usedFallback: fallbackDeals.length > 0 };
-    }
-
-    const fallbackDeals = getFallbackDeals({ limit: resolvedLimit, query: fallbackQuery || trimmedQuery || undefined });
-    return { deals: fallbackDeals, usedFallback: fallbackDeals.length > 0 };
+    return { deals: [], usedFallback: false };
   }
 
   return {
@@ -821,7 +774,6 @@ export async function fetchWheyAbove20(options = {}) {
   return fetchCategoryDeals({
     query: "whey isolate",
     serpQuery: "whey isolate 1kg france",
-    fallbackQuery: "whey",
     limit,
     source: "Sélection Whey",
     predicate: (entry) => typeof entry.price === "number" && entry.price >= minPrice,
@@ -833,7 +785,6 @@ export async function fetchCreatine(options = {}) {
   return fetchCategoryDeals({
     query: "creatine monohydrate",
     serpQuery: "creatine monohydrate 500g",
-    fallbackQuery: "creatine",
     limit,
     source: "Sélection Créatine",
     predicate: (entry) => {
@@ -848,11 +799,9 @@ export async function fetchGymsharkClothes(options = {}) {
   return fetchCategoryDeals({
     query: "gymshark vêtements",
     serpQuery: "gymshark clothes france",
-    fallbackQuery: "gymshark",
     limit,
     source: "Sélection Gymshark",
     forcedType: "clothes",
-    fallbackFactory: getGymsharkFallbackDeals,
     predicate: (entry) => {
       const vendor = `${entry.vendor ?? entry.brand ?? ""}`.toLowerCase();
       if (!vendor.includes("gymshark")) {
