@@ -89,6 +89,8 @@ export default function Comparateur() {
           legacy: true,
         },
         cache: "no-store",
+        preferProxy: true,
+        allowProxyFallback: false,
       })
       .then((data) => {
         if (Array.isArray(data)) {

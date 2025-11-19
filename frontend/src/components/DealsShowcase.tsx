@@ -247,7 +247,6 @@ function DealCard({
 
 export function DealsShowcase() {
   const [hydrated, setHydrated] = useState(false);
-  const [usingFallback, setUsingFallback] = useState(false);
   const [categoryDeals, setCategoryDeals] = useState<Record<CategoryKey, DealItem[]>>({
     whey: [],
     creatine: [],
@@ -313,9 +312,6 @@ export function DealsShowcase() {
           }
           setCategoryDeals((prev) => ({ ...prev, [config.key]: result.deals }));
           setCategoryStatus((prev) => ({ ...prev, [config.key]: "success" }));
-          if (result.usedFallback) {
-            setUsingFallback(true);
-          }
         })
         .catch(() => {
           if (!cancelled) {
@@ -340,15 +336,13 @@ export function DealsShowcase() {
     return "loading";
   }, [categoryConfigs, categoryStatus]);
 
-  const totalDeals = useMemo(
-    () =>
-      categoryConfigs.reduce((acc, config) => {
-        const entries = categoryDeals[config.key] ?? [];
-        return acc + entries.length;
-      }, 0),
+  const visibleCategories = useMemo(
+    () => categoryConfigs.filter((config) => (categoryDeals[config.key]?.length ?? 0) > 0),
     [categoryConfigs, categoryDeals],
   );
-  const hasDeals = totalDeals > 0;
+  const hasDeals = visibleCategories.length > 0;
+
+  let animationCursor = 0;
 
   return (
     <section id="promotions" className="relative overflow-hidden py-24">
@@ -379,12 +373,6 @@ export function DealsShowcase() {
           ))}
         </div>
 
-        {usingFallback && (
-          <p className="mt-2 text-sm font-medium text-primary">
-            Offres de démonstration affichées lorsque les promotions temps réel sont indisponibles.
-          </p>
-        )}
-
         {overallState === "error" && (
           <p className="mt-8 rounded-3xl border border-red-200/60 bg-red-500/10 p-5 text-sm text-red-200">
             Impossible de charger les promotions. Réessayez plus tard.
@@ -403,8 +391,12 @@ export function DealsShowcase() {
           </div>
         ) : hasDeals ? (
           <div className="mt-12 space-y-12">
-            {categoryConfigs.map((config, configIndex) => {
+            {visibleCategories.map((config) => {
               const entries = categoryDeals[config.key] ?? [];
+              if (entries.length === 0) {
+                return null;
+              }
+
               return (
                 <div key={config.key} className="space-y-4">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -414,20 +406,18 @@ export function DealsShowcase() {
                     </div>
                   </div>
                   <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                    {entries.length > 0 ? (
-                      entries.map((deal, index) => (
+                    {entries.map((deal) => {
+                      const currentIndex = animationCursor;
+                      animationCursor += 1;
+                      return (
                         <DealCard
                           key={deal.id ?? `${config.key}-${deal.vendor}-${deal.title}`}
                           deal={deal}
-                          index={configIndex * CATEGORY_LIMIT + index}
+                          index={currentIndex}
                           hydrated={hydrated}
                         />
-                      ))
-                    ) : (
-                      <p className="col-span-full rounded-3xl border border-white/20 bg-white/10 p-8 text-center text-muted dark:text-muted/70">
-                        Aucune promotion disponible pour le moment.
-                      </p>
-                    )}
+                      );
+                    })}
                   </div>
                 </div>
               );
