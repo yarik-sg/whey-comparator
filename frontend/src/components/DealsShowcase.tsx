@@ -8,11 +8,7 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  fetchCreatine,
-  fetchGymsharkClothes,
-  fetchWheyAbove20,
-} from "@/lib/productAggregator";
+import apiClient from "@/lib/apiClient";
 import { buildDisplayImageUrl } from "@/lib/images";
 import type { DealItem } from "@/types/api";
 
@@ -23,21 +19,6 @@ const priceFormatter = new Intl.NumberFormat("fr-FR", {
 });
 
 type FetchState = "idle" | "loading" | "success" | "error";
-
-const CATEGORY_LIMIT = 3;
-
-type CategoryKey = "whey" | "creatine" | "gymshark";
-
-type CategoryFetcherResult = { deals: DealItem[]; usedFallback: boolean };
-
-type CategoryFetcher = (options?: { limit?: number }) => Promise<CategoryFetcherResult>;
-
-interface CategoryConfig {
-  key: CategoryKey;
-  title: string;
-  description: string;
-  fetcher: CategoryFetcher;
-}
 
 const formatRemainingTime = (deadline: string) => {
   const diff = new Date(deadline).getTime() - Date.now();
@@ -246,17 +227,10 @@ function DealCard({
 }
 
 export function DealsShowcase() {
+  const [rawDeals, setRawDeals] = useState<DealItem[]>([]);
+  const [state, setState] = useState<FetchState>("idle");
   const [hydrated, setHydrated] = useState(false);
-  const [categoryDeals, setCategoryDeals] = useState<Record<CategoryKey, DealItem[]>>({
-    whey: [],
-    creatine: [],
-    gymshark: [],
-  });
-  const [categoryStatus, setCategoryStatus] = useState<Record<CategoryKey, FetchState>>({
-    whey: "idle",
-    creatine: "idle",
-    gymshark: "idle",
-  });
+  const [usingFallback, setUsingFallback] = useState(false);
   const router = useRouter();
   const quickFilters = useMemo(
     () => [
@@ -269,31 +243,6 @@ export function DealsShowcase() {
     [],
   );
 
-  // Ordre imposé : Whey -> Créatine -> Gymshark afin de conserver la lecture attendue.
-  const categoryConfigs = useMemo<CategoryConfig[]>(
-    () => [
-      {
-        key: "whey",
-        title: "Whey ≥ 20€",
-        description: "Isolats et concentrés triés par prix croissant.",
-        fetcher: fetchWheyAbove20 as CategoryFetcher,
-      },
-      {
-        key: "creatine",
-        title: "Créatine",
-        description: "Nos meilleures options monohydrate du moment.",
-        fetcher: fetchCreatine as CategoryFetcher,
-      },
-      {
-        key: "gymshark",
-        title: "Vêtements Gymshark",
-        description: "Sélection de pièces lifestyle et training.",
-        fetcher: fetchGymsharkClothes as CategoryFetcher,
-      },
-    ],
-    [],
-  );
-
   useEffect(() => {
     setHydrated(true);
   }, []);
@@ -301,48 +250,93 @@ export function DealsShowcase() {
   useEffect(() => {
     let cancelled = false;
 
-    // Chaque catégorie se charge via son fetcher pour rester indépendante.
-    categoryConfigs.forEach((config) => {
-      setCategoryStatus((prev) => ({ ...prev, [config.key]: "loading" }));
-      config
-        .fetcher({ limit: CATEGORY_LIMIT })
-        .then((result) => {
-          if (cancelled) {
-            return;
-          }
-          setCategoryDeals((prev) => ({ ...prev, [config.key]: result.deals }));
-          setCategoryStatus((prev) => ({ ...prev, [config.key]: "success" }));
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setCategoryStatus((prev) => ({ ...prev, [config.key]: "error" }));
-          }
+    const fetchDeals = async () => {
+      setState("loading");
+      try {
+        const data = await apiClient.get<DealItem[]>("/compare", {
+          cache: "no-store",
+          query: { limit: 24, legacy: true },
         });
-    });
+
+        if (cancelled) {
+          return;
+        }
+
+        setRawDeals(Array.isArray(data) ? data : []);
+        setState("success");
+        setUsingFallback(false);
+      } catch (e) {
+        console.error("DealsShowcase fetch error", e);
+        if (!cancelled) {
+          setRawDeals([]);
+          setState("error");
+          setUsingFallback(false);
+        }
+      }
+    };
+
+    fetchDeals();
 
     return () => {
       cancelled = true;
     };
-  }, [categoryConfigs]);
+  }, []);
 
-  const overallState: FetchState = useMemo(() => {
-    const statuses = categoryConfigs.map((config) => categoryStatus[config.key]);
-    if (statuses.every((status) => status === "success")) {
-      return "success";
-    }
-    if (statuses.every((status) => status === "error")) {
-      return "error";
-    }
-    return "loading";
-  }, [categoryConfigs, categoryStatus]);
-
-  const visibleCategories = useMemo(
-    () => categoryConfigs.filter((config) => (categoryDeals[config.key]?.length ?? 0) > 0),
-    [categoryConfigs, categoryDeals],
+  const wheyDeals = useMemo(
+    () =>
+      rawDeals
+        .filter((deal) => {
+          const title = (deal.title || "").toLowerCase();
+          const category = ((deal as { category?: string }).category || "").toLowerCase();
+          const brand = ((deal as { brand?: string }).brand || "").toLowerCase();
+          const price =
+            typeof deal.price === "object" && deal.price !== null
+              ? Number(deal.price.amount ?? 0)
+              : Number((deal as unknown as { price?: number }).price ?? 0);
+          const isWhey =
+            title.includes("whey") || category.includes("whey") || brand.includes("whey");
+          return isWhey && price >= 20;
+        })
+        .slice(0, 3),
+    [rawDeals],
   );
-  const hasDeals = visibleCategories.length > 0;
 
-  let animationCursor = 0;
+  const creatineDeals = useMemo(
+    () =>
+      rawDeals
+        .filter((deal) => {
+          const title = (deal.title || "").toLowerCase();
+          const category = ((deal as { category?: string }).category || "").toLowerCase();
+          return (
+            title.includes("créatine") ||
+            title.includes("creatine") ||
+            category.includes("créatine") ||
+            category.includes("creatine")
+          );
+        })
+        .slice(0, 3),
+    [rawDeals],
+  );
+
+  const gymsharkDeals = useMemo(
+    () =>
+      rawDeals
+        .filter((deal) => {
+          const title = (deal.title || "").toLowerCase();
+          const brand = ((deal as { brand?: string }).brand || "").toLowerCase();
+          const vendor = deal.vendor?.toLowerCase?.() || "";
+          return (
+            title.includes("gymshark") ||
+            brand.includes("gymshark") ||
+            vendor.includes("gymshark")
+          );
+        })
+        .slice(0, 3),
+    [rawDeals],
+  );
+
+  const hasDeals =
+    wheyDeals.length > 0 || creatineDeals.length > 0 || gymsharkDeals.length > 0;
 
   return (
     <section id="promotions" className="relative overflow-hidden py-24">
@@ -373,60 +367,112 @@ export function DealsShowcase() {
           ))}
         </div>
 
-        {overallState === "error" && (
+        {state === "error" && (
           <p className="mt-8 rounded-3xl border border-red-200/60 bg-red-500/10 p-5 text-sm text-red-200">
             Impossible de charger les promotions. Réessayez plus tard.
           </p>
         )}
 
-        {overallState !== "success" ? (
+        {state !== "success" ? (
+          // skeletons pendant le chargement
           <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: CATEGORY_LIMIT * categoryConfigs.length }).map((_, index) => (
+            {Array.from({ length: 9 }).map((_, i) => (
               <div
-                key={`skeleton-${index}`}
+                key={`skeleton-${i}`}
                 className="h-[420px] animate-pulse rounded-3xl border border-accent/50 bg-accent/60 dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.6)]"
-                aria-hidden
               />
             ))}
           </div>
-        ) : hasDeals ? (
-          <div className="mt-12 space-y-12">
-            {visibleCategories.map((config) => {
-              const entries = categoryDeals[config.key] ?? [];
-              if (entries.length === 0) {
-                return null;
-              }
-
-              return (
-                <div key={config.key} className="space-y-4">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h3 className="text-2xl font-semibold text-dark dark:text-white">{config.title}</h3>
-                      <p className="text-sm text-muted dark:text-muted/70">{config.description}</p>
-                    </div>
-                  </div>
-                  <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                    {entries.map((deal) => {
-                      const currentIndex = animationCursor;
-                      animationCursor += 1;
-                      return (
-                        <DealCard
-                          key={deal.id ?? `${config.key}-${deal.vendor}-${deal.title}`}
-                          deal={deal}
-                          index={currentIndex}
-                          hydrated={hydrated}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
+        ) : !hasDeals ? (
           <p className="mt-12 rounded-3xl border border-white/20 bg-white/10 p-8 text-center text-muted dark:text-muted/70">
             Aucune promotion disponible pour le moment.
           </p>
+        ) : (
+          <div className="mt-12 space-y-12">
+            {/* Section Whey ≥ 20€ */}
+            <section>
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-2xl font-semibold text-dark dark:text-white">Whey ≥ 20€</h3>
+                  <p className="text-sm text-muted dark:text-muted/70">
+                    Isolats et concentrés triés par prix croissant.
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {wheyDeals.length > 0 ? (
+                  wheyDeals.map((deal, index) => (
+                    <DealCard
+                      key={deal.id ?? `whey-${deal.vendor}-${deal.title}-${index}`}
+                      deal={deal}
+                      index={index}
+                      hydrated={hydrated}
+                    />
+                  ))
+                ) : (
+                  <p className="col-span-full rounded-3xl border border-white/20 bg-white/10 p-8 text-center text-muted dark:text-muted/70">
+                    Aucune whey trouvée pour le moment.
+                  </p>
+                )}
+              </div>
+            </section>
+
+            {/* Section Créatine */}
+            <section>
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-2xl font-semibold text-dark dark:text-white">Créatine</h3>
+                  <p className="text-sm text-muted dark:text-muted/70">
+                    Nos meilleures options monohydrate du moment.
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {creatineDeals.length > 0 ? (
+                  creatineDeals.map((deal, index) => (
+                    <DealCard
+                      key={deal.id ?? `creatine-${deal.vendor}-${deal.title}-${index}`}
+                      deal={deal}
+                      index={3 + index}
+                      hydrated={hydrated}
+                    />
+                  ))
+                ) : (
+                  <p className="col-span-full rounded-3xl border border-white/20 bg-white/10 p-8 text-center text-muted dark:text-muted/70">
+                    Aucune créatine trouvée pour le moment.
+                  </p>
+                )}
+              </div>
+            </section>
+
+            {/* Section Vêtements Gymshark */}
+            <section>
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-2xl font-semibold text-dark dark:text-white">Vêtements Gymshark</h3>
+                  <p className="text-sm text-muted dark:text-muted/70">
+                    Sélection de pièces lifestyle et training.
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {gymsharkDeals.length > 0 ? (
+                  gymsharkDeals.map((deal, index) => (
+                    <DealCard
+                      key={deal.id ?? `gymshark-${deal.vendor}-${deal.title}-${index}`}
+                      deal={deal}
+                      index={6 + index}
+                      hydrated={hydrated}
+                    />
+                  ))
+                ) : (
+                  <p className="col-span-full rounded-3xl border border-white/20 bg-white/10 p-8 text-center text-muted dark:text-muted/70">
+                    Aucun vêtement Gymshark trouvé pour le moment.
+                  </p>
+                )}
+              </div>
+            </section>
+          </div>
         )}
 
         <div className="mt-10 flex justify-center">
