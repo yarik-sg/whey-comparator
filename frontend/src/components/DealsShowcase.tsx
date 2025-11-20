@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import apiClient from "@/lib/apiClient";
 import { buildDisplayImageUrl } from "@/lib/images";
+import { fetchCreatine, fetchGymsharkClothes } from "@/lib/productAggregator";
 import type { DealItem } from "@/types/api";
 
 const priceFormatter = new Intl.NumberFormat("fr-FR", {
@@ -228,9 +229,10 @@ function DealCard({
 
 export function DealsShowcase() {
   const [rawDeals, setRawDeals] = useState<DealItem[]>([]);
+  const [creatineDeals, setCreatineDeals] = useState<DealItem[]>([]);
+  const [gymsharkDeals, setGymsharkDeals] = useState<DealItem[]>([]);
   const [state, setState] = useState<FetchState>("idle");
   const [hydrated, setHydrated] = useState(false);
-  const [usingFallback, setUsingFallback] = useState(false);
   const router = useRouter();
   const quickFilters = useMemo(
     () => [
@@ -263,14 +265,26 @@ export function DealsShowcase() {
         }
 
         setRawDeals(Array.isArray(data) ? data : []);
+
+        const [creatine, gymshark] = await Promise.all([
+          fetchCreatine({}).catch(() => ({ deals: [] })),
+          fetchGymsharkClothes({}).catch(() => ({ deals: [] })),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        setCreatineDeals(Array.isArray(creatine?.deals) ? creatine.deals : []);
+        setGymsharkDeals(Array.isArray(gymshark?.deals) ? gymshark.deals : []);
         setState("success");
-        setUsingFallback(false);
       } catch (e) {
         console.error("DealsShowcase fetch error", e);
         if (!cancelled) {
           setRawDeals([]);
+          setCreatineDeals([]);
+          setGymsharkDeals([]);
           setState("error");
-          setUsingFallback(false);
         }
       }
     };
@@ -296,40 +310,6 @@ export function DealsShowcase() {
           const isWhey =
             title.includes("whey") || category.includes("whey") || brand.includes("whey");
           return isWhey && price >= 20;
-        })
-        .slice(0, 3),
-    [rawDeals],
-  );
-
-  const creatineDeals = useMemo(
-    () =>
-      rawDeals
-        .filter((deal) => {
-          const title = (deal.title || "").toLowerCase();
-          const category = ((deal as { category?: string }).category || "").toLowerCase();
-          return (
-            title.includes("créatine") ||
-            title.includes("creatine") ||
-            category.includes("créatine") ||
-            category.includes("creatine")
-          );
-        })
-        .slice(0, 3),
-    [rawDeals],
-  );
-
-  const gymsharkDeals = useMemo(
-    () =>
-      rawDeals
-        .filter((deal) => {
-          const title = (deal.title || "").toLowerCase();
-          const brand = ((deal as { brand?: string }).brand || "").toLowerCase();
-          const vendor = deal.vendor?.toLowerCase?.() || "";
-          return (
-            title.includes("gymshark") ||
-            brand.includes("gymshark") ||
-            vendor.includes("gymshark")
-          );
         })
         .slice(0, 3),
     [rawDeals],

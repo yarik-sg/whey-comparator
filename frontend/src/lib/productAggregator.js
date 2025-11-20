@@ -157,6 +157,62 @@ function toDealItem(product, { sourceLabel, forcedType } = {}) {
   };
 }
 
+function extractWeightKg(text) {
+  if (typeof text !== "string") {
+    return null;
+  }
+
+  const match = text.match(/(\d+[\d\s.,]*)\s*(kg|kilogrammes?|g|grammes?)/i);
+  if (!match) {
+    return null;
+  }
+
+  const numeric = toNumber(match[1]);
+  if (numeric === null) {
+    return null;
+  }
+
+  const unit = match[2].toLowerCase();
+  if (unit.startsWith("kg")) {
+    return numeric;
+  }
+
+  return numeric / 1000;
+}
+
+export function normalizeGoogleShoppingItem(result) {
+  if (!result || typeof result !== "object") {
+    return null;
+  }
+
+  const nameCandidate = cleanProductName(result.name || result.title || result.description || "Produit");
+  const descriptionCandidate = pickString(result.description) || pickString(result.snippet) || null;
+  const priceCandidate = normalisePrice(result.price ?? result.amount ?? result.extracted_price);
+  const oldPriceCandidate = normalisePrice(result.old_price ?? result.compare_at_price);
+  const imageCandidate = pickString(result.image) || pickString(result.thumbnail) || null;
+  const vendorCandidate = pickString(result.vendor) || pickString(result.source) || pickString(result.store) || null;
+  const brandCandidate = pickString(result.brand) || pickString(result.source) || vendorCandidate || null;
+  const urlCandidate = pickString(result.url) || pickString(result.link) || pickString(result.product_link) || null;
+  const ratingCandidate = toNumber(result.rating);
+  const weightCandidate = result.weightKg
+    || extractWeightKg(`${nameCandidate} ${descriptionCandidate ?? ""}`)
+    || extractWeightKg(String(result.weight ?? ""));
+
+  return {
+    id: pickString(result.id) || pickString(result.productId) || pickString(result.position) || `${vendorCandidate ?? "GS"}:${nameCandidate}`,
+    name: nameCandidate,
+    price: priceCandidate,
+    old_price: oldPriceCandidate,
+    image: imageCandidate,
+    brand: brandCandidate,
+    vendor: vendorCandidate ?? brandCandidate ?? "Google Shopping",
+    url: urlCandidate,
+    rating: typeof ratingCandidate === "number" ? ratingCandidate : null,
+    description: descriptionCandidate,
+    weightKg: typeof weightCandidate === "number" && Number.isFinite(weightCandidate) ? weightCandidate : null,
+  };
+}
+
 function normaliseProduct(record, vendor) {
   if (!record || typeof record !== "object") {
     return null;
@@ -782,35 +838,113 @@ export async function fetchWheyAbove20(options = {}) {
 
 export async function fetchCreatine(options = {}) {
   const { limit = DEFAULT_CATEGORY_LIMIT } = options;
-  return fetchCategoryDeals({
-    query: "creatine monohydrate",
-    serpQuery: "creatine monohydrate 500g",
-    limit,
-    source: "Sélection Créatine",
-    predicate: (entry) => {
-      const name = `${entry.name ?? ""} ${entry.description ?? ""}`.toLowerCase();
-      return name.includes("créatine") || name.includes("creatine");
-    },
-  });
+  try {
+    const data = await apiClient.get("/api/proxy?target=search", {
+      cache: "no-store",
+      query: { q: "creatine monohydrate 500g", limit: 20 },
+      allowProxyFallback: false,
+      preferProxy: true,
+    });
+
+    const normalized = ensureArray(data)
+      .map((item) => normalizeGoogleShoppingItem(item))
+      .filter((item) => item && typeof item.price === "number")
+      .map((item) => ({
+        ...item,
+        price: normalisePrice(item.price),
+        old_price: normalisePrice(item.old_price),
+      }))
+      .filter((item) => {
+        if (!item) {
+          return false;
+        }
+        const name = `${item.name ?? ""} ${item.description ?? ""}`.toLowerCase();
+        const isMono = name.includes("creatine monohydrate") || name.includes("créatine monohydrate");
+        const weightOk =
+          typeof item.weightKg === "number"
+            ? item.weightKg >= 0.3
+            : true;
+        return isMono && typeof item.price === "number" && item.price <= 50 && weightOk;
+      });
+
+    const sorted = normalized.sort((a, b) => {
+      const priceA = typeof a.price === "number" ? a.price : Number.POSITIVE_INFINITY;
+      const priceB = typeof b.price === "number" ? b.price : Number.POSITIVE_INFINITY;
+      if (priceA !== priceB) {
+        return priceA - priceB;
+      }
+      return a.name.localeCompare(b.name, "fr", { sensitivity: "base" });
+    });
+
+    const limited = sorted.slice(0, limit);
+    return {
+      deals: limited.map((entry) => toDealItem(entry, { sourceLabel: "Sélection Créatine" })),
+      usedFallback: false,
+    };
+  } catch (error) {
+    console.error("productAggregator.creatine", { error });
+    return { deals: [], usedFallback: false };
+  }
 }
 
 export async function fetchGymsharkClothes(options = {}) {
   const { limit = DEFAULT_CATEGORY_LIMIT } = options;
-  return fetchCategoryDeals({
-    query: "gymshark vêtements",
-    serpQuery: "gymshark clothes france",
-    limit,
-    source: "Sélection Gymshark",
-    forcedType: "clothes",
-    predicate: (entry) => {
-      const vendor = `${entry.vendor ?? entry.brand ?? ""}`.toLowerCase();
-      if (!vendor.includes("gymshark")) {
-        return false;
+  const queries = ["gymshark hoodie", "gymshark leggings", "gymshark shorts"];
+  const collected = [];
+
+  try {
+    for (const search of queries) {
+      // eslint-disable-next-line no-await-in-loop
+      const data = await apiClient.get("/api/proxy?target=search", {
+        cache: "no-store",
+        query: { q: search, limit: DEFAULT_LIMIT },
+        allowProxyFallback: false,
+        preferProxy: true,
+      });
+
+      const normalized = ensureArray(data)
+        .map((item) => normalizeGoogleShoppingItem(item))
+        .filter((item) => item && typeof item.price === "number")
+        .map((item) => ({
+          ...item,
+          price: normalisePrice(item.price),
+          old_price: normalisePrice(item.old_price),
+        }))
+        .filter((item) => {
+          if (!item) {
+            return false;
+          }
+          const vendor = `${item.vendor ?? item.brand ?? ""}`.toLowerCase();
+          if (!vendor.includes("gymshark")) {
+            return false;
+          }
+          const name = `${item.name ?? ""} ${item.description ?? ""}`.toLowerCase();
+          return CLOTHING_KEYWORDS.some((keyword) => name.includes(keyword));
+        });
+
+      collected.push(...normalized);
+    }
+
+    const merged = mergeAndCleanResults(collected).filter((item) => item.vendor?.toLowerCase?.().includes("gymshark"));
+
+    const sorted = merged.sort((a, b) => {
+      const priceA = typeof a.price === "number" ? a.price : Number.POSITIVE_INFINITY;
+      const priceB = typeof b.price === "number" ? b.price : Number.POSITIVE_INFINITY;
+      if (priceA !== priceB) {
+        return priceA - priceB;
       }
-      const name = `${entry.name ?? ""} ${entry.description ?? ""}`.toLowerCase();
-      return CLOTHING_KEYWORDS.some((keyword) => name.includes(keyword));
-    },
-  });
+      return a.name.localeCompare(b.name, "fr", { sensitivity: "base" });
+    });
+
+    const limited = sorted.slice(0, limit);
+    return {
+      deals: limited.map((entry) => toDealItem(entry, { sourceLabel: "Sélection Gymshark", forcedType: "clothes" })),
+      usedFallback: false,
+    };
+  } catch (error) {
+    console.error("productAggregator.gymshark", { error });
+    return { deals: [], usedFallback: false };
+  }
 }
 
 export async function searchProducts(query, { limit = DEFAULT_LIMIT } = {}) {
@@ -858,4 +992,5 @@ export default {
   mergeAndCleanResults,
   searchProducts,
   formatPrice,
+  normalizeGoogleShoppingItem,
 };
