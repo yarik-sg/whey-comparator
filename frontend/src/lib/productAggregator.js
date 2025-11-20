@@ -216,11 +216,12 @@ export function normalizeGoogleShoppingItem(result) {
 }
 
 function normalizeSerpApiResults(json) {
+  const payload = json && typeof json === "object" ? json : {};
   const pools = [
-    json.shopping_results,
-    json.inline_products,
-    json.inline_results,
-    json.organic_results,
+    payload.shopping_results,
+    payload.inline_products,
+    payload.inline_results,
+    payload.organic_results,
   ];
 
   const merged = pools
@@ -858,13 +859,28 @@ export async function fetchWheyAbove20(options = {}) {
 
 export async function fetchCreatine(options = {}) {
   try {
+    if (!SERPAPI_KEY) return { deals: [], usedFallback: true };
+
     const q = "creatine monohydrate";
-    const url = `${SERPAPI_BASE}?engine=google_shopping&q=${encodeURIComponent(
-      q,
-    )}&gl=fr&hl=fr&api_key=${SERPAPI_KEY}`;
+    const url = new URL(SERPAPI_BASE);
+    url.searchParams.set("engine", "google_shopping");
+    url.searchParams.set("q", q);
+    url.searchParams.set("hl", "fr");
+    url.searchParams.set("gl", "fr");
+    url.searchParams.set("num", String(options?.limit ?? 3));
+    url.searchParams.set("api_key", SERPAPI_KEY);
 
     const json = await fetchJson(url);
-    const items = normalizeSerpApiResults(json || [])
+    if (!json || typeof json !== "object") {
+      return { deals: [], usedFallback: true };
+    }
+
+    const raw = normalizeSerpApiResults(json || {});
+    if (!raw || raw.length === 0) {
+      return { deals: [], usedFallback: true };
+    }
+
+    const items = raw
       .slice(0, options?.limit ?? 3)
       .map((item) => toDealItem({
         ...item,
@@ -872,7 +888,7 @@ export async function fetchCreatine(options = {}) {
         url: item.url,
       }, { sourceLabel: "Sélection Créatine" }));
 
-    return { deals: items, usedFallback: json === null };
+    return { deals: items, usedFallback: false };
   } catch (error) {
     console.warn("productAggregator.creatine.error", error);
     return { deals: [], usedFallback: true };
@@ -881,13 +897,28 @@ export async function fetchCreatine(options = {}) {
 
 export async function fetchGymsharkClothes(options = {}) {
   try {
+    if (!SERPAPI_KEY) return { deals: [], usedFallback: true };
+
     const q = "gymshark clothing";
-    const url = `${SERPAPI_BASE}?engine=google_shopping&q=${encodeURIComponent(
-      q,
-    )}&gl=fr&hl=fr&api_key=${SERPAPI_KEY}`;
+    const url = new URL(SERPAPI_BASE);
+    url.searchParams.set("engine", "google_shopping");
+    url.searchParams.set("q", q);
+    url.searchParams.set("hl", "fr");
+    url.searchParams.set("gl", "fr");
+    url.searchParams.set("num", String(options?.limit ?? 3));
+    url.searchParams.set("api_key", SERPAPI_KEY);
 
     const json = await fetchJson(url);
-    const items = normalizeSerpApiResults(json || [])
+    if (!json || typeof json !== "object") {
+      return { deals: [], usedFallback: true };
+    }
+
+    const raw = normalizeSerpApiResults(json || {});
+    if (!raw || raw.length === 0) {
+      return { deals: [], usedFallback: true };
+    }
+
+    const items = raw
       .slice(0, options?.limit ?? 3)
       .map((item) => toDealItem({
         ...item,
@@ -895,7 +926,7 @@ export async function fetchGymsharkClothes(options = {}) {
         url: item.url,
       }, { sourceLabel: "Sélection Gymshark", forcedType: "clothes" }));
 
-    return { deals: items, usedFallback: json === null };
+    return { deals: items, usedFallback: false };
   } catch (error) {
     console.warn("productAggregator.gymshark.error", error);
     return { deals: [], usedFallback: true };
