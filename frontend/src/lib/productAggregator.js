@@ -13,7 +13,9 @@ const MYPROTEIN_ENDPOINT =
   process.env.MYPROTEIN_SEARCH_URL
   || process.env.NEXT_PUBLIC_MYPROTEIN_SEARCH_URL
   || null;
-const SERP_ENDPOINT = "https://serpapi.com/search.json";
+const SERPAPI_BASE = "https://serpapi.com/search.json";
+const SERP_ENDPOINT = SERPAPI_BASE;
+const SERPAPI_KEY = process.env.SERPAPI_KEY || process.env.NEXT_PUBLIC_SERPAPI_KEY || null;
 const BACKEND_VENDOR_KEYWORDS = {
   decathlon: ["decathlon"],
   amazon: ["amazon"],
@@ -211,6 +213,32 @@ export function normalizeGoogleShoppingItem(result) {
     description: descriptionCandidate,
     weightKg: typeof weightCandidate === "number" && Number.isFinite(weightCandidate) ? weightCandidate : null,
   };
+}
+
+function normalizeSerpApiResults(json) {
+  const pools = [
+    json.shopping_results,
+    json.inline_products,
+    json.inline_results,
+    json.organic_results,
+  ];
+
+  const merged = pools
+    .filter(Boolean)
+    .flat()
+    .map((p) => ({
+      id: p.product_id || p.serpapi_product_id || p.position,
+      title: p.title,
+      price: p.price || p.extracted_price,
+      vendor: p.source || p.store || p.seller,
+      image: p.thumbnail || p.image,
+      rating: p.rating || null,
+      url: p.link,
+      usedFallback: false,
+    }))
+    .filter((p) => p.price && p.title);
+
+  return merged;
 }
 
 function normaliseProduct(record, vendor) {
@@ -650,7 +678,7 @@ function buildSerpUrl(query, limit, apiKey) {
 }
 
 export async function fetchSerpApi(query, { limit = DEFAULT_LIMIT } = {}) {
-  const apiKey = process.env.SERPAPI_KEY || process.env.NEXT_PUBLIC_SERPAPI_KEY;
+  const apiKey = SERPAPI_KEY;
   if (!apiKey || !query) {
     return [];
   }
@@ -671,28 +699,20 @@ export async function fetchSerpApi(query, { limit = DEFAULT_LIMIT } = {}) {
     }
 
     const payload = await response.json();
-    const items = Array.isArray(payload?.shopping_results) ? payload.shopping_results : [];
-    return items
-      .map((item, index) => {
-        const productId = pickString(item.product_id)
-          || (typeof item.product_id === "number" ? String(item.product_id) : null)
-          || pickString(item.position)
-          || (typeof item.position === "number" ? String(item.position) : null)
-          || `serp-${index}`;
-
-        return {
-          id: productId,
-          name: pickString(item.title) || "Produit",
-          price: normalisePrice(item.price) ?? normalisePrice(item.extracted_price),
-          old_price: normalisePrice(item.compare_at_price),
-          image: pickString(item.thumbnail),
-          brand: pickString(item.brand),
-          vendor: pickString(item.source) || pickString(item.store) || "SerpAPI",
-          url: pickString(item.link) || null,
-          rating: toNumber(item.rating),
-          description: pickString(item.description) || null,
-        };
-      })
+    const normalized = normalizeSerpApiResults(payload || {});
+    return normalized
+      .map((item, index) => ({
+        id: item.id || `serp-${index}`,
+        name: cleanProductName(item.title || "Produit"),
+        price: normalisePrice(item.price),
+        old_price: null,
+        image: item.image || null,
+        brand: null,
+        vendor: item.vendor || "SerpAPI",
+        url: item.url || null,
+        rating: typeof item.rating === "number" ? item.rating : toNumber(item.rating),
+        description: null,
+      }))
       .filter((item) => item && item.name)
       .slice(0, limit);
   } catch (error) {
@@ -836,113 +856,48 @@ export async function fetchWheyAbove20(options = {}) {
   });
 }
 
-export async function fetchCreatine(options = {}) {
-  const { limit = DEFAULT_CATEGORY_LIMIT } = options;
+export async function fetchCreatine({ limit = 3 } = {}) {
   try {
-    const data = await apiClient.get("/api/proxy?target=search", {
-      cache: "no-store",
-      query: { q: "creatine monohydrate 500g", limit: 20 },
-      allowProxyFallback: false,
-      preferProxy: true,
-    });
+    const q = "creatine monohydrate";
+    const url = `${SERPAPI_BASE}?engine=google_shopping&q=${encodeURIComponent(
+      q,
+    )}&gl=fr&hl=fr&api_key=${SERPAPI_KEY}`;
 
-    const normalized = ensureArray(data)
-      .map((item) => normalizeGoogleShoppingItem(item))
-      .filter((item) => item && typeof item.price === "number")
-      .map((item) => ({
+    const json = await fetchJson(url);
+    const items = normalizeSerpApiResults(json || {})
+      .slice(0, limit)
+      .map((item) => toDealItem({
         ...item,
-        price: normalisePrice(item.price),
-        old_price: normalisePrice(item.old_price),
-      }))
-      .filter((item) => {
-        if (!item) {
-          return false;
-        }
-        const name = `${item.name ?? ""} ${item.description ?? ""}`.toLowerCase();
-        const isMono = name.includes("creatine monohydrate") || name.includes("créatine monohydrate");
-        const weightOk =
-          typeof item.weightKg === "number"
-            ? item.weightKg >= 0.3
-            : true;
-        return isMono && typeof item.price === "number" && item.price <= 50 && weightOk;
-      });
+        name: item.title,
+        url: item.url,
+      }, { sourceLabel: "Sélection Créatine" }));
 
-    const sorted = normalized.sort((a, b) => {
-      const priceA = typeof a.price === "number" ? a.price : Number.POSITIVE_INFINITY;
-      const priceB = typeof b.price === "number" ? b.price : Number.POSITIVE_INFINITY;
-      if (priceA !== priceB) {
-        return priceA - priceB;
-      }
-      return a.name.localeCompare(b.name, "fr", { sensitivity: "base" });
-    });
-
-    const limited = sorted.slice(0, limit);
-    return {
-      deals: limited.map((entry) => toDealItem(entry, { sourceLabel: "Sélection Créatine" })),
-      usedFallback: false,
-    };
+    return { deals: items, usedFallback: false };
   } catch (error) {
-    console.error("productAggregator.creatine", { error });
+    console.error("productAggregator.creatine", error);
     return { deals: [], usedFallback: false };
   }
 }
 
 export async function fetchGymsharkClothes(options = {}) {
-  const { limit = DEFAULT_CATEGORY_LIMIT } = options;
-  const queries = ["gymshark hoodie", "gymshark leggings", "gymshark shorts"];
-  const collected = [];
-
   try {
-    for (const search of queries) {
-      // eslint-disable-next-line no-await-in-loop
-      const data = await apiClient.get("/api/proxy?target=search", {
-        cache: "no-store",
-        query: { q: search, limit: DEFAULT_LIMIT },
-        allowProxyFallback: false,
-        preferProxy: true,
-      });
+    const q = "gymshark clothing";
+    const url = `${SERPAPI_BASE}?engine=google_shopping&q=${encodeURIComponent(
+      q,
+    )}&gl=fr&hl=fr&api_key=${SERPAPI_KEY}`;
 
-      const normalized = ensureArray(data)
-        .map((item) => normalizeGoogleShoppingItem(item))
-        .filter((item) => item && typeof item.price === "number")
-        .map((item) => ({
-          ...item,
-          price: normalisePrice(item.price),
-          old_price: normalisePrice(item.old_price),
-        }))
-        .filter((item) => {
-          if (!item) {
-            return false;
-          }
-          const vendor = `${item.vendor ?? item.brand ?? ""}`.toLowerCase();
-          if (!vendor.includes("gymshark")) {
-            return false;
-          }
-          const name = `${item.name ?? ""} ${item.description ?? ""}`.toLowerCase();
-          return CLOTHING_KEYWORDS.some((keyword) => name.includes(keyword));
-        });
+    const json = await fetchJson(url);
+    const items = normalizeSerpApiResults(json || {})
+      .slice(0, limit)
+      .map((item) => toDealItem({
+        ...item,
+        name: item.title,
+        url: item.url,
+      }, { sourceLabel: "Sélection Gymshark", forcedType: "clothes" }));
 
-      collected.push(...normalized);
-    }
-
-    const merged = mergeAndCleanResults(collected).filter((item) => item.vendor?.toLowerCase?.().includes("gymshark"));
-
-    const sorted = merged.sort((a, b) => {
-      const priceA = typeof a.price === "number" ? a.price : Number.POSITIVE_INFINITY;
-      const priceB = typeof b.price === "number" ? b.price : Number.POSITIVE_INFINITY;
-      if (priceA !== priceB) {
-        return priceA - priceB;
-      }
-      return a.name.localeCompare(b.name, "fr", { sensitivity: "base" });
-    });
-
-    const limited = sorted.slice(0, limit);
-    return {
-      deals: limited.map((entry) => toDealItem(entry, { sourceLabel: "Sélection Gymshark", forcedType: "clothes" })),
-      usedFallback: false,
-    };
+    return { deals: items, usedFallback: false };
   } catch (error) {
-    console.error("productAggregator.gymshark", { error });
+    console.error("productAggregator.gymshark", error);
     return { deals: [], usedFallback: false };
   }
 }
