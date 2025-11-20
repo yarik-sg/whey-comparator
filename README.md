@@ -1,120 +1,136 @@
-# FitIdion
+# FitIdion — Comparez, progressez, performez dans le fitness
 
-Comparateur fitness nouvelle génération combinant une application Next.js 15 (App Router) et une API FastAPI. FitIdion agrège les offres SerpAPI, ScraperAPI et les scrapers internes pour proposer un comparateur temps réel, un catalogue enrichi et un annuaire de salles.
+## Aperçu du projet
+FitIdion est la nouvelle version de Whey Comparator. La plateforme rassemble un comparateur de prix Next.js, une API FastAPI et une bibliothèque de données communes pour aider les sportifs à identifier les meilleurs compléments, équipements et abonnements. L'expérience utilisateur repose sur un design system Tailwind moderne, un mode sombre natif et des parcours guidés couvrant toutes les routes clés : produits, salles, programmes, favoris et tableau de bord.
 
-## Sommaire
-1. [Fonctionnalités](#fonctionnalités)
-2. [Architecture rapide](#architecture-rapide)
-3. [Installation & exécution](#installation--exécution)
-4. [Commandes utiles](#commandes-utiles)
-5. [Guides développeur](#guides-développeur)
-6. [Documentation détaillée](#documentation-détaillée)
-7. [Changelog](#changelog)
+Parmi les fonctionnalités clés :
+- Comparateur intelligent avec agrégation multi-marchands, scoring nutritionnel et repérage automatique du meilleur prix.
+- Catalogue produit enrichi avec filtres avancés, alertes e-mail et historique de prix visualisé sur les fiches produits.
+- Moteur de recherche unifié couvrant produits, salles et programmes d'entraînement.
+- Gym Locator connecté (scraping Basic-Fit et partenaires) pour trouver rapidement une salle proche.
+- Centre légal unifié avec mentions légales, politique de confidentialité et gestion des cookies.
+- Documentation technique et produit centralisée (`docs/`).
 
-## Fonctionnalités
-- Comparateur intelligent (`/comparateur`, `/compare`, `/comparison`) avec historique de prix et agrégation multi-marchands.
-- Catalogue produits filtrable (prix, marque, catégorie, ratio protéine/€) alimenté par `GET /products`.
-- Annuaire de salles (`/gyms`, `/api/gyms`) connecté aux scrapers Basic-Fit, Fitness Park, Neoness, On Air.
-- Programmes d'entraînement (`/programmes`), centre légal, favoris et dashboard.
-- API unifiée (`/search`) pour alimenter la recherche globale.
+## Aperçu du design final
+- ![Hero FitIdion](frontend/public/FitIdion_Banner.png)
+- ![Catalogue produits](frontend/public/images/prise-masse.jpg)
+- ![Programme d'entraînement](frontend/public/images/seche-musculaire.jpg)
 
-## Architecture rapide
-```
-Next.js (frontend/) ──► FastAPI (main.py) ──► Services Python (SerpAPI, ScraperAPI, scrapers) ──► Données/fallbacks
-                             │
-                             └──► Backend complet apps/api (SQLAlchemy + Celery)
-```
-- Architecture détaillée : `docs/ARCHITECTURE.md`
-- Flux comparateur : `docs/PRODUCT_COMPARE_FLOW.md`
+## Stack technique
+- **Frontend** : Next.js 15 (App Router), React 19, Tailwind CSS 4, TanStack Query et composants animés Framer Motion.
+- **Backend** : FastAPI (API légère `main.py`) et projet complet `apps/api` (SQLAlchemy, Celery, APScheduler) pour l’ingestion et les alertes.
+- **Données & services** : SerpAPI, scrapers Python (`services/gyms_scraper.py`), catalogue de secours (`fallback_catalogue.py`, `data/programmes.json`).
+- **Outillage** : TypeScript 5, ESLint 9, Docker Compose, Poetry (backend) et PNPM/NPM pour le frontend.
 
-## Installation & exécution
+## Installation locale
 ### Prérequis
-- Node.js ≥ 20 (npm, pnpm ou yarn au choix).
-- Python 3.11+.
-- (Optionnel) Docker 24+ si vous utilisez `docker-compose.yml`.
-- (Optionnel) PostgreSQL + Redis pour `apps/api`.
+- Node.js ≥ 20 et npm 10 (ou PNPM 9 si vous préférez).
+- Python 3.11 pour les services FastAPI.
+- Docker 24+ et Docker Compose si vous lancez toute la stack en conteneurs.
+- Poetry 1.8 pour le backend complet (`apps/api`).
 
-### Option A — Docker Compose
+### Option A — Stack complète avec Docker
 ```bash
-git clone https://github.com/<org>/fitidion.git
+git clone https://github.com/<votre-organisation>/fitidion.git
 cd fitidion
 docker compose up --build
 ```
-- Frontend : http://localhost:3000
-- API FastAPI : http://localhost:8000 (`/docs` pour l'OpenAPI)
+- Frontend Next.js : http://localhost:3000
+- API FastAPI légère : http://localhost:8000 (Swagger sur `/docs`)
 
-Arrêt : `docker compose down` (ajoutez `-v` pour purger les volumes).
-
-### Option B — Installation manuelle
-1. **Frontend**
-   ```bash
-   npm install --prefix frontend
-   cp frontend/.env.local.example frontend/.env.local  # créez-le si besoin
-   ```
-   Variables à définir dans `frontend/.env.local` :
-   - `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`
-   - `NEXT_PUBLIC_SITE_URL=http://localhost:3000`
-
-   Lancer le serveur :
-   ```bash
-   npm run dev --prefix frontend
-   ```
-
-2. **API FastAPI légère (`main.py`)**
-   ```bash
-   python -m venv .venv && source .venv/bin/activate
-   pip install -r requirements.txt
-   uvicorn main:app --reload --port 8000
-   ```
-   Variables clés : `SERPAPI_KEY`, `SCRAPERAPI_KEY`, `SCRAPER_BASE_URL`, `FORCE_IMAGE_HTTPS`.
-
-3. **Backend complet (`apps/api`)**
-   ```bash
-   cd apps/api
-   poetry install
-   poetry run uvicorn app.main:app --reload --port 8100
-   ```
-   Services optionnels :
-   ```bash
-   poetry run celery -A app.celery_app worker -l info
-   poetry run python -m app.scheduler
-   ```
-
-## Commandes utiles
+Arrêt et nettoyage :
 ```bash
-# Lancer le lint frontend
-npm run lint --prefix frontend
-
-# Construire le frontend
-npm run build --prefix frontend
-
-# Mettre à jour les dépendances backend léger
-pip install -r requirements.txt --upgrade
-
-# Exécuter les tests unitaires apps/api
-cd apps/api && poetry run pytest
+docker compose down
+# Purge des volumes si nécessaire
+docker compose down -v
 ```
 
-## Guides développeur
-- **Conventions TypeScript/React** :
-  - Préfixez les fichiers client par `"use client"` et utilisez `@tanstack/react-query` pour les données paginées.
-  - Les types partagés vivent dans `frontend/src/types/api.ts`. Étendez-les plutôt que de créer de nouveaux objets non typés.
-- **Conventions FastAPI** :
-  - Les endpoints publics doivent conserver les champs camelCase historiques (compatibilité SPA).
-  - Documentez toute nouvelle variable d'environnement dans ce README + `docs/BACKEND.md`.
-- **Intégrations externes** :
-  - Suivez le guide d'ajout de fournisseur dans `docs/BACKEND.md` et `docs/PRODUCT_COMPARE_FLOW.md` (SerpAPI/ScraperAPI, scrapers internes).
-- **Legacy support** : tant que la page `/comparateur` n'est pas migrée, le flag `legacy=true` doit rester opérationnel sur `/compare`.
+### Option B — Installation manuelle
+#### 1. Frontend Next.js
+```bash
+npm install --prefix frontend
+```
+Créez le fichier `frontend/.env.local` s'il n'existe pas puis définissez :
+Variables essentielles dans `frontend/.env.local` :
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
 
-## Documentation détaillée
-| Sujet | Fichier |
-|-------|--------|
-| Rapport d'audit / problèmes ouverts | `docs/AUDIT_REPORT.md` |
-| Architecture & schéma de données | `docs/ARCHITECTURE.md` |
-| Backend & API FastAPI | `docs/BACKEND.md` |
-| Frontend & conventions | `docs/FRONTEND.md` |
-| Référence complète des endpoints | `docs/API_REFERENCE.md` |
-| Flux comparateur + services externes | `docs/PRODUCT_COMPARE_FLOW.md` |
+Démarrer le serveur :
+```bash
+npm run dev --prefix frontend
+```
 
-## Changelog
-Consultez `CHANGELOG.md` pour suivre les évolutions (mise à jour dans ce commit avec la refonte documentaire).
+Vérifiez les parcours `/products`, `/gyms`, `/programmes`, `/favoris`, `/dashboard` directement dans le navigateur.
+
+#### 2. API FastAPI légère (`main.py`)
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows : .venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+Variables utiles : `SERPAPI_KEY`, `SCRAPER_BASE_URL`.
+
+#### 3. Backend complet (`apps/api`)
+```bash
+cd apps/api
+poetry install
+poetry run uvicorn app.main:app --reload --port 8100
+```
+Workers Celery :
+```bash
+poetry run celery -A app.celery_app worker -l info
+poetry run python -m app.scheduler
+```
+
+## Déploiement
+### Frontend (Vercel)
+1. Lancer un build local pour valider :
+   ```bash
+   npm run build --prefix frontend
+   ```
+2. Configurer les variables d'environnement :
+   - `NEXT_PUBLIC_API_BASE_URL`
+   - `NEXT_PUBLIC_SITE_URL`
+   - `SERPAPI_KEY` (si l'intégration d'alertes prix est active)
+3. Commande de build : `npm run build --prefix frontend`
+4. Commande de démarrage : `npm run start --prefix frontend`
+
+### Frontend (Render ou autre PaaS)
+- Image Node 20.
+- Build command : `npm install --prefix frontend && npm run build --prefix frontend`.
+- Start command : `npm run start --prefix frontend` (pensez à définir `PORT`).
+- Activer la mise en cache du dossier `frontend/.next` pour des déploiements plus rapides.
+
+### API FastAPI
+- Déployer `main.py` sur Render/Fly.io avec `uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}`.
+- Pour le backend complet (`apps/api`), provisionner PostgreSQL, Redis et un worker Celery.
+- Les variables clés : `DATABASE_URL`, `REDIS_URL`, `SERPAPI_KEY`, `SCRAPER_BASE_URL`.
+
+### Workers & scraping
+- `services/gyms_scraper.py` peut être orchestré via Cron, Celery Beat ou un scheduler Render.
+- Les workers Celery décrits plus haut doivent partager les mêmes variables que l'API.
+
+> Consultez `docs/build-report.md` pour le détail du dernier build et des vérifications de déploiement.
+
+## Structure des répertoires
+```
+.
+├── README.md                     # Ce guide
+├── frontend/                     # Application Next.js (App Router)
+│   ├── src/app/                  # Pages, layouts, API routes app/
+│   ├── src/components/           # Composants UI et sections marketing
+│   ├── src/lib/                  # Clients API, metadata, helpers
+│   └── public/                   # Assets (logos, manifest, captures)
+├── apps/
+│   └── api/                      # Backend FastAPI complet (Poetry)
+├── services/                     # Scripts de scraping & ingestion Python
+├── data/                         # Données statiques partagées
+├── docs/                         # Documentation produit & technique
+├── main.py / requirements.txt    # API FastAPI légère
+├── docker-compose.yml            # Orchestration locale (Postgres, Redis, API, Frontend)
+└── fallback_catalogue.py         # Catalogue de secours partagé
+```
+
