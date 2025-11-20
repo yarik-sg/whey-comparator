@@ -856,7 +856,7 @@ export async function fetchWheyAbove20(options = {}) {
   });
 }
 
-export async function fetchCreatine({ limit = 3 } = {}) {
+export async function fetchCreatine(options = {}) {
   try {
     const q = "creatine monohydrate";
     const url = `${SERPAPI_BASE}?engine=google_shopping&q=${encodeURIComponent(
@@ -864,18 +864,18 @@ export async function fetchCreatine({ limit = 3 } = {}) {
     )}&gl=fr&hl=fr&api_key=${SERPAPI_KEY}`;
 
     const json = await fetchJson(url);
-    const items = normalizeSerpApiResults(json || {})
-      .slice(0, limit)
+    const items = normalizeSerpApiResults(json || [])
+      .slice(0, options?.limit ?? 3)
       .map((item) => toDealItem({
         ...item,
         name: item.title,
         url: item.url,
       }, { sourceLabel: "Sélection Créatine" }));
 
-    return { deals: items, usedFallback: false };
+    return { deals: items, usedFallback: json === null };
   } catch (error) {
-    console.error("productAggregator.creatine", error);
-    return { deals: [], usedFallback: false };
+    console.warn("productAggregator.creatine.error", error);
+    return { deals: [], usedFallback: true };
   }
 }
 
@@ -887,18 +887,18 @@ export async function fetchGymsharkClothes(options = {}) {
     )}&gl=fr&hl=fr&api_key=${SERPAPI_KEY}`;
 
     const json = await fetchJson(url);
-    const items = normalizeSerpApiResults(json || {})
-      .slice(0, limit)
+    const items = normalizeSerpApiResults(json || [])
+      .slice(0, options?.limit ?? 3)
       .map((item) => toDealItem({
         ...item,
         name: item.title,
         url: item.url,
       }, { sourceLabel: "Sélection Gymshark", forcedType: "clothes" }));
 
-    return { deals: items, usedFallback: false };
+    return { deals: items, usedFallback: json === null };
   } catch (error) {
-    console.error("productAggregator.gymshark", error);
-    return { deals: [], usedFallback: false };
+    console.warn("productAggregator.gymshark.error", error);
+    return { deals: [], usedFallback: true };
   }
 }
 
