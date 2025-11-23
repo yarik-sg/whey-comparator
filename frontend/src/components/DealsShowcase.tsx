@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Award, Flame, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -123,7 +124,7 @@ function DealCard({
       viewport={{ once: true, amount: 0.2 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Card className="group flex h-full flex-col overflow-hidden border-accent/40 bg-white shadow-neo transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.85)]">
+      <Card className="group flex h-full scale-[0.97] transform flex-col overflow-hidden border-accent/40 bg-white shadow-neo transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.85)]">
         <CardHeader className="space-y-4">
           <div className="relative h-56 w-full overflow-hidden rounded-3xl">
             <Image
@@ -315,8 +316,10 @@ export function DealsShowcase() {
     [rawDeals],
   );
 
-  const hasDeals =
-    wheyDeals.length > 0 || creatineDeals.length > 0 || gymsharkDeals.length > 0;
+  const creatineTopDeals = useMemo(() => creatineDeals.slice(0, 4), [creatineDeals]);
+  const gymsharkTopDeals = useMemo(() => gymsharkDeals.slice(0, 4), [gymsharkDeals]);
+
+  const hasDeals = wheyDeals.length > 0 || creatineTopDeals.length > 0 || gymsharkTopDeals.length > 0;
 
   return (
     <section id="promotions" className="relative overflow-hidden py-24">
@@ -355,8 +358,8 @@ export function DealsShowcase() {
 
         {state !== "success" ? (
           // skeletons pendant le chargement
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 9 }).map((_, i) => (
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
                 className="h-[380px] animate-pulse rounded-3xl border border-accent/50 bg-accent/60 dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.6)]"
@@ -379,7 +382,7 @@ export function DealsShowcase() {
                   </p>
                 </div>
               </div>
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {wheyDeals.length > 0 ? (
                   wheyDeals.map((deal, index) => (
                     <DealCard
@@ -407,9 +410,9 @@ export function DealsShowcase() {
                   </p>
                 </div>
               </div>
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {creatineDeals.length > 0 ? (
-                  creatineDeals.map((deal, index) => (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {creatineTopDeals.length > 0 ? (
+                  creatineTopDeals.map((deal, index) => (
                     <DealCard
                       key={deal.id ?? `creatine-${deal.vendor}-${deal.title}-${index}`}
                       deal={deal}
@@ -435,9 +438,9 @@ export function DealsShowcase() {
                   </p>
                 </div>
               </div>
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {gymsharkDeals.length > 0 ? (
-                  gymsharkDeals.map((deal, index) => (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {gymsharkTopDeals.length > 0 ? (
+                  gymsharkTopDeals.map((deal, index) => (
                     <DealCard
                       key={deal.id ?? `gymshark-${deal.vendor}-${deal.title}-${index}`}
                       deal={deal}
@@ -456,13 +459,8 @@ export function DealsShowcase() {
         )}
 
         <div className="mt-10 flex justify-center">
-          <Button
-            variant="outline"
-            size="lg"
-            className="rounded-full border-primary/40 text-primary hover:bg-primary/10"
-            onClick={() => router.push("/catalogue")}
-          >
-            Voir toutes les offres
+          <Button variant="outline" size="lg" className="rounded-full border-primary/40 text-primary hover:bg-primary/10" asChild>
+            <Link href="/comparateur">Voir toutes les offres</Link>
           </Button>
         </div>
       </div>
