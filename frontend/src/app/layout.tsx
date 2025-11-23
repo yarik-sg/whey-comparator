@@ -26,8 +26,8 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL(siteMetadata.url),
   title: {
-    default: "FitIdion — La plateforme du Fitness Intelligent",
-    template: "%s — FitIdion",
+    default: "Fitidion — La plateforme du Fitness Intelligent",
+    template: "%s — Fitidion",
   },
   description: siteMetadata.description,
   keywords: [
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   applicationName: siteMetadata.name,
   authors: [{ name: siteMetadata.name }],
   openGraph: {
-    title: "FitIdion — La plateforme du Fitness Intelligent",
+    title: "Fitidion — La plateforme du Fitness Intelligent",
     description: siteMetadata.description,
     url: siteMetadata.url,
     siteName: siteMetadata.name,
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FitIdion — La plateforme du Fitness Intelligent",
+    title: "Fitidion — La plateforme du Fitness Intelligent",
     description: siteMetadata.description,
   },
   icons: {
