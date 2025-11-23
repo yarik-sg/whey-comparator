@@ -311,7 +311,7 @@ export function DealsShowcase() {
             title.includes("whey") || category.includes("whey") || brand.includes("whey");
           return isWhey && price >= 20;
         })
-        .slice(0, 3),
+        .slice(0, 4),
     [rawDeals],
   );
 
@@ -359,7 +359,7 @@ export function DealsShowcase() {
             {Array.from({ length: 9 }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className="h-[420px] animate-pulse rounded-3xl border border-accent/50 bg-accent/60 dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.6)]"
+                className="h-[380px] animate-pulse rounded-3xl border border-accent/50 bg-accent/60 dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.6)]"
               />
             ))}
           </div>
