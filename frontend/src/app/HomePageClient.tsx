@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 import { DealsShowcase } from "@/components/DealsShowcase";
 import { HeroSection } from "@/components/HeroSection";
-import { PartnerLogos } from "@/components/PartnerLogos";
 import { PopularCategories } from "@/components/PopularCategories";
 import { GymLocatorSection } from "@/components/GymLocatorSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
@@ -21,7 +20,7 @@ export function HomePageClient() {
   }, [router]);
 
   const handleViewDeals = useCallback(() => {
-    router.push("/catalogue");
+    router.push("/comparateur");
   }, [router]);
 
   const handleSelectCategory = useCallback(
@@ -43,7 +42,6 @@ export function HomePageClient() {
       <WhyChooseUsSection />
       <StatsSection />
       <GymLocatorSection />
-      <PartnerLogos />
       <TestimonialsSection />
       <PriceAlertsSection onExploreCatalogue={handleExploreCatalogue} />
     </div>

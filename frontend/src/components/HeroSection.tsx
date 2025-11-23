@@ -112,7 +112,7 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           </span>
 
           <div className="space-y-5">
-            <h1 className="font-heading text-3xl font-semibold leading-tight text-[color:var(--text)] sm:text-4xl lg:text-5xl">
+            <h1 className="font-heading text-3xl font-semibold leading-tight text-[color:var(--text)] sm:text-4xl lg:text-4xl">
               Trouvez les meilleurs produits, au meilleur prix.
             </h1>
             <p className="mx-auto max-w-2xl text-base leading-relaxed text-[color:var(--text)]/80 sm:text-lg">

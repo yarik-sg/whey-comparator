@@ -12,9 +12,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 const navItems = [
   { label: "Produits", href: "/products" },
   { label: "Programmes", href: "/programmes" },
-  { label: "Équipements", href: "/equipements" },
   { label: "Salles", href: "/gyms" },
-  { label: "Tableau de bord", href: "/dashboard" },
   { label: "Favoris", href: "/favoris" },
   { label: "Analyse", href: "/analyse" },
 ];
