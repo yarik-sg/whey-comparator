@@ -6,7 +6,6 @@ import "./globals.css";
 import { QueryProvider } from "@/components/QueryProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { BrandHeader } from "@/components/BrandHeader";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "sonner";
 import { AnalyticsProvider } from "@/components/AnalyticsProvider";
@@ -83,7 +82,6 @@ export default function RootLayout({
           <AnalyticsProvider>
             <QueryProvider>
               <div className="flex min-h-screen flex-col">
-                <BrandHeader />
                 <SiteHeader />
                 <main className="flex-1">{children}</main>
                 <SiteFooter />
