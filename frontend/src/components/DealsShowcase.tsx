@@ -119,14 +119,15 @@ function DealCard({
 
   return (
     <motion.div
+      className="flex justify-center"
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Card className="group flex h-full scale-[0.97] transform flex-col overflow-hidden border-accent/40 bg-white shadow-neo transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.85)]">
+      <Card className="group mx-auto flex h-full w-full max-w-[300px] flex-col overflow-hidden border-accent/40 bg-white shadow-neo transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.85)]">
         <CardHeader className="space-y-4">
-          <div className="relative h-56 w-full overflow-hidden rounded-3xl">
+          <div className="relative h-44 w-full overflow-hidden rounded-3xl">
             <Image
               src={buildDisplayImageUrl(deal.image) || "/placeholder.png"}
               alt={deal.title}
@@ -167,7 +168,7 @@ function DealCard({
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/80">{deal.source}</p>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-1 flex-col justify-between space-y-6">
+        <CardContent className="flex flex-1 flex-col justify-between space-y-5">
           <div
             className="flex flex-wrap items-center gap-2 text-sm text-muted dark:text-muted/70"
             aria-label={
@@ -208,7 +209,7 @@ function DealCard({
           </div>
           <div>
             <div className="flex items-end gap-2">
-              <p className="text-3xl font-bold text-dark dark:text-white">{formattedPrice}</p>
+              <p className="text-2xl font-bold text-dark dark:text-white">{formattedPrice}</p>
               {referencePrice && <span className="text-sm text-muted/80 dark:text-muted line-through">{referencePrice}</span>}
             </div>
             {deal.shippingText && <p className="text-xs text-muted/80 dark:text-muted">{deal.shippingText}</p>}
@@ -358,11 +359,11 @@ export function DealsShowcase() {
 
         {state !== "success" ? (
           // skeletons pendant le chargement
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className="h-[380px] animate-pulse rounded-3xl border border-accent/50 bg-accent/60 dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.6)]"
+                className="h-[304px] animate-pulse rounded-3xl border border-accent/50 bg-accent/60 dark:border-accent-d/40 dark:bg-[rgba(30,41,59,0.6)]"
               />
             ))}
           </div>
@@ -382,7 +383,7 @@ export function DealsShowcase() {
                   </p>
                 </div>
               </div>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
                 {wheyDeals.length > 0 ? (
                   wheyDeals.map((deal, index) => (
                     <DealCard
@@ -410,7 +411,7 @@ export function DealsShowcase() {
                   </p>
                 </div>
               </div>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
                 {creatineTopDeals.length > 0 ? (
                   creatineTopDeals.map((deal, index) => (
                     <DealCard
@@ -438,7 +439,7 @@ export function DealsShowcase() {
                   </p>
                 </div>
               </div>
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
                 {gymsharkTopDeals.length > 0 ? (
                   gymsharkTopDeals.map((deal, index) => (
                     <DealCard
