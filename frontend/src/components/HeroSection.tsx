@@ -2,7 +2,6 @@
 
 import { motion, animate } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -22,32 +21,6 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
 
   const popularSearches = useMemo(
     () => ["Whey isolate chocolat", "Protéine vegan", "Optimum Nutrition", "Créatine monohydrate"],
-    [],
-  );
-
-  const heroLogos = useMemo(
-    () => [
-      {
-        name: "MyProtein",
-        logo: "https://cdn.jsdelivr.net/gh/tsiwla/assets-cdn/partners/myprotein-logo.svg",
-      },
-      {
-        name: "Prozis",
-        logo: "https://cdn.jsdelivr.net/gh/tsiwla/assets-cdn/partners/prozis-logo.svg",
-      },
-      {
-        name: "Amazon",
-        logo: "https://cdn.jsdelivr.net/gh/tsiwla/assets-cdn/partners/amazon-logo.svg",
-      },
-      {
-        name: "Optimum Nutrition",
-        logo: "https://cdn.jsdelivr.net/gh/tsiwla/assets-cdn/partners/optimum-nutrition-logo.svg",
-      },
-      {
-        name: "Decathlon",
-        logo: "https://cdn.jsdelivr.net/gh/tsiwla/assets-cdn/partners/decathlon-coach-logo.svg",
-      },
-    ],
     [],
   );
 
@@ -112,8 +85,14 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           </span>
 
           <div className="space-y-5">
-            <h1 className="font-heading text-3xl font-semibold leading-tight text-[color:var(--text)] sm:text-4xl lg:text-4xl">
-              Trouvez les meilleurs produits, au meilleur prix.
+            <h1 className="font-heading text-2xl font-semibold leading-tight text-[color:var(--text)] sm:text-3xl lg:text-3xl">
+              <span>
+                Trouvez les meilleurs <span className="font-bold text-primary">produits</span>,
+              </span>
+              <br />
+              <span>
+                au meilleur <span className="font-bold text-primary">prix</span>.
+              </span>
             </h1>
             <p className="mx-auto max-w-2xl text-base leading-relaxed text-[color:var(--text)]/80 sm:text-lg">
               Comparez des centaines de compléments, suivez les variations de prix et économisez sur chacune de vos commandes fitness.
@@ -132,24 +111,6 @@ export function HeroSection({ onStartComparison, onViewDeals }: HeroSectionProps
           <SearchModal query={searchQuery} isOpen={isSearchModalOpen} onClose={handleSearchModalClose} />
 
           <div className="flex w-full flex-col items-center gap-6">
-            <div className="flex flex-wrap items-center justify-center gap-4 rounded-2xl border border-white/30 bg-white/60 px-6 py-4 text-xs uppercase tracking-[0.28em] text-muted shadow-sm backdrop-blur">
-              {heroLogos.map(({ name, logo }) => (
-                <span key={name} className="flex items-center gap-3">
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
-                    <Image
-                      src={logo}
-                      alt={`Logo ${name}`}
-                      width={20}
-                      height={20}
-                      className="h-5 w-5 object-contain"
-                      loading="lazy"
-                    />
-                  </span>
-                  {name}
-                </span>
-              ))}
-            </div>
-
             <div className="grid w-full max-w-2xl gap-4 sm:grid-cols-3">
               {counters.map(({ value, prefix, suffix, label }) => (
                 <HeroCounter key={label} value={value} prefix={prefix} suffix={suffix} label={label} />
