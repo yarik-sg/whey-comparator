@@ -858,77 +858,59 @@ export async function fetchWheyAbove20(options = {}) {
 }
 
 export async function fetchCreatine(options = {}) {
+  const limit = options?.limit ?? 3;
+
   try {
-    if (!SERPAPI_KEY) return { deals: [], usedFallback: true };
+    const data = await apiClient.get(`/compare`, {
+      query: { q: "creatine", limit, legacy: true },
+      cache: "no-store",
+      allowProxyFallback: true,
+      preferProxy: true,
+    });
 
-    const q = "creatine monohydrate";
-    const url = new URL(SERPAPI_BASE);
-    url.searchParams.set("engine", "google_shopping");
-    url.searchParams.set("q", q);
-    url.searchParams.set("hl", "fr");
-    url.searchParams.set("gl", "fr");
-    url.searchParams.set("num", String(options?.limit ?? 3));
-    url.searchParams.set("api_key", SERPAPI_KEY);
+    const records = ensureArray(data)
+      .map((record) => normaliseDeal(record))
+      .filter(Boolean)
+      .slice(0, limit)
+      .map((entry) => toDealItem(entry, { sourceLabel: "Sélection Créatine" }));
 
-    const json = await fetchJson(url);
-    if (!json || typeof json !== "object") {
+    if (records.length === 0) {
+      console.warn("productAggregator.creatine.backendError", { error: "empty response" });
       return { deals: [], usedFallback: true };
     }
 
-    const raw = normalizeSerpApiResults(json || {});
-    if (!raw || raw.length === 0) {
-      return { deals: [], usedFallback: true };
-    }
-
-    const items = raw
-      .slice(0, options?.limit ?? 3)
-      .map((item) => toDealItem({
-        ...item,
-        name: item.title,
-        url: item.url,
-      }, { sourceLabel: "Sélection Créatine" }));
-
-    return { deals: items, usedFallback: false };
+    return { deals: records, usedFallback: false };
   } catch (error) {
-    console.warn("productAggregator.creatine.error", error);
+    console.warn("productAggregator.creatine.backendError", { error });
     return { deals: [], usedFallback: true };
   }
 }
 
 export async function fetchGymsharkClothes(options = {}) {
+  const limit = options?.limit ?? 3;
+
   try {
-    if (!SERPAPI_KEY) return { deals: [], usedFallback: true };
+    const data = await apiClient.get(`/compare`, {
+      query: { q: "gymshark promo", limit, legacy: true },
+      cache: "no-store",
+      allowProxyFallback: true,
+      preferProxy: true,
+    });
 
-    const q = "gymshark clothing";
-    const url = new URL(SERPAPI_BASE);
-    url.searchParams.set("engine", "google_shopping");
-    url.searchParams.set("q", q);
-    url.searchParams.set("hl", "fr");
-    url.searchParams.set("gl", "fr");
-    url.searchParams.set("num", String(options?.limit ?? 3));
-    url.searchParams.set("api_key", SERPAPI_KEY);
+    const records = ensureArray(data)
+      .map((record) => normaliseDeal(record))
+      .filter(Boolean)
+      .slice(0, limit)
+      .map((entry) => toDealItem(entry, { sourceLabel: "Sélection Gymshark", forcedType: "clothes" }));
 
-    const json = await fetchJson(url);
-    if (!json || typeof json !== "object") {
+    if (records.length === 0) {
+      console.warn("productAggregator.gymshark.backendError", { error: "empty response" });
       return { deals: [], usedFallback: true };
     }
 
-    const raw = normalizeSerpApiResults(json || {});
-    if (!raw || raw.length === 0) {
-      return { deals: [], usedFallback: true };
-    }
-
-    const items = raw
-      .slice(0, options?.limit ?? 3)
-      .map((item) => toDealItem({
-        ...item,
-        name: item.title,
-        url: item.url,
-      }, { sourceLabel: "Sélection Gymshark", forcedType: "clothes" }));
-
-    return { deals: items, usedFallback: false };
+    return { deals: records, usedFallback: false };
   } catch (error) {
-    console.warn("productAggregator.gymshark.error", error);
+    console.warn("productAggregator.gymshark.backendError", { error });
     return { deals: [], usedFallback: true };
   }
 }
