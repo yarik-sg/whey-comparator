@@ -8,6 +8,7 @@ import { HeroSection } from "@/components/HeroSection";
 import { PopularCategories } from "@/components/PopularCategories";
 import { GymLocatorSection } from "@/components/GymLocatorSection";
 import { PriceAlertsSection } from "@/components/PriceAlertsSection";
+import { FlashSaleSection } from "@/components/FlashSaleSection";
 import { StatsSection } from "@/components/StatsSection";
 import { TestimonialsSection } from "@/components/TestimonialsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
@@ -38,6 +39,7 @@ export function HomePageClient() {
     <div className="bg-background text-text">
       <HeroSection onStartComparison={handleStartComparison} onViewDeals={handleViewDeals} />
       <DealsShowcase />
+      <FlashSaleSection />
       <PopularCategories onSelectCategory={handleSelectCategory} />
       <WhyChooseUsSection />
       <StatsSection />
