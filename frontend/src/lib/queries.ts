@@ -1,17 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 
 import apiClient from "@/lib/apiClient";
+import type { QueryValue } from "@/lib/apiClient";
 import type {
   PriceAlertRecord,
   ProductListResponse,
   ProductReviewsResponse,
 } from "@/types/api";
 
-function createProductListQueryKey(params: Record<string, unknown>) {
+type QueryParams = Record<string, QueryValue>;
+
+function createProductListQueryKey(params: QueryParams) {
   return ["products", params];
 }
 
-export function useProductList(params: Record<string, unknown>) {
+export function useProductList(params: QueryParams) {
   return useQuery<ProductListResponse, Error>({
     queryKey: createProductListQueryKey(params),
     queryFn: async () => {

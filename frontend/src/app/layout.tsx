@@ -89,7 +89,6 @@ export default function RootLayout({
               <Toaster
                 richColors
                 position="top-right"
-                toastOptions={{ style: { borderRadius: "9999px", fontFamily: "var(--font-poppins)" } }}
               />
             </QueryProvider>
           </AnalyticsProvider>

@@ -22,7 +22,7 @@ export const useGyms = (filters: GymQueryFilters = {}) => {
     queryFn: () => fetchGyms(filters),
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 15,
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 };
 

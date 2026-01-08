@@ -2,10 +2,10 @@
 
 import * as React from "react";
 
-import { cn, type ClassValue } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  className?: ClassValue;
+export interface CardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "className"> {
+  className?: string;
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(

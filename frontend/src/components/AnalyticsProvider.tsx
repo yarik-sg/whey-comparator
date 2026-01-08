@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -129,11 +130,47 @@ function extractLabel(
   return secondary;
 }
 
-export function AnalyticsProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(analyticsReducer, initialState);
+// Inner component that uses useSearchParams (requires Suspense boundary)
+function AnalyticsPageTracker({
+  trackPageVisit,
+}: {
+  trackPageVisit: (options: TrackPageVisitOptions) => void;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const lastTrackedPath = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!pathname) {
+      return;
+    }
+
+    const searchString = searchParams?.toString() ?? "";
+    const compositePath = searchString ? `${pathname}?${searchString}` : pathname;
+
+    if (lastTrackedPath.current === compositePath) {
+      return;
+    }
+
+    lastTrackedPath.current = compositePath;
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    trackPageVisit({
+      path: pathname,
+      search: searchString || null,
+      referrer: document.referrer || null,
+      title: document.title || null,
+    });
+  }, [pathname, searchParams, trackPageVisit]);
+
+  return null;
+}
+
+export function AnalyticsProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(analyticsReducer, initialState);
 
   const trackPageVisit = useCallback(
     ({ path, search = null, title = null, referrer = null }: TrackPageVisitOptions) => {
@@ -203,32 +240,6 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     },
     []);
 
-  useEffect(() => {
-    if (!pathname) {
-      return;
-    }
-
-    const searchString = searchParams?.toString() ?? "";
-    const compositePath = searchString ? `${pathname}?${searchString}` : pathname;
-
-    if (lastTrackedPath.current === compositePath) {
-      return;
-    }
-
-    lastTrackedPath.current = compositePath;
-
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    trackPageVisit({
-      path: pathname,
-      search: searchString || null,
-      referrer: document.referrer || null,
-      title: document.title || null,
-    });
-  }, [pathname, searchParams, trackPageVisit]);
-
   const value = useMemo<AnalyticsContextValue>(
     () => ({
       state,
@@ -239,5 +250,12 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     [state, trackPageVisit, trackProductView, trackButtonClick],
   );
 
-  return <AnalyticsContext.Provider value={value}>{children}</AnalyticsContext.Provider>;
+  return (
+    <AnalyticsContext.Provider value={value}>
+      <Suspense fallback={null}>
+        <AnalyticsPageTracker trackPageVisit={trackPageVisit} />
+      </Suspense>
+      {children}
+    </AnalyticsContext.Provider>
+  );
 }

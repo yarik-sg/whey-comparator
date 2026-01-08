@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { Slot } from "@radix-ui/react-slot";
 
-import { cn, type ClassValue } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const baseStyles =
   "inline-flex items-center justify-center rounded-full font-semibold transition-all duration-200 shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-60 hover:-translate-y-0.5 hover:shadow-soft";
@@ -42,17 +42,17 @@ export function buttonClassName({
 }: {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  className?: ClassValue;
+  className?: string;
 }) {
   return cn(baseStyles, variants[variant], sizes[size], className);
 }
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "className"> {
   asChild?: boolean;
   variant?: ButtonVariant;
   size?: ButtonSize;
-  className?: ClassValue;
+  className?: string;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -71,17 +71,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const mergedClassName = buttonClassName({ variant, size, className });
 
     if (asChild) {
-      if (!React.isValidElement(children)) {
-        throw new Error("Button with `asChild` requires a single React element as a child.");
-      }
-
-      const child = React.Children.only(children) as React.ReactElement;
-
-      return React.cloneElement(child, {
-        ref,
-        className: cn(mergedClassName, child.props.className),
-        ...props,
-      });
+      return (
+        <Slot ref={ref} className={mergedClassName} {...props}>
+          {children}
+        </Slot>
+      );
     }
 
     return (

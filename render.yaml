@@ -1,0 +1,22 @@
+# Render.com configuration for FastAPI backend
+# https://docs.render.com/blueprint-spec
+
+services:
+  - type: web
+    name: fitidion-api
+    runtime: python
+    region: frankfurt
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SERPAPI_KEY
+        sync: false
+      - key: SCRAPER_BASE_URL
+        sync: false
+      - key: API_CACHE_TTL_SECONDS
+        value: "120"
+      - key: FORCE_IMAGE_HTTPS
+        value: "true"
+    healthCheckPath: /
+    autoDeploy: true

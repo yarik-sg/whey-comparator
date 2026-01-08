@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { cn, type ClassValue } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export type BadgeVariant = "primary" | "secondary" | "accent" | "outline" | "muted";
 export type BadgeSize = "sm" | "md";
@@ -23,10 +23,10 @@ const sizeStyles: Record<BadgeSize, string> = {
   md: "px-4 py-1.5 text-sm",
 };
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface BadgeProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, "className"> {
   variant?: BadgeVariant;
   size?: BadgeSize;
-  className?: ClassValue;
+  className?: string;
 }
 
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(

@@ -479,7 +479,7 @@ function GenericResultCard({
 
 export default function SearchPage() {
   const params = useSearchParams();
-  const rawQueryParam = params.get("q") ?? "";
+  const rawQueryParam = params?.get("q") ?? "";
   const query = rawQueryParam.trim();
   const [results, setResults] = useState<CombinedSearchResults | null>(null);
   const [isLoading, setIsLoading] = useState(false);

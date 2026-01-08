@@ -34,7 +34,7 @@ export function CreatePriceAlert({ product }: CreatePriceAlertProps) {
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (payload: CreateAlertPayload) => {
-      return apiClient.post("/price-alerts/", { body: payload });
+      return apiClient.post("/price-alerts/", { body: payload as unknown as Record<string, unknown> });
     },
     onSuccess: () => {
       toast.success("Alerte de prix créée avec succès !");

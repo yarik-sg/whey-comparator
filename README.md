@@ -18,16 +18,17 @@ Parmi les fonctionnalités clés :
 
 ## Stack technique
 - **Frontend** : Next.js 15 (App Router), React 19, Tailwind CSS 4, TanStack Query et composants animés Framer Motion.
-- **Backend** : FastAPI (API légère `main.py`) et projet complet `apps/api` (SQLAlchemy, Celery, APScheduler) pour l’ingestion et les alertes.
-- **Données & services** : SerpAPI, scrapers Python (`services/gyms_scraper.py`), catalogue de secours (`fallback_catalogue.py`, `data/programmes.json`).
-- **Outillage** : TypeScript 5, ESLint 9, Docker Compose, Poetry (backend) et PNPM/NPM pour le frontend.
+- **Backend principal** : FastAPI (`main.py` à la racine) — API d'agrégation combinant SerpAPI, scrapers et fallback pour alimenter le frontend.
+- **Backend avancé (optionnel)** : `apps/api` (SQLAlchemy, Celery, APScheduler) pour l'ingestion persistante et les alertes planifiées.
+- **Données & services** : SerpAPI, scrapers Python (`services/gyms_scraper.py`), catalogue de secours (`fallback_catalogue.py`, `data/programmes.json`).
+- **Outillage** : TypeScript 5, ESLint 9, Docker Compose, Poetry (backend avancé) et PNPM/NPM pour le frontend.
 
 ## Installation locale
 ### Prérequis
 - Node.js ≥ 20 et npm 10 (ou PNPM 9 si vous préférez).
-- Python 3.11 pour les services FastAPI.
+- Python 3.11+ pour l'API FastAPI.
 - Docker 24+ et Docker Compose si vous lancez toute la stack en conteneurs.
-- Poetry 1.8 pour le backend complet (`apps/api`).
+- Poetry 1.8 (optionnel, uniquement pour le backend avancé `apps/api`).
 
 ### Option A — Stack complète avec Docker
 ```bash
@@ -64,16 +65,22 @@ npm run dev --prefix frontend
 
 Vérifiez les parcours `/products`, `/gyms`, `/programmes`, `/favoris`, `/dashboard` directement dans le navigateur.
 
-#### 2. API FastAPI légère (`main.py`)
+#### 2. Backend FastAPI (`main.py` — racine du projet)
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
-Variables utiles : `SERPAPI_KEY`, `SCRAPER_BASE_URL`.
+Variables d'environnement :
+- `SERPAPI_KEY` : clé API SerpAPI pour les recherches produits.
+- `SCRAPER_BASE_URL` : URL du scraper externe (optionnel).
+- `API_CACHE_TTL_SECONDS` : durée du cache en secondes (défaut : 120).
 
-#### 3. Backend complet (`apps/api`)
+Swagger UI disponible sur http://localhost:8000/docs.
+
+#### 3. Backend avancé (optionnel) — `apps/api`
+Ce backend fournit une persistance PostgreSQL, des workers Celery et des alertes planifiées :
 ```bash
 cd apps/api
 poetry install
@@ -84,6 +91,8 @@ Workers Celery :
 poetry run celery -A app.celery_app worker -l info
 poetry run python -m app.scheduler
 ```
+
+> ⚠️ Pour un déploiement simple (Vercel + Render), le backend principal (`main.py`) suffit.
 
 ## Déploiement
 ### Frontend (Vercel)
@@ -104,10 +113,24 @@ poetry run python -m app.scheduler
 - Start command : `npm run start --prefix frontend` (pensez à définir `PORT`).
 - Activer la mise en cache du dossier `frontend/.next` pour des déploiements plus rapides.
 
-### API FastAPI
-- Déployer `main.py` sur Render/Fly.io avec `uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}`.
-- Pour le backend complet (`apps/api`), provisionner PostgreSQL, Redis et un worker Celery.
-- Les variables clés : `DATABASE_URL`, `REDIS_URL`, `SERPAPI_KEY`, `SCRAPER_BASE_URL`.
+### Backend FastAPI (Render)
+Le fichier `render.yaml` à la racine configure le déploiement automatique :
+```yaml
+services:
+  - type: web
+    name: fitidion-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+Variables d'environnement à configurer dans Render :
+- `SERPAPI_KEY` (secret) : clé API SerpAPI.
+- `SCRAPER_BASE_URL` (optionnel) : URL du scraper externe.
+- `API_CACHE_TTL_SECONDS` : durée du cache (défaut : 120).
+- `FORCE_IMAGE_HTTPS` : forcer HTTPS pour les images (défaut : true).
+
+> Pour le backend avancé (`apps/api`) avec PostgreSQL/Redis, provisionner les services additionnels.
 
 ### Workers & scraping
 - `services/gyms_scraper.py` peut être orchestré via Cron, Celery Beat ou un scheduler Render.
@@ -119,18 +142,21 @@ poetry run python -m app.scheduler
 ```
 .
 ├── README.md                     # Ce guide
+├── main.py                       # 🚀 Backend FastAPI principal (point d'entrée)
+├── requirements.txt              # Dépendances Python du backend
+├── fallback_catalogue.py         # Catalogue de secours partagé
+├── render.yaml                   # Configuration déploiement Render
+├── docker-compose.yml            # Orchestration locale (Postgres, Redis, API, Frontend)
 ├── frontend/                     # Application Next.js (App Router)
-│   ├── src/app/                  # Pages, layouts, API routes app/
+│   ├── src/app/                  # Pages, layouts, API routes
 │   ├── src/components/           # Composants UI et sections marketing
 │   ├── src/lib/                  # Clients API, metadata, helpers
+│   ├── vercel.json               # Configuration déploiement Vercel
 │   └── public/                   # Assets (logos, manifest, captures)
 ├── apps/
-│   └── api/                      # Backend FastAPI complet (Poetry)
+│   └── api/                      # Backend avancé (Poetry, SQLAlchemy, Celery)
 ├── services/                     # Scripts de scraping & ingestion Python
-├── data/                         # Données statiques partagées
-├── docs/                         # Documentation produit & technique
-├── main.py / requirements.txt    # API FastAPI légère
-├── docker-compose.yml            # Orchestration locale (Postgres, Redis, API, Frontend)
-└── fallback_catalogue.py         # Catalogue de secours partagé
+├── data/                         # Données statiques partagées (programmes, gyms)
+└── docs/                         # Documentation produit & technique
 ```
 

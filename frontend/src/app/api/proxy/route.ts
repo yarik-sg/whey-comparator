@@ -381,7 +381,7 @@ function buildComparePayload(
   };
 }
 
-export async function handleCompareDetailRequest(
+async function handleCompareDetailRequest(
   url: URL,
 ): Promise<NextResponse> {
   const rawId = url.searchParams.get("id")?.trim();
@@ -492,11 +492,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const forwardedFor = request.headers.get("x-forwarded-for");
     const data = await apiClient.get(`/${target}`, {
       query: buildQuery(url.searchParams),
-      headers: {
-        "X-Forwarded-For": request.headers.get("x-forwarded-for") ?? undefined,
-      },
+      headers: forwardedFor ? { "X-Forwarded-For": forwardedFor } : undefined,
       cache: "no-store",
       allowProxyFallback: false,
     });

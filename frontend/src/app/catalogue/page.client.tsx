@@ -241,7 +241,7 @@ async function fetchSerpDealsWithFallback({
 }): Promise<SerpIntegrationResult> {
   const baseDeals = existingDeals.length > 0 ? selectTopPromotions(existingDeals, limit) : [];
 
-  const useCatalogueFallback = (error?: string): SerpIntegrationResult => {
+  const getCatalogueFallback = (error?: string): SerpIntegrationResult => {
     const fallbackDeals = getFallbackDeals({ limit: limit * 3, query });
     if (fallbackDeals.length === 0) {
       return { deals: baseDeals, source: "none", error };
@@ -260,7 +260,7 @@ async function fetchSerpDealsWithFallback({
   };
 
   if (!query) {
-    return useCatalogueFallback();
+    return getCatalogueFallback();
   }
 
   try {
@@ -276,7 +276,7 @@ async function fetchSerpDealsWithFallback({
     if (!response.ok) {
       await response.text();
       const reason = `SerpAPI request failed with status ${response.status}`;
-      return useCatalogueFallback(reason);
+      return getCatalogueFallback(reason);
     }
 
     const data = await response.json();
@@ -287,7 +287,7 @@ async function fetchSerpDealsWithFallback({
         : [];
 
     if (deals.length === 0) {
-      return useCatalogueFallback("SerpAPI returned no deals");
+      return getCatalogueFallback("SerpAPI returned no deals");
     }
 
     const combined = mergeDeals(baseDeals, deals, limit);
@@ -298,7 +298,7 @@ async function fetchSerpDealsWithFallback({
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "SerpAPI request error";
-    return useCatalogueFallback(message);
+    return getCatalogueFallback(message);
   }
 }
 

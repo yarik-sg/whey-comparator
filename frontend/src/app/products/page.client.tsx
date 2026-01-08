@@ -13,6 +13,7 @@ import { PriceAlertsSection } from "@/components/PriceAlertsSection";
 import { WhyChooseUsSection } from "@/components/WhyChooseUsSection";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { useProductList } from "@/lib/queries";
+import type { QueryValue } from "@/lib/apiClient";
 import {
   getCanonicalProductId,
   normalizeProductIdentifier,
@@ -82,12 +83,12 @@ function buildQueryObject(
   searchParams: URLSearchParams,
   filters: ProductFilters,
   perPage: number,
-): Record<string, unknown> {
+): Record<string, QueryValue> {
   const search = searchParams.get("search") ?? undefined;
   const page = parseNumberParam(searchParams.get("page")) ?? 1;
   const sort = searchParams.get("sort") ?? "price_asc";
 
-  const query: Record<string, unknown> = {
+  const query: Record<string, QueryValue> = {
     page,
     per_page: perPage,
     sort,
@@ -121,14 +122,14 @@ function buildQueryObject(
 export default function ProductsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const searchParamsString = searchParams.toString();
+  const searchParamsString = searchParams?.toString() ?? "";
 
   const filters = useMemo(
     () => buildFiltersFromParams(new URLSearchParams(searchParamsString)),
     [searchParamsString],
   );
 
-  const [searchInput, setSearchInput] = useState(searchParams.get("search") ?? "");
+  const [searchInput, setSearchInput] = useState(searchParams?.get("search") ?? "");
 
   useEffect(() => {
     const params = new URLSearchParams(searchParamsString);
@@ -145,7 +146,7 @@ export default function ProductsPage() {
 
   const products = data?.products ?? [];
   const pagination = data?.pagination;
-  const sort = searchParams.get("sort") ?? "price_asc";
+  const sort = searchParams?.get("sort") ?? "price_asc";
 
   const availableBrands = useMemo(() => {
     const brandSet = new Set<string>();

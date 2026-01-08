@@ -61,7 +61,7 @@ function formatShipping(offer: DealItem) {
 
 export default function Comparateur() {
   const searchParams = useSearchParams();
-  const qParam = searchParams.get("q") || "whey protein 2kg";
+  const qParam = searchParams?.get("q") || "whey protein 2kg";
 
   const [produits, setProduits] = useState<DealItem[]>([]);
   const [loading, setLoading] = useState(false);

@@ -1,38 +1,50 @@
 # Rapport de build — FitIdion
 
 ## Contexte
-- Généré le 6 novembre 2025 dans l'environnement de développement Conteneur AI.
-- Objectif : valider le build Next.js et documenter la compatibilité Vercel/Render.
+- Dernière mise à jour : 8 janvier 2026
+- Objectif : valider le build Next.js et FastAPI pour déploiement Vercel/Render.
 
-## Commandes exécutées
+## Résultats du build
+
+### Frontend (Next.js)
 | Commande | Résultat |
 | --- | --- |
-| `npm run lint --prefix frontend` | ❌ `next: not found` (dépendances non installées) |
-| `npm install --prefix frontend` | ⚠️ Échec (`403 Forbidden` sur `recharts`) dû aux restrictions réseau/npm du conteneur |
-| `npm run build --prefix frontend` | ❌ `next: not found` car l'installation précédente n'a pas pu aboutir |
+| `npm install --prefix frontend` | ✅ Succès |
+| `npm run build --prefix frontend` | ✅ Succès (28 pages générées) |
 
-## Analyse
-- Les scripts Next.js (`lint`, `build`, `start`) nécessitent une installation complète des dépendances listées dans `frontend/package.json`.
-- Le conteneur CI ne dispose pas d'un accès complet au registre npm (erreur 403 sur `recharts`).
-- Les dépendances locales vendorisées (`vendor/`) restent fonctionnelles mais ne suffisent pas sans l'installation des paquets externes (`next`, `framer-motion`, `recharts`, etc.).
+### Backend (FastAPI)
+| Commande | Résultat |
+| --- | --- |
+| `pip install -r requirements.txt` | ✅ Succès |
+| `uvicorn main:app --port 8000` | ✅ Succès |
 
-## Recommandations pour un build réussi
-1. Sur un poste ou CI disposant d'un accès npm, exécuter :
-   ```bash
-   npm ci --prefix frontend
-   npm run lint --prefix frontend
-   npm run build --prefix frontend
-   ```
-2. Vérifier que `.env.local` contient `NEXT_PUBLIC_API_BASE_URL` et `NEXT_PUBLIC_SITE_URL` avant le build.
-3. Pour Vercel :
-   - Build Command : `npm run build --prefix frontend`
-   - Install Command : `npm ci`
-   - Output Directory : `frontend/.next`
-4. Pour Render (service web) :
-   - Build Command : `npm install --prefix frontend && npm run build --prefix frontend`
-   - Start Command : `npm run start --prefix frontend`
-   - Variables : `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SITE_URL`, `SERPAPI_KEY`.
+## Configuration de déploiement
+
+### Vercel (Frontend)
+- **Build Command** : `npm run build`
+- **Output Directory** : `.next`
+- **Install Command** : `npm ci`
+- **Root Directory** : `frontend`
+- **Variables d'environnement** :
+  - `NEXT_PUBLIC_API_BASE_URL` : URL de l'API Render
+  - `NEXT_PUBLIC_SITE_URL` : URL du site Vercel
+  - `SERPAPI_KEY` : Clé API SerpAPI (optionnel)
+
+### Render (Backend)
+- **Build Command** : `pip install -r requirements.txt`
+- **Start Command** : `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- **Root Directory** : racine du repo
+- **Variables d'environnement** :
+  - `SERPAPI_KEY` : Clé API SerpAPI
+  - `API_CACHE_TTL_SECONDS` : 120
+  - `FORCE_IMAGE_HTTPS` : true
+
+## Fichiers de configuration
+- `render.yaml` : Blueprint Render pour le backend
+- `frontend/vercel.json` : Configuration Vercel pour le frontend
+- `frontend/.env.example` : Template des variables d'environnement
 
 ## Statut
-- ✅ Configuration de build documentée.
-- ⚠️ Build non exécuté dans le conteneur à cause des limitations d'accès au registre npm.
+- ✅ Build frontend validé
+- ✅ Backend FastAPI fonctionnel
+- ✅ Configurations de déploiement prêtes

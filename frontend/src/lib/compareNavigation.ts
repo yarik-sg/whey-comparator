@@ -147,7 +147,7 @@ export function setCompareNavigationState(state: CompareNavigationState | null) 
       configurable: true,
     });
   } catch {
-    (window as Record<string, unknown>)[NAVIGATION_STATE_KEY] = payload;
+    (window as unknown as Record<string, unknown>)[NAVIGATION_STATE_KEY] = payload;
   }
 
   window.dispatchEvent(new CustomEvent(NAVIGATION_EVENT, { detail: payload }));
@@ -158,7 +158,7 @@ export function getCompareNavigationState(): CompareNavigationState | null | und
     return undefined;
   }
 
-  const payload = (window as Record<string, unknown>)[NAVIGATION_STATE_KEY] as NavigationStatePayload | undefined;
+  const payload = (window as unknown as Record<string, unknown>)[NAVIGATION_STATE_KEY] as NavigationStatePayload | undefined;
   if (payload && typeof payload === "object" && "state" in payload) {
     return payload.state ?? null;
   }

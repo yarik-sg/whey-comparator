@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { createMetadata } from "@/lib/siteMetadata";
 import ProductsPageClient from "./page.client";
@@ -10,6 +11,18 @@ export const metadata: Metadata = createMetadata({
   path: "/products",
 });
 
+function ProductsLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="animate-pulse text-lg text-muted">Chargement des produits...</div>
+    </div>
+  );
+}
+
 export default function ProductsPage() {
-  return <ProductsPageClient />;
+  return (
+    <Suspense fallback={<ProductsLoading />}>
+      <ProductsPageClient />
+    </Suspense>
+  );
 }

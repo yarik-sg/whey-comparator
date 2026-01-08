@@ -79,6 +79,7 @@ export interface ProductSummary {
   isBestPrice?: boolean | null;
   discount?: number | null;
   originalPrice?: ApiPrice | null;
+  link?: string | null;
 }
 
 export interface ProgramSummary {
